@@ -1,6 +1,6 @@
 # Requirements Document - current EZWallet
 
-Date: 
+Date: oggi
 
 Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 
