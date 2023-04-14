@@ -32,9 +32,11 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 # Stakeholders
 
-| Stakeholder name | Description |
-| ---------------- | :---------: |
-| Stakeholder x..  |             |
+| Stakeholder name  | Description 													                    	      | 
+| -----------------:|:-----------------------------------------------------------------:|
+| User			        | End-users like individuals and families that use the application  | 
+| Developer team    | People who work and configure the system				                  | 
+| Competitor	      | Other similar products that can inspire new features		          | 
 
 # Context Diagram and interfaces
 
@@ -52,15 +54,23 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<GUIs will be described graphically in a separate document>
 
-| Actor     | Logical Interface | Physical Interface |
-| --------- | :---------------: | -----------------: |
-| Actor x.. |                   |                    |
+| Actor  			      | Phisical interface	  | Logical interface										                           				| 
+| -----------------:|:---------------------:|:---------------------------------------------------------------------:|
+| User			        | PC/Smartphone			    | GUI (manage transactions and categories, signup, login, logout)	    	| 
+| Developer team    | PC					          | API																                                  	| 
 
 # Stories and personas
 
 \<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
 
 \<Persona is-an-instance-of actor>
+User 1: Young adult starting living alone and managing his money
+User 2: A father of a family that wants to analyse incomes and outcomes
+User 3: Household expenses to balance and limit it
+User 4: A group of friends organizing a trip
+User 5: Student living aborad for his studies who want to reduce expenses
+User 6: Someone that has just started his worklife and saving his first paychecks
+User 7: Reriree that wants to understand how he has spent his pension
 
 \<stories will be formalized later as scenarios in use cases>
 
