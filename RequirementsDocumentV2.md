@@ -5,7 +5,7 @@ Date:
 Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 
  
-| Version number | Change |
+| Version number 2 | Change |
 | ----------------- |:-----------|
 | | | 
 
