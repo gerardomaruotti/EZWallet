@@ -90,12 +90,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | FR4 Manage Labels        | The system can show the existing labels                            |
 
 
-## Non Functional Requirementsq
-| ID                       | Description |
-| -----                    | :---------: |
-| NFR1 Security            | Basic form of authentication using access and refresh tokens|
-| NFR2 Availability        | Max server downtime 1.5h/y|
-
+## Non Functional Requirements
 
 \<Describe constraints on functional requirements>
 
