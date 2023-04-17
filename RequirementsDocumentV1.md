@@ -82,22 +82,28 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 \<they match to high level use cases>
 
-| ID    | Description |
-| ----- | :---------: |
-| FR1   |             |
-| FR2   |             |
-| FRx.. |             |
+| ID                       | Description |
+| -----                    | :---------: |
+| FR1 Manage account       | The system is capable of the following functions:login, register, logout, refresh token, show user and show user by username|
+| FR2 Manage Transactions  | The system is able to Create, delete and show transactions         |
+| FR3 Manage Categories    | The software allow to Create and show categories                 |
+| FR4 Manage Labels        | The system can show the existing labels                            |
 
-## Non Functional Requirements
+
+## Non Functional Requirementsq
+| ID                       | Description |
+| -----                    | :---------: |
+| NFR1 Security            | Basic form of authentication using access and refresh tokens|
+| NFR2 Availability        | Max server downtime 1.5h/y|
+
 
 \<Describe constraints on functional requirements>
 
 | ID      | Type (efficiency, reliability, ..) | Description | Refers to |
 | ------- | :--------------------------------: | :---------: | --------: |
-| NFR1    |                                    |             |           |
-| NFR2    |                                    |             |           |
-| NFR3    |                                    |             |           |
-| NFRx .. |                                    |             |           |
+| NFR1    |  Security                          |Basic form of authentication using access and refresh tokens| FR1          |
+| NFR2    |  Availability                      | Max server downtime 1.5h/y |  FR1,FR2,FR3,FR4     |
+
 
 # Use case diagram and use cases
 
