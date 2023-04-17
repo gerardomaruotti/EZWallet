@@ -108,15 +108,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 \<next describe here each use case in the UCD>
 
-### Use case 1, UC1
+### Use case 1, Login
 
-| Actors Involved  |                                                                      |
+| Actors Involved  |  User                                                                    |
 | ---------------- | :------------------------------------------------------------------: |
-| Precondition     | \<Boolean expression, must evaluate to true before the UC can start> |
-| Post condition   |  \<Boolean expression, must evaluate to true after UC is finished>   |
-| Nominal Scenario |         \<Textual description of actions executed by the UC>         |
-| Variants         |                      \<other normal executions>                      |
-| Exceptions       |                        \<exceptions, errors >                        |
+| Precondition     | User has an account |
+| Post condition   | User receives AccessToken and RefreshToken   |
+| Nominal Scenario | User asks to login and try to authenticate himself     |                                     
+| Exceptions       | email does not exist, password incorrect, invalid Token |                      |
 
 ##### Scenario 1.1
 
@@ -130,16 +129,26 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 | Scenario 1.1   |                                                                            |
 | -------------- | :------------------------------------------------------------------------: |
-| Precondition   | \<Boolean expression, must evaluate to true before the scenario can start> |
-| Post condition |  \<Boolean expression, must evaluate to true after scenario is finished>   |
+| Precondition   | User has an account  |
+| Post condition |  User receives AccessToken and RefreshToken   |
 | Step#          |                                Description                                 |
-| 1              |                                                                            |
-| 2              |                                                                            |
-| ...            |                                                                            |
-
+| 1             |  User asks to login                                                                        |
+| 2              |  The system asks email and password                                                                        |
+| 3           |   The user enters email and password                                                                         |
+| 4          |   The system checks if email and password are not correct                                                                         |
+| 5      |    If email and password are not correct, the user is not authorized and receives an error message "wrong credentials"                                                |
 ##### Scenario 1.2
+1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   | User has an account  |
+| Post condition |  User receives AccessToken and RefreshToken   |
+| Step#          |                                Description                                 |
+| 1             |  User asks to login                                                                        |
+| 2              |  The system asks email and password                                                                        |
+| 3           |   The user enters email and password                                                                         |
+| 4          |   The system checks if email and password are not correct                                                                         |
+| 5      |    If email and password are not correct, the user is not authorized and receives an errore message "please you need to register"                                                       |
 
-##### Scenario 1.x
 
 ### Use case 2, UC2
 
