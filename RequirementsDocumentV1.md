@@ -150,13 +150,43 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 5      |    If email and password are not correct, the user is not authorized and receives an errore message "please you need to register"                                                       |
 
 
-### Use case 2, UC2
+### Use case 2, Register
+| Actors Involved  |  User                                                                    |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has no account |
+| Post condition   | User has account  |
+| Nominal Scenario | User provides his credentials and obtains the access to the service  |                                     
+| Exceptions       | email already exists |                      |
 
-..
+##### Scenario 1
 
-### Use case x, UCx
+| Scenario 1.1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   | User has no account  |
+| Post condition |  User has account   |
+| Step#          |                                Description                                 |
+| 1             |  User asks to register                                                                       |
+| 2              |  The system asks username and does not check if it is already available                                                             |
+| 3           |   The system asks email and checks if it is already available                                                                        |
+| 4          |   The system asks password                                                                          |
+| 5      |   User enters username,email and password
+| 6     |   If the email is valid, the system stores the account
 
-..
+##### Scenario 1.1
+
+| Scenario 1.11   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   | User has no account  |
+| Post condition |  User has account   |
+| Step#          |                                Description                                 |
+| 1             |  User asks to register                                                                       |
+| 2              |  The system asks username and does not check if it is already available                                                             |
+| 3           |   The system asks email and checks if it is already available                                                                        |
+| 4          |   The system asks password                                                                          |
+| 5      |   User enters username,email and password
+| 6     |   If the email already exists , the registration was unsuccessful and receives an errore message "You are already register"
+
+
 
 # Glossary
 
