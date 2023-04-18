@@ -8,15 +8,23 @@ Version:
 Consider the EZWallet  project in CURRENT version (as received by the teachers), assume that you are going to develop the project INDEPENDENT of the deadlines of the course
 # Estimate by size
 ### 
-|             | Estimate                        |             
-| ----------- | ------------------------------- |  
-| NC =  Estimated number of classes to be developed   |                             |             
-|  A = Estimated average size per class, in LOC       |                            | 
-| S = Estimated size of project, in LOC (= NC * A) | |
-| E = Estimated effort, in person hours (here use productivity 10 LOC per person hour)  |                                      |   
-| C = Estimated cost, in euro (here use 1 person hour cost = 30 euro) | | 
-| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week ) |                    |               
-
+|                               | Estimate                                  | Assumption                     
+| ----------------------------- | ----------------------------------------- | ---------------------------------
+| NC (Number of classes)        | 1 classes for database connection         | 
+|                               | 3 classes for database models             |
+|                               | 1 classes for api routes                  |
+|                               | 1 classes for application context         |
+|                               | 4 classes for application authentication  |
+|                               | 6 classes for application controller      |
+|                               | 2 classes for appplication users          |
+|                               | 9 classes for tests                       |       
+|                               | X classes for GUI                         |        
+| A (Average size per class)    | 30 LOC per class                          | 
+| S (Size of project)           | NC * A            (LOC)                   |
+| E (Effort)                    | S / P             (person hour)           | P = productivity of 10 LOC per person hour  
+| C (Estimated cost)            | E * C             (euro)                  | C = cost of 30 euro per person hour   
+| Estimated calendar time       | E / (T * H * D)   (weeks)                 | T = team of 4 people, H = 8 hours per day, D = 5 days per week         
+ 
 # Estimate by product decomposition
 ### 
 |         component name    | Estimated effort (person hours)   |             
