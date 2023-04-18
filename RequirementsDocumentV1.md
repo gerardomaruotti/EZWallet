@@ -210,22 +210,123 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   | The transaction is created |
 | Nominal Scenario | User create new transaction by entering name, amount and type |                                     
-| Exceptions       |    |                      |
+| Exceptions       |User is not logged    |                      |
+
+##### Scenario 1
+
+| Scenario 1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized |
+| Post condition |  The transaction is created   |
+| Step#          |                                Description                                 |
+| 1             |  User asks to create a transaction                                                                      |
+| 2              |  User inserts the name, the amount and the type                                                    |
+| 3           |   The transaction is created and stored in the Database                                                                        |
 
 ##### Scenario 1
 
 | Scenario 1.1   |                                                                            |
 | -------------- | :------------------------------------------------------------------------: |
-| Precondition   | User has no account  |
-| Post condition |  User has account   |
+| Precondition   |  User has account, user has been authenticated and authorized |
+| Post condition |  The transaction is created   |
 | Step#          |                                Description                                 |
-| 1             |  User asks to register                                                                       |
-| 2              |  The system asks username and does not check if it is already available                                                             |
-| 3           |   The system asks email and checks if it is already available                                                                        |
-| 4          |   The system asks password                                                                          |
-| 5      |   User enters username,email and password
-| 6     |   If the email is valid, the system stores the account
+| 1             |  User asks to create a transaction                                                                      |
+| 2              |  User try to insert the name, the amount and the type                                                    |
+| 3           |   The transaction is not created because the user is not logged and an error message appears                                                                         |
 
+### Use case 4, Delete transaction
+| Actors Involved  |  User                                                                    |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
+| Post condition   | The transaction is deleted |
+| Nominal Scenario | User delete one transaction by entering the ID |                                     
+| Exceptions       | |  The transaction does not exists         |
+
+##### Scenario 1
+
+| Scenario 1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
+| Post condition |  The transaction is deleted  |
+| Step#          |                                Description                                 |
+| 1             |  User chooses a specific transaction                                                                   |
+| 2              |  The transaction with the corresponding ID is deleted from the Database                                                   |
+              
+         
+
+### Use case 4, get transaction
+| Actors Involved  |  User                                                                    |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized  |
+| Post condition   | All the transactions are shown |
+| Nominal Scenario | User see all the transactions that he has made  |                                     
+| Exceptions       | |          |
+
+##### Scenario 1
+
+| Scenario 1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized  |
+| Post condition |  All the transactions are shown  |
+| Step#          |                                Description                                 |
+| 1             |  User asks to see all the transactions on the account                                                                   |
+| 2              |  The system show the full list of transactions with name,amount,type and date                                                   |
+              
+### Use case 5, get labels
+| Actors Involved  |  User                                                                    |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized  |
+| Post condition   | All the transactions are shown |
+| Nominal Scenario | User see all the transactions that he has made  |                                     
+| Exceptions       | |          |
+
+##### Scenario 1
+
+| Scenario 1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized  |
+| Post condition |  All the transactions are shown  |
+| Step#          |                                Description                                 |
+| 1             |  User asks to see all the transactions on the account                                                                   |
+| 2              |  The system show the full list of transactions with name, amount and type                                                |
+
+
+### Use case 5, get categories
+| Actors Involved  |  User                                                                    |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized  |
+| Post condition   | All the categories are shown |
+| Nominal Scenario | User see all the categories that he has inserted  |                                     
+| Exceptions       | |          |
+
+##### Scenario 1
+
+| Scenario 1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized  |
+| Post condition |  All the categories are shown  |
+| Step#          |                                Description                                 |
+| 1             |  User asks to see all the categories created on the account                                                                   |
+| 2              |  The system show the full list of categories 
+
+
+### Use case 6, create categories
+| Actors Involved  |  User                                                                    |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized  |
+| Post condition   | A category is created |
+| Nominal Scenario | User create and specify the name and the color for that category |                                     
+| Exceptions       | |          |
+
+##### Scenario 1
+
+| Scenario 1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized  |
+| Post condition |  A category is created|
+| Step#          |                                Description                                 |
+| 1             |  User wants to create a new category                                                                   |
+| 2              | User inserts name and color for that specific category
 
 # Glossary
 
