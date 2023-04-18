@@ -24,18 +24,20 @@ Consider the EZWallet  project in CURRENT version (as received by the teachers),
 | E (Effort)                    | S / P             (person hour)           | P = productivity of 10 LOC per person hour  
 | C (Estimated cost)            | E * C             (euro)                  | C = cost of 30 euro per person hour   
 | Estimated calendar time       | E / (T * H * D)   (weeks)                 | T = team of 4 people, H = 8 hours per day, D = 5 days per week         
- 
+
 # Estimate by product decomposition
 ### 
-|         component name    | Estimated effort (person hours)   |             
-| ----------- | ------------------------------- | 
-|requirement document    | |
-| GUI prototype ||
-|design document ||
-|code ||
-| unit tests ||
-| api tests ||
-| management documents  ||
+| Component name        | Estimated effort  |             
+| --------------------- | ----------------- | 
+| Requirement document  | 10 person hour    |
+| GUI prototype         | 20 person hour    |
+| Design document       | 10 person hour    |
+| Code                  | 50 person hour    |
+| Unit tests            | 15 person hour    |
+| Api tests             | 15 person hour    |
+| Management documents  | 10 person hour    |
+| --------------------- | ----------------- |
+| Total                 | 130 person hour   |
 
 
 
