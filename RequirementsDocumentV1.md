@@ -105,6 +105,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 ## Use case diagram
 
 \<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
+![usecasediagram](code/images/usecase.png)
 
 \<next describe here each use case in the UCD>
 
@@ -160,7 +161,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 ##### Scenario 1
 
-| Scenario 1.1   |                                                                            |
+| Scenario 1   |                                                                            |
 | -------------- | :------------------------------------------------------------------------: |
 | Precondition   | User has no account  |
 | Post condition |  User has account   |
@@ -254,7 +255,7 @@ User 7: Reriree that wants to understand how he has spent his pension
               
          
 
-### Use case 4, get transaction
+### Use case 5, get transaction
 | Actors Involved  |  User                                                                    |
 | ---------------- | :------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
@@ -272,7 +273,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1             |  User asks to see all the transactions on the account                                                                   |
 | 2              |  The system show the full list of transactions with name,amount,type and date                                                   |
               
-### Use case 5, get labels
+### Use case 6, get labels
 | Actors Involved  |  User                                                                    |
 | ---------------- | :------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
@@ -291,7 +292,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              |  The system show the full list of transactions with name, amount and type                                                |
 
 
-### Use case 5, get categories
+### Use case 7, get categories
 | Actors Involved  |  User                                                                    |
 | ---------------- | :------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
@@ -310,7 +311,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              |  The system show the full list of categories 
 
 
-### Use case 6, create categories
+### Use case 8, create categories
 | Actors Involved  |  User                                                                    |
 | ---------------- | :------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
@@ -328,7 +329,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1             |  User wants to create a new category                                                                   |
 | 2              | User inserts name and color for that specific category
 
-### Use case 7, get users
+### Use case 9, get users
 | Actors Involved  |  User                                                                    |
 | -————— | :——————————————————————: |
 | Precondition     | User has account, user has been authenticated, authorized and has admin privileges |
@@ -346,7 +347,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1             |  Admin asks for a full list of users                                                                    |
 | 2              | The system returns a the list of all the existing users
 
-### Use case 8, get user by username
+### Use case 10, get user by username
 | Actors Involved  |  User                                                                    |
 | -————— | :——————————————————————: |
 | Precondition     | User has account, user has been authenticated and authorized |
@@ -364,9 +365,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1             |  User asks for all his credentials by entering his username                                                                    |
 | 2              | The system returns the asked data
 
-##### Scenario 2
+##### Scenario 1.1
 
-| Scenario 2   |                                                                            |
+| Scenario 1.1  |                                                                            |
 | ————— | :————————————————————————: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   | User receives an error message|
