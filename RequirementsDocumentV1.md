@@ -105,7 +105,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 ## Use case diagram
 
 \<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
-![usecasediagram](code/images/usecase.png)
+![usecasediagram](code/images/usecase1.png)
 
 \<next describe here each use case in the UCD>
 
