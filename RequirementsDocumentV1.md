@@ -330,49 +330,47 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              | User inserts name and color for that specific category
 
 ### Use case 9, get users
-| Actors Involved  |  User                                                                    |
-| -————— | :——————————————————————: |
-| Precondition     | User has account, user has been authenticated, authorized and has admin privileges |
-| Post condition   | A list of users is shown |
+| Actors Involved  |  Developer Team                                                                    |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated, authorized and has admin privileges  |
+| Post condition   |  A list of users is shown |
 | Nominal Scenario | Admin asks for a list of all users credentials |                                     
 | Exceptions       | |          |
 
 ##### Scenario 1
-
 | Scenario 1   |                                                                            |
-| ————— | :————————————————————————: |
-| Precondition     | User has account, user has been authenticated, authorized and has admin privileges |
-| Post condition   | A list of users is shown |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated, authorized and has admin privileges  |
+| Post condition |  A list of users is shown|
 | Step#          |                                Description                                 |
-| 1             |  Admin asks for a full list of users                                                                    |
+| 1             |  Admin asks for a full list of users                                                                   |
 | 2              | The system returns a the list of all the existing users
 
 ### Use case 10, get user by username
 | Actors Involved  |  User                                                                    |
-| -————— | :——————————————————————: |
-| Precondition     | User has account, user has been authenticated and authorized |
-| Post condition   |  User receives his credentials |
-| Nominal Scenario |  The user asks for his credentials and the system returns them |                                     
-| Exceptions       | | User tries to get other users data         |
+| ---------------- | :------------------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized  |
+| Post condition   | User receives his credentials  |
+| Nominal Scenario | The user asks for his credentials and the system returns them  |                                     
+| Exceptions       | User tries to get other users data |           |
 
 ##### Scenario 1
-
 | Scenario 1   |                                                                            |
-| ————— | :————————————————————————: |
-| Precondition     | User has account, user has been authenticated and authorized |
-| Post condition   | User receives his credentials|
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized  |
+| Post condition |  User receives his credentials |
 | Step#          |                                Description                                 |
-| 1             |  User asks for all his credentials by entering his username                                                                    |
+| 1             |   User asks for all his credentials by entering his username                                                                   |
 | 2              | The system returns the asked data
 
-##### Scenario 1.1
 
-| Scenario 1.1  |                                                                            |
-| ————— | :————————————————————————: |
-| Precondition     | User has account, user has been authenticated and authorized |
-| Post condition   | User receives an error message|
+##### Scenario 1.1
+| Scenario 1.1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |  User has account, user has been authenticated and authorized  |
+| Post condition |  User receives an error message |
 | Step#          |                                Description                                 |
-| 1             |  User asks for all his credentials by entering his username                                                                    |
+| 1             |    User asks for all his credentials by entering his username                                                                   |
 | 2              | The request fails and the user receives the “unauthorized” error message
 
 # Glossary
