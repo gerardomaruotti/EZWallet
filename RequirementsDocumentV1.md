@@ -105,7 +105,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 ## Use case diagram
 
 \<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
-![usecasediagram](code/images/usecase1.png)
+![usecasediagram](code/images/usecasev1.png)
 
 \<next describe here each use case in the UCD>
 
@@ -329,24 +329,8 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1             |  User wants to create a new category                                                                   |
 | 2              | User inserts name and color for that specific category
 
-### Use case 9, get users
-| Actors Involved  |  Developer Team                                                                    |
-| ---------------- | :------------------------------------------------------------------: |
-| Precondition     | User has account, user has been authenticated, authorized and has admin privileges  |
-| Post condition   |  A list of users is shown |
-| Nominal Scenario | Admin asks for a list of all users credentials |                                     
-| Exceptions       | |          |
 
-##### Scenario 1
-| Scenario 1   |                                                                            |
-| -------------- | :------------------------------------------------------------------------: |
-| Precondition   |  User has account, user has been authenticated, authorized and has admin privileges  |
-| Post condition |  A list of users is shown|
-| Step#          |                                Description                                 |
-| 1             |  Admin asks for a full list of users                                                                   |
-| 2              | The system returns a the list of all the existing users
-
-### Use case 10, get user by username
+### Use case 9, get user by username
 | Actors Involved  |  User                                                                    |
 | ---------------- | :------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
