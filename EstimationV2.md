@@ -19,25 +19,31 @@ Consider the EZWallet  project in FUTURE version (as proposed by the team), assu
 
 # Estimate by product decomposition
 ### 
-|         component name    | Estimated effort (person hours)   |             
-| ----------- | ------------------------------- | 
-|requirement document    | |
-| GUI prototype ||
-|design document ||
-|code ||
-| unit tests ||
-| api tests ||
-| management documents  ||
-
+| Component name        | Estimated effort  |             
+| --------------------- | ----------------- | 
+| Requirement document  | 40 person hour    |
+| GUI prototype         | 75 person hour    |
+| Design document       | 40 person hour    |
+| Code                  | 180 person hour    |
+| Unit tests            | 58 person hour    |
+| Api tests             | 58 person hour    |
+| Management documents  | 40 person hour    |
+| --------------------- | ----------------- |
+| Total                 | 491 person hour   |
 
 
 # Estimate by activity decomposition
 ### 
 |         Activity name    | Estimated effort (person hours)   |             
 | ----------- | ------------------------------- | 
-| | |
-###
-Insert here Gantt chart with above activities
+|Review existing systems|61|
+|Perform workflow analysis|61|
+|Model process|53|
+|Identify user requirements|53|
+|Identify performance requirements|53|
+|Identify interface requirements|53|
+|Prepare software requirements specification|77|
+|Software requirements review|61|
 
 # Summary
 
@@ -46,8 +52,8 @@ Report here the results of the three estimation approaches. The  estimates may d
 |             | Estimated effort                        |   Estimated duration |          
 | ----------- | ------------------------------- | ---------------|
 | estimate by size ||
-| estimate by product decomposition ||
-| estimate by activity decomposition ||
+| estimate by product decomposition |491| 123
+| estimate by activity decomposition |472| 118
 
 
 
