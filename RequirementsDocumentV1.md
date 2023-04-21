@@ -35,8 +35,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Stakeholder name |                           Description                            |
 | ---------------: | :--------------------------------------------------------------: |
 |             User | End-users like individuals and families that use the application |
-|   Developer team |             People who work and configure the system             |
-|       Competitor |       Other similar products that can inspire new features       |
+
 
 # Context Diagram and interfaces
 
@@ -57,19 +56,20 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 |          Actor | Phisical interface |                        Logical interface                        |
 | -------------: | :----------------: | :-------------------------------------------------------------: |
 |           User |   PC/Smartphone    | GUI (manage transactions and categories, signup, login, logout) |
-| Developer team |         PC         |                               API                               |
+
 
 # Stories and personas
 
 \<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
 
 \<Persona is-an-instance-of actor>
-User 1: Young adult starting living alone and managing his money
-User 2: A father of a family that wants to analyse incomes and outcomes
-User 3: Household expenses to balance and limit it
-User 4: A group of friends organizing a trip
-User 5: Student living aborad for his studies who want to reduce expenses
-User 6: Someone that has just started his worklife and saving his first paychecks
+
+User 1: Young adult starting living alone and managing his money   
+User 2: A father of a family that wants to analyse incomes and outcomes   
+User 3: Household expenses to balance and limit it  
+User 4: A group of friends organizing a trip  
+User 5: Student living aborad for his studies who want to reduce expenses  
+User 6: Someone that has just started his worklife and saving his first paychecks  
 User 7: Reriree that wants to understand how he has spent his pension
 
 \<stories will be formalized later as scenarios in use cases>
@@ -87,7 +87,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | FR1 Manage account      | The system is capable of the following functions:login, register, logout, refresh token, show user and show user by username |
 | FR2 Manage Transactions |                                  The system is able to Create, delete and show transactions                                  |
 | FR3 Manage Categories   |                                       The software allow to Create and show categories                                       |
-| FR4 Manage Labels       |                                           The system can show the existing labels                                            |
+
 
 ## Non Functional Requirements
 
