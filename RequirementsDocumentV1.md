@@ -1,12 +1,12 @@
 # Requirements Document - current EZWallet
 
-Date: oggi
+Date: 21/04/2023
 
 Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 
 | Version number | Change |
 | -------------- | :----- |
-|                |        |
+| 1              |        |
 
 # Contents
 
