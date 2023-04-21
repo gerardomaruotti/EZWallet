@@ -36,7 +36,6 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | ---------------: | :--------------------------------------------------------------: |
 |             User | End-users like individuals and families that use the application |
 
-
 # Context Diagram and interfaces
 
 ## Context Diagram
@@ -53,10 +52,9 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<GUIs will be described graphically in a separate document>
 
-|          Actor | Phisical interface |                        Logical interface                        |
-| -------------: | :----------------: | :-------------------------------------------------------------: |
-|           User |   PC/Smartphone    | GUI (manage transactions and categories, signup, login, logout) |
-
+| Actor | Phisical interface |                        Logical interface                        |
+| ----: | :----------------: | :-------------------------------------------------------------: |
+|  User |   PC/Smartphone    | GUI (manage transactions and categories, signup, login, logout) |
 
 # Stories and personas
 
@@ -64,8 +62,8 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<Persona is-an-instance-of actor>
 
-User 1: Young adult starting living alone and managing his money   
-User 2: A father of a family that wants to analyse incomes and outcomes   
+User 1: Young adult starting living alone and managing his money  
+User 2: A father of a family that wants to analyse incomes and outcomes  
 User 3: Household expenses to balance and limit it  
 User 4: A group of friends organizing a trip  
 User 5: Student living aborad for his studies who want to reduce expenses  
@@ -88,7 +86,6 @@ User 7: Reriree that wants to understand how he has spent his pension
 | FR2 Manage Transactions |                                  The system is able to Create, delete and show transactions                                  |
 | FR3 Manage Categories   |                                       The software allow to Create and show categories                                       |
 
-
 ## Non Functional Requirements
 
 \<Describe constraints on functional requirements>
@@ -110,11 +107,11 @@ User 7: Reriree that wants to understand how he has spent his pension
 ### Use case 1, Login
 
 | Actors Involved  |                          User                           |
-| ---------------- | :-----------------------------------------------------: | --- |
+| ---------------- | :-----------------------------------------------------: |
 | Precondition     |                   User has an account                   |
 | Post condition   |       User receives AccessToken and RefreshToken        |
 | Nominal Scenario |   User asks to login and try to authenticate himself    |
-| Exceptions       | email does not exist, password incorrect, invalid Token |     |
+| Exceptions       | email does not exist, password incorrect, invalid Token |
 
 ##### Scenario 1.1
 
@@ -153,11 +150,11 @@ User 7: Reriree that wants to understand how he has spent his pension
 ### Use case 2, Register
 
 | Actors Involved  |                                User                                 |
-| ---------------- | :-----------------------------------------------------------------: | --- |
+| ---------------- | :-----------------------------------------------------------------: |
 | Precondition     |                         User has no account                         |
 | Post condition   |                          User has account                           |
 | Nominal Scenario | User provides his credentials and obtains the access to the service |
-| Exceptions       |                        email already exists                         |     |
+| Exceptions       |                        email already exists                         |
 
 ##### Scenario 1
 
@@ -209,11 +206,11 @@ User 7: Reriree that wants to understand how he has spent his pension
 ### Use case 4, Create transaction
 
 | Actors Involved  |                             User                              |
-| ---------------- | :-----------------------------------------------------------: | --- |
+| ---------------- | :-----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
 | Post condition   |                  The transaction is created                   |
 | Nominal Scenario | User create new transaction by entering name, amount and type |
-| Exceptions       |                      User is not logged                       |     |
+| Exceptions       |                      User is not logged                       |
 
 ##### Scenario 1
 
@@ -237,14 +234,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              |                    User try to insert the name, the amount and the type                    |
 | 3              | The transaction is not created because the user is not logged and an error message appears |
 
-### Use case 4, Delete transaction
+### Use case 5, Delete transaction
 
 | Actors Involved  |                                                      User                                                       |
-| ---------------- | :-------------------------------------------------------------------------------------------------------------: | ------------------------------- |
+| ---------------- | :-------------------------------------------------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
 | Post condition   |                                           The transaction is deleted                                            |
 | Nominal Scenario |                                 User delete one transaction by entering the ID                                  |
-| Exceptions       |                                                                                                                 | The transaction does not exists |
+| Exceptions       |                                         The transaction does not exists                                         |
 
 ##### Scenario 1
 
@@ -256,14 +253,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |                                       User chooses a specific transaction                                       |
 | 2              |                     The transaction with the corresponding ID is deleted from the Database                      |
 
-### Use case 5, get transaction
+### Use case 6, get transaction
 
 | Actors Involved  |                             User                             |
-| ---------------- | :----------------------------------------------------------: | --- |
+| ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                All the transactions are shown                |
 | Nominal Scenario |        User see all the transactions that he has made        |
-| Exceptions       |                                                              |     |
+| Exceptions       |                                                              |
 
 ##### Scenario 1
 
@@ -275,14 +272,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |             User asks to see all the transactions on the account             |
 | 2              | The system show the full list of transactions with name,amount,type and date |
 
-### Use case 6, get labels
+### Use case 7, get labels
 
 | Actors Involved  |                             User                             |
-| ---------------- | :----------------------------------------------------------: | --- |
+| ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                All the transactions are shown                |
 | Nominal Scenario |        User see all the transactions that he has made        |
-| Exceptions       |                                                              |     |
+| Exceptions       |                                                              |
 
 ##### Scenario 1
 
@@ -294,14 +291,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |           User asks to see all the transactions on the account           |
 | 2              | The system show the full list of transactions with name, amount and type |
 
-### Use case 7, get categories
+### Use case 8, get categories
 
 | Actors Involved  |                             User                             |
-| ---------------- | :----------------------------------------------------------: | --- |
+| ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                 All the categories are shown                 |
 | Nominal Scenario |       User see all the categories that he has inserted       |
-| Exceptions       |                                                              |     |
+| Exceptions       |                                                              |
 
 ##### Scenario 1
 
@@ -313,14 +310,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |  User asks to see all the categories created on the account  |
 | 2              |         The system show the full list of categories          |
 
-### Use case 8, create categories
+### Use case 9, create categories
 
 | Actors Involved  |                               User                               |
-| ---------------- | :--------------------------------------------------------------: | --- |
+| ---------------- | :--------------------------------------------------------------: |
 | Precondition     |   User has account, user has been authenticated and authorized   |
 | Post condition   |                      A category is created                       |
 | Nominal Scenario | User create and specify the name and the color for that category |
-| Exceptions       |                                                                  |     |
+| Exceptions       |                                                                  |
 
 ##### Scenario 1
 
@@ -332,14 +329,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |             User wants to create a new category              |
 | 2              |    User inserts name and color for that specific category    |
 
-### Use case 9, get user by username
+### Use case 10, get user by username
 
 | Actors Involved  |                             User                              |
-| ---------------- | :-----------------------------------------------------------: | --- |
+| ---------------- | :-----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
 | Post condition   |                 User receives his credentials                 |
 | Nominal Scenario | The user asks for his credentials and the system returns them |
-| Exceptions       |              User tries to get other users data               |     |
+| Exceptions       |              User tries to get other users data               |
 
 ##### Scenario 1
 
