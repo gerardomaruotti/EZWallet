@@ -233,9 +233,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Actors Involved  |                             User                              |
 | ---------------- | :-----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized  |
-| Post condition   |                  The transaction is created                   |
+| Post condition   |   The transaction is created    |
 | Nominal Scenario | User create new transaction by entering name, amount and type |
-| Exceptions       |                      User is not logged                       |
+| Exceptions       |     User is not logged |
 
 ##### Scenario 4.1
 
