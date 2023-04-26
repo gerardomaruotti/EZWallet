@@ -34,7 +34,8 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
     - [Use case 3, Logout](#use-case-3-logout)
         - [Scenario 3.1](#scenario-31)
     - [Use case 4, Create transaction](#use-case-4-create-transaction)
-        - [Scenario 4](#scenario-4)
+        - [Scenario 4.1](#scenario-41)
+        - [Scenario 4.2](#scenario-42)
         - [Scenario 4.3](#scenario-43)
     - [Use case 5, Delete transaction](#use-case-5-delete-transaction)
         - [Scenario 5.1](#scenario-51)
@@ -47,8 +48,20 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
     - [Use case 9, create categories](#use-case-9-create-categories)
         - [Scenario 9.1](#scenario-91)
     - [Use case 10, get user by username](#use-case-10-get-user-by-username)
-        - [Scenario 10](#scenario-10)
+        - [Scenario 10.1](#scenario-101)
         - [Scenario 10.2](#scenario-102)
+    - [Use case 11, Insert receipt](#use-case-11-insert-receipt)
+        - [Scenario 11.1](#scenario-111)
+        - [Scenario 11.2](#scenario-112)
+    - [Use case 12, Insert payment method](#use-case-12-insert-payment-method)
+        - [Scenario 12.1](#scenario-121)
+        - [Scenario 12.2](#scenario-122)
+    - [Use case 13, Insert automatic transaction after a payment with payment method](#use-case-13-insert-automatic-transaction-after-a-payment-with-payment-method)
+        - [Scenario 13.1](#scenario-131)
+        - [Scenario 13.2](#scenario-132)
+    - [Use case 14, Change base currency](#use-case-14-change-base-currency)
+        - [Scenario 14.1](#scenario-141)
+        - [Scenario 14.2](#scenario-142)
 - [Glossary](#glossary)
 - [System Design](#system-design)
 - [Deployment Diagram](#deployment-diagram)
@@ -420,6 +433,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              | The request fails and the user receives the “unauthorized” error message |
 
 ### Use case 11, Insert receipt
+
 | Actors Involved  |                          User                           |
 | ---------------- | :-----------------------------------------------------: |
 | Precondition     |   User must have created a transaction  |
@@ -450,6 +464,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 3              |  The application gives a feedback of the information of the transaction that was created and a verification that the photo was uploaded           |
 
 ### Use case 12, Insert payment method
+
 | Actors Involved  |                          User                           |
 | ---------------- | :-----------------------------------------------------: |
 | Precondition     |  User has account, user has been authenticated and authorized  |
@@ -483,6 +498,71 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 3              |  The system asks to the payment company to check if the payment method is valid         |
 |4| The payment company refuses the method|
 |5| The system shows an error message|
+
+### Use case 13, Insert automatic transaction after a payment with payment method 
+
+| Actors Involved  |                             User                              |
+| ---------------- | :-----------------------------------------------------------: |
+| Precondition     | User has insert payment method  |
+| Post condition   |                A transaction is added                 |
+| Nominal Scenario | The payment company sends a transaction after a purchase and the system regiters it |
+| Exceptions       |              The transaction values are invalid             |
+
+##### Scenario 13.1
+
+| Scenario 13.1     |                                                              |
+| -------------- | :----------------------------------------------------------: |
+| Precondition   | User has insert payment method  |
+| Post condition |               A transaction is added and the user receives a success message             |
+| Step#          |                         Description                          |
+| 1              | The payment company sends a message with the transaction information to the system  |
+| 2              |              The system creates a new transaction and fills it with the information received          |
+
+##### Scenario 13.2
+
+| Scenario 13.2   |                                                                          |
+| -------------- | :----------------------------------------------------------------------: |
+| Precondition   |       User has insert payment method        |
+| Post condition |                      User receives an error message and the transaction isn't added                     |
+| Step#          |                               Description                                |
+| 1              | The payment company sends a message with the transaction information to the system  |
+| 2              |              The system is unalbe to create a transaction from the company message and show an error message         |
+
+### Use case 14, Change base currency
+
+| Actors Involved  |                             User                              |
+| ---------------- | :-----------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized  |
+| Post condition   |                User base currency is changed                  |
+| Nominal Scenario | User select the new currency and the amounts were convered and updated|
+| Exceptions       |              The currency rate is unavailable             |
+
+##### Scenario 14.1
+
+| Scenario 14.1     |                                                              |
+| -------------- | :----------------------------------------------------------: |
+| Precondition   | User has account, user has been authenticated and authorized |
+| Post condition |                User base currency is changed              |
+| Step#          |                         Description                          |
+| 1              |  User selects the new currency   |
+| 2              |              The system asks to the exchange rate tracker the actual rate of the old currencye and the new one             |
+| 3 | The exchange rate tracker provides the rate |
+| 4 | The system updates the old currency to the new one |
+| 5 | The system updates the all the amounts with convered values |
+
+##### Scenario 14.2
+
+| Scenario 14.2   |                                                                          |
+| -------------- | :----------------------------------------------------------------------: |
+| Precondition   |       User has account, user has been authenticated and authorized       |
+| Post condition |                      User receives an error message                      |
+| Step#          |                               Description                                |
+| 1              |  User selects the new currency   |
+| 2              |              The system asks to the exchange rate tracker the actual rate of the old currencye and the new one             |
+| 3 | The exchange rate tracker sends an error message |
+| 4 | The system shows an error message to the user |
+
+
 # Glossary
 
 \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships>
