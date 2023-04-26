@@ -66,6 +66,8 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
     - [Use case 15, Change currency](#use-case-15-change-currency)
         - [Scenario 15.1](#scenario-151)
         - [Scenario 15.2](#scenario-152)
+    - [Use case 16, Calculates expenses](#use-case-16-calculates-expenses)
+        - [Scenario 16.1](#scenario-161)
 - [Glossary](#glossary)
 - [System Design](#system-design)
 - [Deployment Diagram](#deployment-diagram)
@@ -420,22 +422,23 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 ### Use case 8, Get labels
 
-| Actors Involved  |                             User                             |
-| ---------------- | :----------------------------------------------------------: |
-| Precondition     | User has account, user has been authenticated and authorized |
-| Post condition   |                All the transactions are shown                |
-| Nominal Scenario |        User see all the transactions that he has made        |
-| Exceptions       |                                                              |
+| Actors Involved  |                                  User                                  |
+| ---------------- | :--------------------------------------------------------------------: |
+| Precondition     |      User has account, user has been authenticated and authorized      |
+| Post condition   |          Shows the total amount of the transaction by labels           |
+| Nominal Scenario | User see the list of labels associated to the total amount of each one |
+| Exceptions       |                                                                        |
 
 ##### Scenario 8.1
 
-| Scenario 8.1   |                                                                          |
-| -------------- | :----------------------------------------------------------------------: |
-| Precondition   |       User has account, user has been authenticated and authorized       |
-| Post condition |                      All the transactions are shown                      |
-| Step#          |                               Description                                |
-| 1              |           User asks to see all the transactions on the account           |
-| 2              | The system show the full list of transactions with name, amount and type |
+| Scenario 8.1   |                                                                            |
+| -------------- | :------------------------------------------------------------------------: |
+| Precondition   |        User has account, user has been authenticated and authorized        |
+| Post condition |            Shows the total amount of the transaction by labels             |
+| Step#          |                                Description                                 |
+| 1              |      User asks to see the total amounts for each label on the account      |
+| 2              |          the system calculates the total expenses for each label           |
+| 3              | The system show the list of labels with name and total amount for each one |
 
 ### Use case 9, Get categories
 
@@ -630,6 +633,25 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              | The system asks to the exchange rate tracker the actual rate of the old currencye and the new one |
 | 3              |                         The exchange rate tracker sends an error message                          |
 | 4              |                           The system shows an error message to the user                           |
+
+### Use case 16, Calculates expenses
+
+| Actors Involved  |                                                         User                                                          |
+| ---------------- | :-------------------------------------------------------------------------------------------------------------------: |
+| Precondition     |         User has account, user has been authenticated and authorized, User adds new              transaction          |  |
+| Post condition   |                                      Users sees new annual and monthly expenses                                       |
+| Nominal Scenario | User adds new transaction and calculates the net changes on the annual and monthly expenses for displaying in the GUI |
+
+##### Scenario 16.1
+
+| Scenario 16.1  |                                                                                                      |
+| -------------- | :--------------------------------------------------------------------------------------------------: |
+| Precondition   | User has account, user has been authenticated and authorized, User adds new              transaction |
+| Post condition |                           Users sees new total annual and monthly expenses                           |
+| Step#          |                                             Description                                              |
+| 1              |                                     User creates new transaction                                     |
+| 2              |       The system calculates the net change on the available total annual and monthly expenses        |
+| 3              |                              The system display the changes on the GUI                               |
 
 # Glossary
 
