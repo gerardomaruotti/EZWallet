@@ -34,6 +34,9 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
     - [Use case 4, Create transaction](#use-case-4-create-transaction)
       - [Scenario 4](#scenario-4)
       - [Scenario 4.3](#scenario-43)
+        - [Scenario 4.1](#scenario-41)
+        - [Scenario 4.2](#scenario-42)
+        - [Scenario 4.3](#scenario-43)
     - [Use case 5, Delete transaction](#use-case-5-delete-transaction)
       - [Scenario 5.1](#scenario-51)
     - [Use case 6, get transaction](#use-case-6-get-transaction)
@@ -47,6 +50,20 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
     - [Use case 10, get user by username](#use-case-10-get-user-by-username)
       - [Scenario 10](#scenario-10)
       - [Scenario 10.2](#scenario-102)
+        - [Scenario 10.1](#scenario-101)
+        - [Scenario 10.2](#scenario-102)
+    - [Use case 11, Insert receipt](#use-case-11-insert-receipt)
+      - [Scenario 11.1](#scenario-111)
+      - [Scenario 11.2](#scenario-112)
+    - [Use case 12, Insert payment method](#use-case-12-insert-payment-method)
+      - [Scenario 12.1](#scenario-121)
+      - [Scenario 12.2](#scenario-122)
+    - [Use case 13, Insert automatic transaction after a payment with payment method](#use-case-13-insert-automatic-transaction-after-a-payment-with-payment-method)
+      - [Scenario 13.1](#scenario-131)
+      - [Scenario 13.2](#scenario-132)
+    - [Use case 14, Change base currency](#use-case-14-change-base-currency)
+      - [Scenario 14.1](#scenario-141)
+      - [Scenario 14.2](#scenario-142)
 - [Glossary](#glossary)
 - [System Design](#system-design)
 - [Deployment Diagram](#deployment-diagram)
@@ -65,6 +82,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Google play and Apple store (legal + quality requirements) |                Gatekeepers of Android and IOS stores                |
 | Map service                                                |   The service useful to attach location to a specific transaction   |
 | Payment company                                            | The company who manage a payment method linked with the application |
+| Exchange rate tracker                                      |  The system that provide the exchange rate of a specific currency   |
 
 # Context Diagram and interfaces
 
@@ -72,7 +90,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<Define here Context diagram using UML use case diagram>
 
-![contextdiagram](code/images/contextdiagramv2.png)
+![contextdiagram](code/images/contextdiagramv2_finale.png)
 
 \<actors are a subset of stakeholders>
 
@@ -82,12 +100,19 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<GUIs will be described graphically in a separate document>
 
-| Actor           | Phisical interface |                        Logical interface                        |
-| :-------------- | :----------------: | :-------------------------------------------------------------: |
-| User            |   PC/Smartphone    | GUI (manage transactions and categories, signup, login, logout) |
-| Developer team  |         PC         |                               API                               |
-| Map Service     |   Internet link    |                               API                               |
-| Payment company |   Internet Link    |                               API                               |
+| Actor                 | Phisical interface  |                        Logical interface                         |
+| :-------------------- | :-----------------: | :--------------------------------------------------------------: |
+| User                  |    PC/Smartphone    | GUI (manage transactions and categories, signup, login, logout)  |
+| Developer team        |         PC          |                               API                                |
+| Map Service           |    Internet link    |                               API                                |
+| Payment company       |    Internet Link    |                               API                                |
+| Actor                 | Phisical interface  |                        Logical interface                         |
+| :--------------       | :-----------------: | :--------------------------------------------------------------: |
+| User                  |    PC/Smartphone    | GUI (manage transactions and categories, signup, login, logout)  |
+| Developer team        |         PC          |                               API                                |
+| Map Service           |    Internet link    |                               API                                |
+| Payment company       |    Internet Link    |                               API                                |
+| Exchange rate tracker |    Internet link    |                               API                                |
 
 # Stories and personas
 
@@ -393,7 +418,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario | The user asks for his credentials and the system returns them |
 | Exceptions       |              User tries to get other users data               |
 
-##### Scenario 10
+##### Scenario 10.1
 
 | Scenario 10.1  |                                                              |
 | -------------- | :----------------------------------------------------------: |
@@ -412,6 +437,135 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Step#          |                               Description                                |
 | 1              |        User asks for all his credentials by entering his username        |
 | 2              | The request fails and the user receives the “unauthorized” error message |
+
+### Use case 11, Insert receipt
+
+| Actors Involved  |                      User                      |
+| ---------------- | :--------------------------------------------: |
+| Precondition     |      User must have created a transaction      |
+| Post condition   |    A photo of the receipt has been inserted    |
+| Nominal Scenario | User uploads a photo of the receipt to the app |
+| Exceptions       |                                                |
+
+##### Scenario 11.1
+
+| Scenario 11.1  |                                                                                                                                        |
+| -------------- | :------------------------------------------------------------------------------------------------------------------------------------: |
+| Precondition   |                                                  User must have created a transaction                                                  |
+| Post condition |                                                A photo of the receipt has been inserted                                                |
+| Step#          |                                                              Description                                                               |
+| 1              |                                                User takes picture from the application                                                 |
+| 2              |                                                          User inserts picture                                                          |
+| 3              | The application gives a feedback of the information of the transaction that was created and a verification that the photo was uploaded |
+
+##### Scenario 11.2
+
+| Scenario 11.2  |                                                                                                                                        |
+| -------------- | :------------------------------------------------------------------------------------------------------------------------------------: |
+| Precondition   |                                                  User must have created a transaction                                                  |
+| Post condition |                                                A photo of the receipt has been inserted                                                |
+| Step#          |                                                              Description                                                               |
+| 1              |                                                   User selects picture from gallery                                                    |
+| 2              |                                                          User inserts picture                                                          |
+| 3              | The application gives a feedback of the information of the transaction that was created and a verification that the photo was uploaded |
+
+### Use case 12, Insert payment method
+
+| Actors Involved  |                             User                             |
+| ---------------- | :----------------------------------------------------------: |
+| Precondition     | User has account, user has been authenticated and authorized |
+| Post condition   |               The payment method is registered               |
+| Nominal Scenario |       The user adds and authenticates a payment method       |
+| Exceptions       |                    Invalid payment method                    |
+
+##### Scenario 12.1
+
+| Scenario 12.1  |                                                                                                       |
+| -------------- | :---------------------------------------------------------------------------------------------------: |
+| Precondition   |                     User has account, user has been authenticated and authorized                      |
+| Post condition |                                   The payment method is registered                                    |
+| Step#          |                                              Description                                              |
+| 1              | User selects the option to link payment method to EZwallet for automatic registration of transactions |
+| 2              |                                    User inserts the payment method                                    |
+| 3              |            The system asks to the payment company to check if the payment method is valid             |
+| 4              |                                The payment company confirms the method                                |
+| 5              |                 The system adds the payment method just inserted in the user account                  |
+
+##### Scenario 12.2
+
+| Scenario 12.2  |                                                                                                       |
+| -------------- | :---------------------------------------------------------------------------------------------------: |
+| Precondition   |                     User has account, user has been authenticated and authorized                      |
+| Post condition |                                  The payment method is not inserted                                   |
+| Step#          |                                              Description                                              |
+| 1              | User selects the option to link payment method to EZwallet for automatic registration of transactions |
+| 2              |                                    User inserts the payment method                                    |
+| 3              |            The system asks to the payment company to check if the payment method is valid             |
+| 4              |                                The payment company refuses the method                                 |
+| 5              |                                   The system shows an error message                                   |
+
+### Use case 13, Insert automatic transaction after a payment with payment method
+
+| Actors Involved  |                                        User                                         |
+| ---------------- | :---------------------------------------------------------------------------------: |
+| Precondition     |                           User has insert payment method                            |
+| Post condition   |                               A transaction is added                                |
+| Nominal Scenario | The payment company sends a transaction after a purchase and the system regiters it |
+| Exceptions       |                         The transaction values are invalid                          |
+
+##### Scenario 13.1
+
+| Scenario 13.1  |                                                                                    |
+| -------------- | :--------------------------------------------------------------------------------: |
+| Precondition   |                           User has insert payment method                           |
+| Post condition |           A transaction is added and the user receives a success message           |
+| Step#          |                                    Description                                     |
+| 1              | The payment company sends a message with the transaction information to the system |
+| 2              |  The system creates a new transaction and fills it with the information received   |
+
+##### Scenario 13.2
+
+| Scenario 13.2  |                                                                                                 |
+| -------------- | :---------------------------------------------------------------------------------------------: |
+| Precondition   |                                 User has insert payment method                                  |
+| Post condition |                 User receives an error message and the transaction isn't added                  |
+| Step#          |                                           Description                                           |
+| 1              |       The payment company sends a message with the transaction information to the system        |
+| 2              | The system is unalbe to create a transaction from the company message and show an error message |
+
+### Use case 14, Change base currency
+
+| Actors Involved  |                                  User                                  |
+| ---------------- | :--------------------------------------------------------------------: |
+| Precondition     |      User has account, user has been authenticated and authorized      |
+| Post condition   |                     User base currency is changed                      |
+| Nominal Scenario | User select the new currency and the amounts were convered and updated |
+| Exceptions       |                    The currency rate is unavailable                    |
+
+##### Scenario 14.1
+
+| Scenario 14.1  |                                                                                                   |
+| -------------- | :-----------------------------------------------------------------------------------------------: |
+| Precondition   |                   User has account, user has been authenticated and authorized                    |
+| Post condition |                                   User base currency is changed                                   |
+| Step#          |                                            Description                                            |
+| 1              |                                   User selects the new currency                                   |
+| 2              | The system asks to the exchange rate tracker the actual rate of the old currencye and the new one |
+| 3              |                            The exchange rate tracker provides the rate                            |
+| 4              |                        The system updates the old currency to the new one                         |
+| 5              |                    The system updates the all the amounts with convered values                    |
+
+##### Scenario 14.2
+
+| Scenario 14.2  |                                                                                                   |
+| -------------- | :-----------------------------------------------------------------------------------------------: |
+| Precondition   |                   User has account, user has been authenticated and authorized                    |
+| Post condition |                                  User receives an error message                                   |
+| Step#          |                                            Description                                            |
+| 1              |                                   User selects the new currency                                   |
+| 2              | The system asks to the exchange rate tracker the actual rate of the old currencye and the new one |
+| 3              |                         The exchange rate tracker sends an error message                          |
+| 4              |                           The system shows an error message to the user                           |
 
 # Glossary
 
