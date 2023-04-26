@@ -10,6 +10,8 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 
 # Contents
 
+- [Requirements Document - current EZWallet](#requirements-document---current-ezwallet)
+- [Contents](#contents)
 - [Informal description](#informal-description)
 - [Stakeholders](#stakeholders)
 - [Context Diagram and interfaces](#context-diagram-and-interfaces)
@@ -18,13 +20,36 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 - [Stories and personas](#stories-and-personas)
 - [Functional and non functional requirements](#functional-and-non-functional-requirements)
   - [Functional Requirements](#functional-requirements)
-  - [Non functional requirements](#non-functional-requirements)
+  - [Non Functional Requirements](#non-functional-requirements)
 - [Use case diagram and use cases](#use-case-diagram-and-use-cases)
   - [Use case diagram](#use-case-diagram)
-  - [Use cases](#use-cases) + [Relevant scenarios](#relevant-scenarios)
+    - [Use case 1, Login](#use-case-1-login)
+        - [Scenario 1.1](#scenario-11)
+        - [Scenario 1.2](#scenario-12)
+    - [Use case 2, Register](#use-case-2-register)
+        - [Scenario 2.1](#scenario-21)
+        - [Scenario 2.2](#scenario-22)
+    - [Use case 3, Logout](#use-case-3-logout)
+        - [Scenario 3.1](#scenario-31)
+    - [Use case 4, Create transaction](#use-case-4-create-transaction)
+        - [Scenario 4.1](#scenario-41)
+        - [Scenario 4.2](#scenario-42)
+    - [Use case 5, Delete transaction](#use-case-5-delete-transaction)
+        - [Scenario 5.1](#scenario-51)
+    - [Use case 6, get transaction](#use-case-6-get-transaction)
+        - [Scenario 6.1](#scenario-61)
+    - [Use case 7, get labels](#use-case-7-get-labels)
+        - [Scenario 7.1](#scenario-71)
+    - [Use case 8, get categories](#use-case-8-get-categories)
+        - [Scenario 8.1](#scenario-81)
+    - [Use case 9, create categories](#use-case-9-create-categories)
+        - [Scenario 9.1](#scenario-91)
+    - [Use case 10, get user by username](#use-case-10-get-user-by-username)
+        - [Scenario 10.1](#scenario-101)
+        - [Scenario 10.2](#scenario-102)
 - [Glossary](#glossary)
-- [System design](#system-design)
-- [Deployment diagram](#deployment-diagram)
+- [System Design](#system-design)
+- [Deployment Diagram](#deployment-diagram)
 
 # Informal description
 
@@ -33,7 +58,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 # Stakeholders
 
 | Stakeholder name |                           Description                            |
-| ---------------: | :--------------------------------------------------------------: |
+| :****--------------- | :--------------------------------------------------------------: |
 |             User | End-users like individuals and families that use the application |
 
 # Context Diagram and interfaces
@@ -53,7 +78,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 \<GUIs will be described graphically in a separate document>
 
 | Actor | Phisical interface |                        Logical interface                        |
-| ----: | :----------------: | :-------------------------------------------------------------: |
+| :---- | :----------------: | :-------------------------------------------------------------: |
 |  User |   PC/Smartphone    | GUI (manage transactions and categories, signup, login, logout) |
 
 # Stories and personas
@@ -136,7 +161,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 ##### Scenario 1.2
 
-| 1              |                                                                                                                                |
+| Scenario 1.2              |                                                                                                                                |
 | -------------- | :----------------------------------------------------------------------------------------------------------------------------: |
 | Precondition   |                                                      User has an account                                                       |
 | Post condition |                                           User receives AccessToken and RefreshToken                                           |
@@ -156,9 +181,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario | User provides his credentials and obtains the access to the service |
 | Exceptions       |                        email already exists                         |
 
-##### Scenario 1
+##### Scenario 2.1
 
-| Scenario 1     |                                                                        |
+| Scenario 2.1     |                                                                        |
 | -------------- | :--------------------------------------------------------------------: |
 | Precondition   |                          User has no account                           |
 | Post condition |                            User has account                            |
@@ -170,9 +195,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 5              |                User enters username,email and password                 |
 | 6              |          If the email is valid, the system stores the account          |
 
-##### Scenario 1.1
+##### Scenario 2.2
 
-| Scenario 1.1   |                                                                                                                           |
+| Scenario 2.2   |                                                                                                                           |
 | -------------- | :-----------------------------------------------------------------------------------------------------------------------: |
 | Precondition   |                                                    User has no account                                                    |
 | Post condition |                                                     User has account                                                      |
@@ -193,9 +218,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario |   User completes the logout procedure    |
 | Exceptions       |
 
-##### Scenario 1
+##### Scenario 3.1
 
-| Scenario 1     |                                          |
+| Scenario 3.1     |                                          |
 | -------------- | :--------------------------------------: |
 | Precondition   |             User has account             |
 | Post condition | User disconnects himself from the system |
@@ -212,9 +237,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario | User create new transaction by entering name, amount and type |
 | Exceptions       |                      User is not logged                       |
 
-##### Scenario 1
+##### Scenario 4.1
 
-| Scenario 1     |                                                              |
+| Scenario 4.1     |                                                              |
 | -------------- | :----------------------------------------------------------: |
 | Precondition   | User has account, user has been authenticated and authorized |
 | Post condition |                  The transaction is created                  |
@@ -223,9 +248,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              |        User inserts the name, the amount and the type        |
 | 3              |    The transaction is created and stored in the Database     |
 
-##### Scenario 1
+##### Scenario 4.2
 
-| Scenario 1.1   |                                                                                            |
+| Scenario 4.2   |                                                                                            |
 | -------------- | :----------------------------------------------------------------------------------------: |
 | Precondition   |                User has account, user has been authenticated and authorized                |
 | Post condition |                                 The transaction is created                                 |
@@ -243,9 +268,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario |                                 User delete one transaction by entering the ID                                  |
 | Exceptions       |                                         The transaction does not exists                                         |
 
-##### Scenario 1
+##### Scenario 5.1
 
-| Scenario 1     |                                                                                                                 |
+| Scenario 5.1     |                                                                                                                 |
 | -------------- | :-------------------------------------------------------------------------------------------------------------: |
 | Precondition   | User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
 | Post condition |                                           The transaction is deleted                                            |
@@ -262,9 +287,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario |        User see all the transactions that he has made        |
 | Exceptions       |                                                              |
 
-##### Scenario 1
+##### Scenario 6.1
 
-| Scenario 1     |                                                                              |
+| Scenario 6.1     |                                                                              |
 | -------------- | :--------------------------------------------------------------------------: |
 | Precondition   |         User has account, user has been authenticated and authorized         |
 | Post condition |                        All the transactions are shown                        |
@@ -281,9 +306,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario |        User see all the transactions that he has made        |
 | Exceptions       |                                                              |
 
-##### Scenario 1
+##### Scenario 7.1
 
-| Scenario 1     |                                                                          |
+| Scenario 7.1     |                                                                          |
 | -------------- | :----------------------------------------------------------------------: |
 | Precondition   |       User has account, user has been authenticated and authorized       |
 | Post condition |                      All the transactions are shown                      |
@@ -300,9 +325,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario |       User see all the categories that he has inserted       |
 | Exceptions       |                                                              |
 
-##### Scenario 1
+##### Scenario 8.1
 
-| Scenario 1     |                                                              |
+| Scenario 8.1     |                                                              |
 | -------------- | :----------------------------------------------------------: |
 | Precondition   | User has account, user has been authenticated and authorized |
 | Post condition |                 All the categories are shown                 |
@@ -319,9 +344,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario | User create and specify the name and the color for that category |
 | Exceptions       |                                                                  |
 
-##### Scenario 1
+##### Scenario 9.1
 
-| Scenario 1     |                                                              |
+| Scenario 9.1     |                                                              |
 | -------------- | :----------------------------------------------------------: |
 | Precondition   | User has account, user has been authenticated and authorized |
 | Post condition |                    A category is created                     |
@@ -338,9 +363,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario | The user asks for his credentials and the system returns them |
 | Exceptions       |              User tries to get other users data               |
 
-##### Scenario 1
+##### Scenario 10.1
 
-| Scenario 1     |                                                              |
+| Scenario 10.1     |                                                              |
 | -------------- | :----------------------------------------------------------: |
 | Precondition   | User has account, user has been authenticated and authorized |
 | Post condition |                User receives his credentials                 |
@@ -348,9 +373,9 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |  User asks for all his credentials by entering his username  |
 | 2              |              The system returns the asked data               |
 
-##### Scenario 1.1
+##### Scenario 10.2
 
-| Scenario 1.1   |                                                                          |
+| Scenario 10.2   |                                                                          |
 | -------------- | :----------------------------------------------------------------------: |
 | Precondition   |       User has account, user has been authenticated and authorized       |
 | Post condition |                      User receives an error message                      |
