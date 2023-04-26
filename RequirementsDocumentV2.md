@@ -67,6 +67,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Google play and Apple store (legal + quality requirements) |                Gatekeepers of Android and IOS stores                |
 | Map service                                                |   The service useful to attach location to a specific transaction   |
 | Payment company                                            | The company who manage a payment method linked with the application |
+| Exchange rate tracker   | The system that provide the exchange rate of a specific currency|
 
 
 # Context Diagram and interfaces
@@ -75,7 +76,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<Define here Context diagram using UML use case diagram>
 
-![contextdiagram](code/images/contextdiagramv2.png)
+![contextdiagram](code/images/contextdiagramv2_finale.png)
 
 \<actors are a subset of stakeholders>
 
@@ -91,6 +92,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 | Developer team  | PC                 | API                                                             |
 | Map Service     | Internet link      | API                                                             |
 | Payment company | Internet Link      | API                                                             |
+|  Exchange rate tracker| Internet link| API|
 
 # Stories and personas
 
@@ -397,7 +399,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario | The user asks for his credentials and the system returns them |
 | Exceptions       |              User tries to get other users data               |
 
-##### Scenario 10
+##### Scenario 10.1
 
 | Scenario 10.1     |                                                              |
 | -------------- | :----------------------------------------------------------: |
@@ -417,6 +419,70 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |        User asks for all his credentials by entering his username        |
 | 2              | The request fails and the user receives the “unauthorized” error message |
 
+### Use case 11, Insert receipt
+| Actors Involved  |                          User                           |
+| ---------------- | :-----------------------------------------------------: |
+| Precondition     |   User must have created a transaction  |
+| Post condition   |    A photo of the receipt has been inserted        |
+| Nominal Scenario |   User uploads a photo of the receipt to the app    |
+| Exceptions       | |
+
+##### Scenario 11.1
+
+| Scenario 11.1     |                                                                        |
+| -------------- | :--------------------------------------------------------------------: |
+| Precondition   |                     User must have created a transaction               |
+| Post condition |     A photo of the receipt has been inserted                           |
+| Step#          |                              Description                               |
+| 1              |   User takes picture from the application        |
+| 2              | User inserts picture |
+| 3              |  The application gives a feedback of the information of the transaction that was created and a verification that the photo was uploaded           |
+
+##### Scenario 11.2
+
+| Scenario 11.2    |                                                                        |
+| -------------- | :--------------------------------------------------------------------: |
+| Precondition   |                     User must have created a transaction               |
+| Post condition |     A photo of the receipt has been inserted                           |
+| Step#          |                              Description                               |
+| 1              |  User selects picture from gallery |
+| 2              | User inserts picture |
+| 3              |  The application gives a feedback of the information of the transaction that was created and a verification that the photo was uploaded           |
+
+### Use case 12, Insert payment method
+| Actors Involved  |                          User                           |
+| ---------------- | :-----------------------------------------------------: |
+| Precondition     |  User has account, user has been authenticated and authorized  |
+| Post condition   |   The payment method is registered    |
+| Nominal Scenario |  The user adds and authenticates a payment method    |
+| Exceptions       | Invalid payment method|
+
+##### Scenario 12.1
+
+| Scenario 12.1    |                                                                        |
+| -------------- | :--------------------------------------------------------------------: |
+| Precondition   | User has account, user has been authenticated and authorized               |
+| Post condition |    The payment method is registered                         |
+| Step#          |                              Description                               |
+| 1              |  User selects the option to link payment method to EZwallet for automatic registration of transactions |
+| 2              | User inserts the payment method |
+| 3              |  The system asks to the payment company to check if the payment method is valid         |
+|4| The payment company confirms the method|
+|5| The system adds the payment method just inserted in the user account|
+
+
+##### Scenario 12.2
+
+| Scenario 12.2    |                                                                        |
+| -------------- | :--------------------------------------------------------------------: |
+| Precondition   | User has account, user has been authenticated and authorized               |
+| Post condition |    The payment method is not inserted                         |
+| Step#          |                              Description                               |
+| 1              |  User selects the option to link payment method to EZwallet for automatic registration of transactions |
+| 2              | User inserts the payment method |
+| 3              |  The system asks to the payment company to check if the payment method is valid         |
+|4| The payment company refuses the method|
+|5| The system shows an error message|
 # Glossary
 
 \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships>
