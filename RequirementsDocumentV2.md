@@ -259,7 +259,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Nominal Scenario | User create new transaction by entering name, amount and type |
 | Exceptions       |                      User is not logged                       |
 
-##### Scenario 4
+##### Scenario 4.1
 
 | Scenario 4.1     |                                                              |
 | -------------- | :----------------------------------------------------------: |
@@ -269,6 +269,18 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |              User asks to create a transaction               |
 | 2              |        User inserts the name, the amount and the type        |
 | 3              |    The transaction is created and stored in the Database     |
+
+##### Scenario 4.2
+
+| Scenario 4.2    |                                                              |
+| -------------- | :----------------------------------------------------------: |
+| Precondition   | User has account, user has been authenticated and authorized |
+| Post condition |                  The periodic transaction is created                  |
+| Step#          |                         Description                          |
+| 1              |              User asks to create a transaction               |
+| 2              |        User inserts the name, the amount and the type        |
+| 3              |    User specify that is a periodic transaction with its peridiocity  |
+| 4              |    The transaction is created and stored in the Database     |
 
 ##### Scenario 4.3
 
