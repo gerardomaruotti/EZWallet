@@ -95,7 +95,10 @@ User 7: Reriree that wants to understand how he has spent his pension
 | FR2 Manage transactions | The system is able to Create, delete and show transactions |
 | FR3 Manage categories   |  The software allow to Create and show categories  |
 | FR4 Manage maps |  The system shows the exact position of the place where the transaction has been made |
-| FR5 Manage statistics   | The software allow to handle and show statistics according to user's needs  |
+| FR5 Manage statistics | The software allow to handle and show statistics according to user's needs |
+
+
+
 
 ## Non Functional Requirements
 \<Describe constraints on functional requirements>
