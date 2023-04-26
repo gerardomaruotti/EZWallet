@@ -567,6 +567,26 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 3              |                         The exchange rate tracker sends an error message                          |
 | 4              |                           The system shows an error message to the user                           |
 
+
+### Use case 16, Calculates expenses
+
+| Actors Involved  |                                  User                                  |
+| ---------------- | :--------------------------------------------------------------------: |
+| Precondition     |      User has account, user has been authenticated and authorized, User adds new              transaction         |      |
+| Post condition   |                     Users sees new annual and monthly expenses                       |
+| Nominal Scenario | User adds new currency and calculates the net changes on the annual and monthly expenses for displaying in the GUI |
+
+##### Scenario 16
+
+| Scenario 16.1   |                                                                              |
+| -------------- | :--------------------------------------------------------------------------: |
+| Precondition   |         User has account, user has been authenticated and authorized, User adds new              transaction         |
+| Post condition |                        Users sees new total annual and monthly expenses                        |
+| Step#          |                                 Description                                  |
+| 1              |             User creates new transaction             |
+| 2              | The system calculates the net change on the available total annual and monthly expenses and the annual and monthly expenses for each categories   |
+| 3              | The system display the changes on the GUI   |
+
 # Glossary
 
 \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships>
