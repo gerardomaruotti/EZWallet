@@ -125,7 +125,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 ## Use case diagram
 
 \<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
-![usecasediagram](code/images/usecasev1.png)
+![usecasediagram](code/images/usecasev1_finale.png)
 
 \<next describe here each use case in the UCD>
 
@@ -150,26 +150,26 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 | Scenario 1.1   |                                                                                                                     |
 | -------------- | :-----------------------------------------------------------------------------------------------------------------: |
-| Precondition   |                                                 User has an account                                                 |
-| Post condition |                                     User receives AccessToken and RefreshToken                                      |
-| Step#          |                                                     Description                                                     |
-| 1              |                                                 User asks to login                                                  |
-| 2              |                                         The system asks email and password                                          |
-| 3              |                                         The user enters email and password                                          |
-| 4              |                               The system checks if email and password are not correct                               |
+| Precondition   |      User has an account     |
+| Post condition |    User receives AccessToken and RefreshToken            |
+| Step#          |   Description    |
+| 1              |   User asks to login        |
+| 2              |  The system asks email and password  |
+| 3  | The user enters email and password   |
+| 4              |    The system checks if email and password are not correct   |
 | 5              | If email and password are not correct, the user is not authorized and receives an error message "wrong credentials" |
 
 ##### Scenario 1.2
 
-| Scenario 1.2              |                                                                                                                                |
+| Scenario 1.2     |     |
 | -------------- | :----------------------------------------------------------------------------------------------------------------------------: |
 | Precondition   |                                                      User has an account                                                       |
 | Post condition |                                           User receives AccessToken and RefreshToken                                           |
-| Step#          |                                                          Description                                                           |
-| 1              |                                                       User asks to login                                                       |
-| 2              |                                               The system asks email and password                                               |
-| 3              |                                               The user enters email and password                                               |
-| 4              |                                    The system checks if email and password are not correct                                     |
+| Step#          |                                                          Description             |
+| 1              |     User asks to login              |
+| 2              |      The system asks email and password                         |
+| 3              |              The user enters email and password    |
+| 4              |   The system checks if email and password are not correct                                     |
 | 5              | If email and password are not correct, the user is not authorized and receives an errore message "please you need to register" |
 
 ### Use case 2, Register
