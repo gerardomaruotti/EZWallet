@@ -672,6 +672,6 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 # Deployment Diagram
 
-![deployment](code/images/deploymentv1.png)
+![deployment](code/images/deploymentdiagramv2.png)
 
 \<describe here deployment diagram >
