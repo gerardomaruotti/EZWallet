@@ -137,7 +137,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Precondition     |                   User has an account                   |
 | Post condition   |       User receives AccessToken and RefreshToken        |
 | Nominal Scenario |   User asks to login and try to authenticate himself    |
-| Exceptions       | email does not exist, password incorrect, invalid Token |
+| Exceptions       | Email does not exist, password incorrect, invalid Token |
 
 ##### Scenario 1.1
 
@@ -180,7 +180,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Precondition     |                         User has no account                         |
 | Post condition   |                          User has account                           |
 | Nominal Scenario | User provides his credentials and obtains the access to the service |
-| Exceptions       |                        email already exists                         |
+| Exceptions       |                        Email already exists                         |
 
 ##### Scenario 2.1
 
@@ -193,30 +193,30 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 2              | The system asks username and does not check if it is already available |
 | 3              |      The system asks email and checks if it is already available       |
 | 4              |                        The system asks password                        |
-| 5              |                User enters username,email and password                 |
+| 5              |                User enters username, email and password                |
 | 6              |          If the email is valid, the system stores the account          |
 
 ##### Scenario 2.2
 
-| Scenario 2.2   |                                                                                                                           |
-| -------------- | :-----------------------------------------------------------------------------------------------------------------------: |
-| Precondition   |                                                    User has no account                                                    |
-| Post condition |                                                     User has account                                                      |
-| Step#          |                                                        Description                                                        |
-| 1              |                                                   User asks to register                                                   |
-| 2              |                          The system asks username and does not check if it is already available                           |
-| 3              |                                The system asks email and checks if it is already available                                |
-| 4              |                                                 The system asks password                                                  |
-| 5              |                                          User enters username,email and password                                          |
-| 6              | If the email already exists , the registration was unsuccessful and receives an errore message "You are already register" |
+| Scenario 2.2   |                                                                                                                              |
+| -------------- | :--------------------------------------------------------------------------------------------------------------------------: |
+| Precondition   |                                                     User has no account                                                      |
+| Post condition |                                                       User has account                                                       |
+| Step#          |                                                         Description                                                          |
+| 1              |                                                    User asks to register                                                     |
+| 2              |                            The system asks username and does not check if it is already available                            |
+| 3              |                                 The system asks email and checks if it is already available                                  |
+| 4              |                                                   The system asks password                                                   |
+| 5              |                                           User enters username, email and password                                           |
+| 6              | If the email already exists, the registration was unsuccessful and the errore message "You are already register" is returned |
 
 ### Use case 3, Logout
 
-| Actors Involved  |                   User                   |
-| ---------------- | :--------------------------------------: |
-| Precondition     |             User has account             |
-| Post condition   | User disconnects himself from the system |
-| Nominal Scenario |   User completes the logout procedure    |
+| Actors Involved  |                 User                 |
+| ---------------- | :----------------------------------: |
+| Precondition     |           User has account           |
+| Post condition   | User is disconnected from the system |
+| Nominal Scenario | User completes the logout procedure  |
 | Exceptions       |
 
 ##### Scenario 3.1
@@ -224,19 +224,19 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Scenario 3.1   |                                          |
 | -------------- | :--------------------------------------: |
 | Precondition   |             User has account             |
-| Post condition | User disconnects himself from the system |
+| Post condition |   User is disconnected from the system   |
 | Step#          |               Description                |
 | 1              |           User asks to logout            |
 | 2              | The system performs the logout procedure |
 
 ### Use case 4, Create transaction
 
-| Actors Involved  |                             User                              |
-| ---------------- | :-----------------------------------------------------------: |
-| Precondition     | User has account, user has been authenticated and authorized  |
-| Post condition   |                  The transaction is created                   |
-| Nominal Scenario | User create new transaction by entering name, amount and type |
-| Exceptions       |                      User is not logged                       |
+| Actors Involved  |                              User                              |
+| ---------------- | :------------------------------------------------------------: |
+| Precondition     |  User has account, user has been authenticated and authorized  |
+| Post condition   |                   The transaction is created                   |
+| Nominal Scenario | User creates new transaction by entering name, amount and type |
+| Exceptions       |                       User is not logged                       |
 
 ##### Scenario 4.1
 
@@ -257,7 +257,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Post condition |                                 The transaction is created                                 |
 | Step#          |                                        Description                                         |
 | 1              |                             User asks to create a transaction                              |
-| 2              |                    User try to insert the name, the amount and the type                    |
+| 2              |                   User tries to insert the name, the amount and the type                   |
 | 3              | The transaction is not created because the user is not logged and an error message appears |
 
 ### Use case 5, Delete transaction
@@ -266,7 +266,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :-------------------------------------------------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
 | Post condition   |                                           The transaction is deleted                                            |
-| Nominal Scenario |                                 User delete one transaction by entering the ID                                  |
+| Nominal Scenario |                                 User deletes one transaction by entering the ID                                 |
 | Exceptions       |                                         The transaction does not exists                                         |
 
 ##### Scenario 5.1
@@ -285,18 +285,18 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                All the transactions are shown                |
-| Nominal Scenario |        User see all the transactions that he has made        |
+| Nominal Scenario |       User sees all the transactions that he has made        |
 | Exceptions       |                                                              |
 
 ##### Scenario 6.1
 
-| Scenario 6.1   |                                                                              |
-| -------------- | :--------------------------------------------------------------------------: |
-| Precondition   |         User has account, user has been authenticated and authorized         |
-| Post condition |                        All the transactions are shown                        |
-| Step#          |                                 Description                                  |
-| 1              |             User asks to see all the transactions on the account             |
-| 2              | The system show the full list of transactions with name,amount,type and date |
+| Scenario 6.1   |                                                                                 |
+| -------------- | :-----------------------------------------------------------------------------: |
+| Precondition   |          User has account, user has been authenticated and authorized           |
+| Post condition |                         All the transactions are shown                          |
+| Step#          |                                   Description                                   |
+| 1              |              User asks to see all the transactions on the account               |
+| 2              | The system shows the full list of transactions with name, amount, type and date |
 
 ### Use case 7, get labels
 
@@ -304,18 +304,18 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                All the transactions are shown                |
-| Nominal Scenario |        User see all the transactions that he has made        |
+| Nominal Scenario |       User sees all the transactions that he has made        |
 | Exceptions       |                                                              |
 
 ##### Scenario 7.1
 
-| Scenario 7.1   |                                                                          |
-| -------------- | :----------------------------------------------------------------------: |
-| Precondition   |       User has account, user has been authenticated and authorized       |
-| Post condition |                      All the transactions are shown                      |
-| Step#          |                               Description                                |
-| 1              |           User asks to see all the transactions on the account           |
-| 2              | The system show the full list of transactions with name, amount and type |
+| Scenario 7.1   |                                                                           |
+| -------------- | :-----------------------------------------------------------------------: |
+| Precondition   |       User has account, user has been authenticated and authorized        |
+| Post condition |                      All the transactions are shown                       |
+| Step#          |                                Description                                |
+| 1              |           User asks to see all the transactions on the account            |
+| 2              | The system shows the full list of transactions with name, amount and type |
 
 ### Use case 8, get categories
 
@@ -323,7 +323,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                 All the categories are shown                 |
-| Nominal Scenario |       User see all the categories that he has inserted       |
+| Nominal Scenario |      User sees all the categories that he has inserted       |
 | Exceptions       |                                                              |
 
 ##### Scenario 8.1
@@ -334,16 +334,16 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Post condition |                 All the categories are shown                 |
 | Step#          |                         Description                          |
 | 1              |  User asks to see all the categories created on the account  |
-| 2              |         The system show the full list of categories          |
+| 2              |         The system shows the full list of categories         |
 
 ### Use case 9, create categories
 
-| Actors Involved  |                               User                               |
-| ---------------- | :--------------------------------------------------------------: |
-| Precondition     |   User has account, user has been authenticated and authorized   |
-| Post condition   |                      A category is created                       |
-| Nominal Scenario | User create and specify the name and the color for that category |
-| Exceptions       |                                                                  |
+| Actors Involved  |                                User                                 |
+| ---------------- | :-----------------------------------------------------------------: |
+| Precondition     |    User has account, user has been authenticated and authorized     |
+| Post condition   |                        A category is created                        |
+| Nominal Scenario | User creates and specifies the name and the color for that category |
+| Exceptions       |                                                                     |
 
 ##### Scenario 9.1
 

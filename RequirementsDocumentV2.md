@@ -143,13 +143,13 @@ User 7: Reriree that wants to understand how he has spent his pension
 | FR2.1 Manage normal transactions        |                                              Manage non-recurrent transactions                                               |
 | FR2.2 Manage recurrent transactions     |                                   Manage transactions adding the period of the recurrence                                    |
 | FR2.3 Manage transactions with location |                                     Manage transactions adding the location of purchase                                      |
-| FR3 Manage categories                   |                       The software allow to create, delete and show categories linked to transactions                        |
+| FR3 Manage categories                   |                       The software allows to create, delete and show categories linked to transactions                       |
 | FR4 Manage maps                         |                The system shows the exact position in a map of the place where the transaction has been made                 |
-| FR5 Manage statistics                   |                           The software allow to handle and show statistics of user's transactions                            |
+| FR5 Manage statistics                   |                           The software allows to handle and show statistics of user's transactions                           |
 | FR5.1 Manage periodical statistics      |                              Compute total annual and monthly amount of the user's transactions                              |
 | FR5.2 Manage categorical statistics     |                                Compute total amount of the user's transactions by categories                                 |
 | FR6 Manage payment method tracker       |           The system can see the expenses of a connected payment method to register automatically the transactions           |
-| FR7 Manage receipt of payment           |           The software allow to add, remove and show the photos of receipts of the payments linked to transactions           |
+| FR7 Manage receipt of payment           |          The software allows to add, remove and show the photos of receipts of the payments linked to transactions           |
 | FR8 Change base currency                |                    The system can show the amounts in different currencies with the actual exchange rate                     |
 | FR9 Manage System                       |                                  The admin can check the users of the system at any moment                                   |
 
@@ -181,7 +181,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Precondition     |                   User has an account                   |
 | Post condition   |       User receives AccessToken and RefreshToken        |
 | Nominal Scenario |   User asks to login and try to authenticate himself    |
-| Exceptions       | email does not exist, password incorrect, invalid Token |
+| Exceptions       | Email does not exist, password incorrect, invalid Token |
 
 ##### Scenario 1.1
 
@@ -243,33 +243,33 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 ##### Scenario 2.2
 
-| Scenario 2.2   |                                                                                                                           |
-| -------------- | :-----------------------------------------------------------------------------------------------------------------------: |
-| Precondition   |                                                    User has no account                                                    |
-| Post condition |                                                  Error message is showed                                                  |
-| Step#          |                                                        Description                                                        |
-| 1              |                                                   User asks to register                                                   |
-| 2              |                          The system asks username and does not check if it is already available                           |
-| 3              |                                The system asks email and checks if it is already available                                |
-| 4              |                                                 The system asks password                                                  |
-| 5              |                                          User enters username,email and password                                          |
-| 6              | If the email already exists , the registration was unsuccessful and receives an errore message "You are already register" |
+| Scenario 2.2   |                                                                                                                              |
+| -------------- | :--------------------------------------------------------------------------------------------------------------------------: |
+| Precondition   |                                                     User has no account                                                      |
+| Post condition |                                                   Error message is showed                                                    |
+| Step#          |                                                         Description                                                          |
+| 1              |                                                    User asks to register                                                     |
+| 2              |                            The system asks username and does not check if it is already available                            |
+| 3              |                                 The system asks email and checks if it is already available                                  |
+| 4              |                                                   The system asks password                                                   |
+| 5              |                                           User enters username,email and password                                            |
+| 6              | If the email already exists, the registration was unsuccessful and the errore message "You are already register" is returned |
 
 ### Use case 3, Logout
 
-| Actors Involved  |                   User                   |
-| ---------------- | :--------------------------------------: |
-| Precondition     |             User has account             |
-| Post condition   | User disconnects himself from the system |
-| Nominal Scenario |   User completes the logout procedure    |
-| Exceptions       |                                          |
+| Actors Involved  |                 User                 |
+| ---------------- | :----------------------------------: |
+| Precondition     |           User has account           |
+| Post condition   | User is disconnected from the system |
+| Nominal Scenario | User completes the logout procedure  |
+| Exceptions       |                                      |
 
 ##### Scenario 3.1
 
 | Scenario 3.1   |                                          |
 | -------------- | :--------------------------------------: |
 | Precondition   |             User has account             |
-| Post condition | User disconnects himself from the system |
+| Post condition |   User is disconnected from the system   |
 | Step#          |               Description                |
 | 1              |           User asks to logout            |
 | 2              | The system performs the logout procedure |
@@ -280,8 +280,8 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                  The transaction is created                  |
-| Nominal Scenario |   User create new transaction by entering its informations   |
-| Variants         |   The user add location or the periodicity or the receipt    |
+| Nominal Scenario |   User creates new transaction by entering its information   |
+| Variants         |   The user adds location or the periodicity or the receipt   |
 | Exceptions       |                      User is not logged                      |
 
 ##### Scenario 4.1
@@ -304,20 +304,20 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Step#          |                         Description                          |
 | 1              |              User asks to create a transaction               |
 | 2              |        User inserts the name, the amount and the type        |
-| 3              |          User specify the location of the purchase           |
+| 3              |         User specifies the location of the purchase          |
 | 4              |    The transaction is created and stored in the Database     |
 
 ##### Scenario 4.3
 
-| Scenario 4.3   |                                                                  |
-| -------------- | :--------------------------------------------------------------: |
-| Precondition   |   User has account, user has been authenticated and authorized   |
-| Post condition |               The periodic transaction is created                |
-| Step#          |                           Description                            |
-| 1              |                User asks to create a transaction                 |
-| 2              |          User inserts the name, the amount and the type          |
-| 3              | User specify that is a periodic transaction with its peridiocity |
-| 4              |      The transaction is created and stored in the Database       |
+| Scenario 4.3   |                                                                    |
+| -------------- | :----------------------------------------------------------------: |
+| Precondition   |    User has account, user has been authenticated and authorized    |
+| Post condition |                The periodic transaction is created                 |
+| Step#          |                            Description                             |
+| 1              |                 User asks to create a transaction                  |
+| 2              |           User inserts the name, the amount and the type           |
+| 3              | User specifies that is a periodic transaction with its peridiocity |
+| 4              |       The transaction is created and stored in the Database        |
 
 ##### Scenario 4.4
 
@@ -339,7 +339,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Post condition |                                 An error message is showed                                 |
 | Step#          |                                        Description                                         |
 | 1              |                             User asks to create a transaction                              |
-| 2              |                    User try to insert the name, the amount and the type                    |
+| 2              |                   User tries to insert the name, the amount and the type                   |
 | 3              | The transaction is not created because the user is not logged and an error message appears |
 
 ### Use case 5, Modify transaction
@@ -348,7 +348,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :-------------------------------------------------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
 | Post condition   |                                           The transaction is modified                                           |
-| Nominal Scenario |                     User modify one or more information of a transaction by entering the ID                     |
+| Nominal Scenario |                    User modifies one or more information of a transaction by entering the ID                    |
 | Exceptions       |                                         The transaction does not exists                                         |
 
 ##### Scenario 5.1
@@ -358,7 +358,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Precondition   | User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
 | Post condition |                                           The transaction is deleted                                            |
 | Step#          |                                                   Description                                                   |
-| 1              |               User chooses a specific transaction and change the infomations that wants to modify               |
+| 1              |               User chooses a specific transaction and change the infomation that wants to modify                |
 | 2              |                  The transaction with the corresponding ID is updated and stored the Database                   |
 
 ##### Scenario 5.2
@@ -377,7 +377,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :-------------------------------------------------------------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized and the transaction with a specific ID must exists |
 | Post condition   |                                           The transaction is deleted                                            |
-| Nominal Scenario |                                 User delete one transaction by entering the ID                                  |
+| Nominal Scenario |                                 User deletes one transaction by entering the ID                                 |
 | Exceptions       |                                         The transaction does not exists                                         |
 
 ##### Scenario 6.1
@@ -406,7 +406,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                All the transactions are shown                |
-| Nominal Scenario |        User see all the transactions that he has made        |
+| Nominal Scenario |       User sees all the transactions that he has made        |
 | Exceptions       |                                                              |
 
 ##### Scenario 7.1
@@ -419,27 +419,27 @@ User 7: Reriree that wants to understand how he has spent his pension
 | 1              |                                User asks to see all the transactions on the account                                 |
 | 2              | For the transactions that the location is available the system asks to retrieve the geo-location to the map service |
 | 3              |                                       The map service sends the location map                                        |
-| 4              |                       The system show the full list of transaction's informations and its map                       |
+| 4              |                       The system shows the full list of transaction's information and its map                       |
 
 ### Use case 8, Get labels
 
-| Actors Involved  |                                  User                                  |
-| ---------------- | :--------------------------------------------------------------------: |
-| Precondition     |      User has account, user has been authenticated and authorized      |
-| Post condition   |          Shows the total amount of the transaction by labels           |
-| Nominal Scenario | User see the list of labels associated to the total amount of each one |
-| Exceptions       |                                                                        |
+| Actors Involved  |                                  User                                   |
+| ---------------- | :---------------------------------------------------------------------: |
+| Precondition     |      User has account, user has been authenticated and authorized       |
+| Post condition   |           Shows the total amount of the transaction by labels           |
+| Nominal Scenario | User sees the list of labels associated to the total amount of each one |
+| Exceptions       |                                                                         |
 
 ##### Scenario 8.1
 
-| Scenario 8.1   |                                                                            |
-| -------------- | :------------------------------------------------------------------------: |
-| Precondition   |        User has account, user has been authenticated and authorized        |
-| Post condition |            Shows the total amount of the transaction by labels             |
-| Step#          |                                Description                                 |
-| 1              |      User asks to see the total amounts for each label on the account      |
-| 2              |          the system calculates the total expenses for each label           |
-| 3              | The system show the list of labels with name and total amount for each one |
+| Scenario 8.1   |                                                                             |
+| -------------- | :-------------------------------------------------------------------------: |
+| Precondition   |        User has account, user has been authenticated and authorized         |
+| Post condition |             Shows the total amount of the transaction by labels             |
+| Step#          |                                 Description                                 |
+| 1              |      User asks to see the total amounts for each label on the account       |
+| 2              |           The system calculates the total expenses for each label           |
+| 3              | The system shows the list of labels with name and total amount for each one |
 
 ### Use case 9, Get categories
 
@@ -447,7 +447,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | ---------------- | :----------------------------------------------------------: |
 | Precondition     | User has account, user has been authenticated and authorized |
 | Post condition   |                 All the categories are shown                 |
-| Nominal Scenario |       User see all the categories that he has inserted       |
+| Nominal Scenario |      User sees all the categories that he has inserted       |
 | Exceptions       |                                                              |
 
 ##### Scenario 9.1
@@ -458,16 +458,16 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Post condition |                 All the categories are shown                 |
 | Step#          |                         Description                          |
 | 1              |  User asks to see all the categories created on the account  |
-| 2              |         The system show the full list of categories          |
+| 2              |         The system shows the full list of categories         |
 
 ### Use case 10, Create categories
 
-| Actors Involved  |                               User                               |
-| ---------------- | :--------------------------------------------------------------: |
-| Precondition     |   User has account, user has been authenticated and authorized   |
-| Post condition   |                      A category is created                       |
-| Nominal Scenario | User create and specify the name and the color for that category |
-| Exceptions       |                                                                  |
+| Actors Involved  |                                User                                 |
+| ---------------- | :-----------------------------------------------------------------: |
+| Precondition     |    User has account, user has been authenticated and authorized     |
+| Post condition   |                        A category is created                        |
+| Nominal Scenario | User creates and specifies the name and the color for that category |
+| Exceptions       |                                                                     |
 
 ##### Scenario 10.1
 
@@ -603,12 +603,12 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 ### Use case 15, Change currency
 
-| Actors Involved  |                                  User                                  |
-| ---------------- | :--------------------------------------------------------------------: |
-| Precondition     |      User has account, user has been authenticated and authorized      |
-| Post condition   |                     User base currency is changed                      |
-| Nominal Scenario | User select the new currency and the amounts were convered and updated |
-| Exceptions       |                    The currency rate is unavailable                    |
+| Actors Involved  |                                  User                                   |
+| ---------------- | :---------------------------------------------------------------------: |
+| Precondition     |      User has account, user has been authenticated and authorized       |
+| Post condition   |                      User base currency is changed                      |
+| Nominal Scenario | User selects the new currency and the amounts were convered and updated |
+| Exceptions       |                    The currency rate is unavailable                     |
 
 ##### Scenario 15.1
 
@@ -652,7 +652,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 | Step#          |                                                 Description                                                  |
 | 1              |                               User creates, updates or removes new transaction                               |
 | 2              |           The system calculates the net change on the available total annual and monthly expenses            |
-| 3              |                                  The system display the changes on the GUI                                   |
+| 3              |                                  The system displays the changes on the GUI                                  |
 
 # Glossary
 
