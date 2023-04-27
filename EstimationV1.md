@@ -2,7 +2,7 @@
 
 Date: 21/04/2023
 
-Version: 1
+Version: 1.0
 
 # Estimation approach
 
@@ -25,10 +25,10 @@ Consider the EZWallet project in CURRENT version (as received by the teachers), 
 |                                                                                                        | 10 classes for GUI                              |
 | Total NC                                                                                               | 37                                              |
 | A (Estimated average size per class)                                                                   | 30 LOC per class                                |
-| S (Estimated size of project)                                                                          | NC * A = 37 * 30 = 1110 LOC                     |
+| S (Estimated size of project)                                                                          | NC _ A = 37 _ 30 = 1110 LOC                     |
 | E (Estimated effort, in person hours, here use productivity 10 LOC per person hour)                    | S / P = 1110 / 10 = 111 person hour             |
-| C (Estimated cost, in euro (here use 1 person hour cost = 30 euro))                                    | E * C = 111 * 30 = 3330 euro                    |
-| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week) | E / (T * H * D) = 111 / (4 * 8 * 5) = 0,7 weeks |
+| C (Estimated cost, in euro (here use 1 person hour cost = 30 euro))                                    | E _ C = 111 _ 30 = 3330 euro                    |
+| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week) | E / (T _ H _ D) = 111 / (4 _ 8 _ 5) = 0,7 weeks |
 
 # Estimate by product decomposition
 
@@ -58,7 +58,7 @@ Consider the EZWallet project in CURRENT version (as received by the teachers), 
 | Develop use cases and scenarios        | 8                               |
 | Estimate and plannig activities        | 7                               |
 | Design data storage and database usage | 5                               |
-| Design grafical interface              | 11                              |
+| Design graphical interface             | 11                              |
 | Design core functions and their API    | 14                              |
 | Implement and develop code             | 53                              |
 | Develop and run unit tests             | 23                              |

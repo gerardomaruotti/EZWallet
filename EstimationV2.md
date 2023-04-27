@@ -1,8 +1,8 @@
 # Project Estimation - FUTURE
 
-Date:
+Date: 20/04/2023
 
-Version:
+Version: 1.0
 
 # Estimation approach
 
@@ -33,10 +33,10 @@ The base component are refered to the V1 functionalities, instead the extended o
 |                                                                                                        | 4 classes for interaction with exchange rate tracker |
 | Total NC                                                                                               | 95 classes                                           |
 | A (Estimated average size per class)                                                                   | 30 LOC per class                                     |
-| S (Estimated size of project)                                                                          | NC * A = 95 * 30 = 2850 LOC                          |
+| S (Estimated size of project)                                                                          | NC _ A = 95 _ 30 = 2850 LOC                          |
 | E (Estimated effort, in person hours, here use productivity 10 LOC per person hour)                    | S / P = 1850 / 10 = 285 person hour                  |
-| C (Estimated cost, in euro (here use 1 person hour cost = 30 euro))                                    | E * C = 285 * 30 = 8550 euro                         |
-| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week) | E / (T * H * D) = 285 / (4 * 8 * 5) = 1,78 weeks     |
+| C (Estimated cost, in euro (here use 1 person hour cost = 30 euro))                                    | E _ C = 285 _ 30 = 8550 euro                         |
+| Estimated calendar time, in calendar weeks (Assume team of 4 people, 8 hours per day, 5 days per week) | E / (T _ H _ D) = 285 / (4 _ 8 _ 5) = 1,78 weeks     |
 
 # Estimate by product decomposition
 
@@ -66,7 +66,7 @@ The base component are refered to the V1 functionalities, instead the extended o
 | Develop use cases and scenarios               | 11                              |
 | Estimate and plannig activities               | 14                              |
 | Design data storage and database usage        | 17                              |
-| Design grafical interface                     | 20                              |
+| Design graphical interface                    | 20                              |
 | Design core functions and their API           | 24                              |
 | Design interaction with third party companies | 25                              |
 | Implement and develop code                    | 112                             |
