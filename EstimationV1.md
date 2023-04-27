@@ -52,16 +52,20 @@ Consider the EZWallet project in CURRENT version (as received by the teachers), 
 
 | Activity name                          | Estimated effort (person hours) |
 | -------------------------------------- | ------------------------------- |
-| Review existing systems                | 12                              |
+| Review existing systems                | 8                               |
 | Identify functional requirements       | 4                               |
-| Identify non functional requirements   | 4                               |
+| Identify non functional requirements   | 2                               |
 | Develop use cases and scenarios        | 8                               |
-| Design data storage and database usage | 6                               |
+| Estimate and plannig activities        | 7                               |
+| Design data storage and database usage | 5                               |
 | Design grafical interface              | 11                              |
 | Design core functions and their API    | 14                              |
 | Implement and develop code             | 53                              |
 | Develop and run unit tests             | 23                              |
-| Fix issues from runnig tests           | 10                              |
+| Verification and validation            | 10                              |
+| --------------------- | ----------------- |
+| Total                 | 145 person hour   |
+
 ###
 
 Insert here Gantt chart with above activities
