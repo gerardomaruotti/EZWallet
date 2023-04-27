@@ -23,6 +23,7 @@ Consider the EZWallet project in CURRENT version (as received by the teachers), 
 |                                                                                                        | 2 classes for appplication users                |
 |                                                                                                        | 9 classes for tests                             |
 |                                                                                                        | 10 classes for GUI                              |
+| Total NC                                                                                               | 37                                              |
 | A (Estimated average size per class)                                                                   | 30 LOC per class                                |
 | S (Estimated size of project)                                                                          | NC * A = 37 * 30 = 1110 LOC                     |
 | E (Estimated effort, in person hours, here use productivity 10 LOC per person hour)                    | S / P = 1110 / 10 = 111 person hour             |
