@@ -63,8 +63,8 @@ Consider the EZWallet project in CURRENT version (as received by the teachers), 
 | Implement and develop code             | 53                              |
 | Develop and run unit tests             | 23                              |
 | Verification and validation            | 10                              |
-| --------------------- | ----------------- |
-| Total                 | 145 person hour   |
+| ---------------------                  | -----------------               |
+| Total                                  | 145 person hour                 |
 
 ###
 
