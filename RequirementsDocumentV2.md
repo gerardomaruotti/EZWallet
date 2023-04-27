@@ -24,50 +24,50 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 - [Use case diagram and use cases](#use-case-diagram-and-use-cases)
   - [Use case diagram](#use-case-diagram)
     - [Use case 1, Login](#use-case-1-login)
-      - [Scenario 1.1](#scenario-11)
-      - [Scenario 1.2](#scenario-12)
+        - [Scenario 1.1](#scenario-11)
+        - [Scenario 1.2](#scenario-12)
     - [Use case 2, Register](#use-case-2-register)
-      - [Scenario 2.1](#scenario-21)
-      - [Scenario 2.2](#scenario-22)
+        - [Scenario 2.1](#scenario-21)
+        - [Scenario 2.2](#scenario-22)
     - [Use case 3, Logout](#use-case-3-logout)
-      - [Scenario 3.1](#scenario-31)
+        - [Scenario 3.1](#scenario-31)
     - [Use case 4, Create transaction](#use-case-4-create-transaction)
-      - [Scenario 4.1](#scenario-41)
-      - [Scenario 4.2](#scenario-42)
-      - [Scenario 4.3](#scenario-43)
-      - [Scenario 4.4](#scenario-44)
-      - [Scenario 4.5](#scenario-45)
+        - [Scenario 4.1](#scenario-41)
+        - [Scenario 4.2](#scenario-42)
+        - [Scenario 4.3](#scenario-43)
+        - [Scenario 4.4](#scenario-44)
+        - [Scenario 4.5](#scenario-45)
     - [Use case 5, Modify transaction](#use-case-5-modify-transaction)
-      - [Scenario 5.1](#scenario-51)
-      - [Scenario 5.2](#scenario-52)
+        - [Scenario 5.1](#scenario-51)
+        - [Scenario 5.2](#scenario-52)
     - [Use case 6, Delete transaction](#use-case-6-delete-transaction)
-      - [Scenario 6.1](#scenario-61)
-      - [Scenario 6.2](#scenario-62)
+        - [Scenario 6.1](#scenario-61)
+        - [Scenario 6.2](#scenario-62)
     - [Use case 7, Get transactions](#use-case-7-get-transactions)
-      - [Scenario 7.1](#scenario-71)
+        - [Scenario 7.1](#scenario-71)
     - [Use case 8, Get labels](#use-case-8-get-labels)
-      - [Scenario 8.1](#scenario-81)
+        - [Scenario 8.1](#scenario-81)
     - [Use case 9, Get categories](#use-case-9-get-categories)
-      - [Scenario 9.1](#scenario-91)
+        - [Scenario 9.1](#scenario-91)
     - [Use case 10, Create categories](#use-case-10-create-categories)
-      - [Scenario 10.1](#scenario-101)
+        - [Scenario 10.1](#scenario-101)
     - [Use case 11, Get user by username](#use-case-11-get-user-by-username)
-      - [Scenario 11.1](#scenario-111)
-      - [Scenario 11.2](#scenario-112)
+        - [Scenario 11.1](#scenario-111)
+        - [Scenario 11.2](#scenario-112)
     - [Use case 12, Get users](#use-case-12-get-users)
-      - [Scenario 12.1](#scenario-121)
-      - [Scenario 12.2](#scenario-122)
+        - [Scenario 12.1](#scenario-121)
+        - [Scenario 12.2](#scenario-122)
     - [Use case 13, Insert payment method](#use-case-13-insert-payment-method)
-      - [Scenario 13.1](#scenario-131)
-      - [Scenario 13.2](#scenario-132)
+        - [Scenario 13.1](#scenario-131)
+        - [Scenario 13.2](#scenario-132)
     - [Use case 14, Automatic transaction](#use-case-14-automatic-transaction)
-      - [Scenario 14.1](#scenario-141)
-      - [Scenario 14.2](#scenario-142)
+        - [Scenario 14.1](#scenario-141)
+        - [Scenario 14.2](#scenario-142)
     - [Use case 15, Change currency](#use-case-15-change-currency)
-      - [Scenario 15.1](#scenario-151)
-      - [Scenario 15.2](#scenario-152)
+        - [Scenario 15.1](#scenario-151)
+        - [Scenario 15.2](#scenario-152)
     - [Use case 16, Calculates expenses](#use-case-16-calculates-expenses)
-      - [Scenario 16.1](#scenario-161)
+        - [Scenario 16.1](#scenario-161)
 - [Glossary](#glossary)
 - [System Design](#system-design)
 - [Deployment Diagram](#deployment-diagram)
@@ -645,14 +645,14 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 ##### Scenario 16.1
 
-| Scenario 16.1  |                                                                                         |
-| -------------- | :-------------------------------------------------------------------------------------: |
-| Precondition   | User has account, user has been authenticated and authorized, User adds new transaction |
-| Post condition |                    Users sees new total annual and monthly expenses                     |
-| Step#          |                                       Description                                       |
-| 1              |                              User creates new transaction                               |
-| 2              | The system calculates the net change on the available total annual and monthly expenses |
-| 3              |                        The system display the changes on the GUI                        |
+| Scenario 16.1  |                                                                                                              |
+| -------------- | :----------------------------------------------------------------------------------------------------------: |
+| Precondition   | User has account, user has been authenticated and authorized, User adds, modifies or deletes new transaction |
+| Post condition |                               Users sees new total annual and monthly expenses                               |
+| Step#          |                                                 Description                                                  |
+| 1              |                               User creates, updates or removes new transaction                               |
+| 2              |           The system calculates the net change on the available total annual and monthly expenses            |
+| 3              |                                  The system display the changes on the GUI                                   |
 
 # Glossary
 
