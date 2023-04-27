@@ -658,7 +658,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships>
 
-![glossaryv1](code/images/glossaryv1.png)
+![glossaryv1](code/images/glossaryv2fine.png)
 
 \<concepts must be used consistently all over the document, ex in use cases, requirements etc>
 
