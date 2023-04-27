@@ -77,7 +77,7 @@ The base component are refered to the V1 functionalities, instead the extended o
 
 Insert here Gantt chart with above activities
 
-![Gantt chart](code/images/ganttv2.png)
+![Gantt chart](code/images/gantt_chart_v2.png)
 
 # Summary
 

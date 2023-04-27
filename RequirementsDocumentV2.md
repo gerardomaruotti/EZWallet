@@ -94,7 +94,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<Define here Context diagram using UML use case diagram>
 
-![contextdiagram](code/images/contextdiagramv2.png)
+![contextdiagram](code/images/context_diagram_v2.png)
 
 \<actors are a subset of stakeholders>
 
@@ -170,7 +170,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 ## Use case diagram
 
 \<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
-![usecasediagram](code/images/usecasev2.png)
+![usecasediagram](code/images/use_case_diagram_v2.png)
 
 \<next describe here each use case in the UCD>
 
@@ -658,7 +658,7 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships>
 
-![glossaryv1](code/images/glossaryv2.png)
+![glossaryv1](code/images/glossary_v2.png)
 
 \<concepts must be used consistently all over the document, ex in use cases, requirements etc>
 
@@ -666,12 +666,12 @@ User 7: Reriree that wants to understand how he has spent his pension
 
 \<describe here system design>
 
-![systemdesign](code/images/systemdesignv2.png)
+![systemdesign](code/images/system_design_v2.png)
 
 \<must be consistent with Context diagram>
 
 # Deployment Diagram
 
-![deployment](code/images/deploymentdiagramv2.png)
+![deployment](code/images/deployment_diagram_v2.png)
 
 \<describe here deployment diagram >

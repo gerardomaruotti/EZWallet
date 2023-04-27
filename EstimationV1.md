@@ -69,7 +69,8 @@ Consider the EZWallet project in CURRENT version (as received by the teachers), 
 ###
 
 Insert here Gantt chart with above activities
-![gantt](code/images/ganttv1.jpg)
+
+![gantt](code/images/gantt_chart_v1.png)
 
 # Summary
 
