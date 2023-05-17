@@ -54,6 +54,39 @@ export const getUser = async (req, res) => {
  */
 export const createGroup = async (req, res) => {
     try {
+      const cookie = req.cookies
+      if (!cookie.accessToken) {
+          return res.status(401).json({ message: "Unauthorized" }) //unauthorized
+      }
+      const {name, memberEmails} = req.body;
+      const alreadyInGroup = [];
+      const membersNotFound = [];
+
+      if (await Group.findOne({ name: name})) 
+        return res.status(401).json({ message: "A group with the same name already exists"});
+
+      memberEmails.forEach(async (e) => {
+        if (!(await User.findOne({ email: e}))) {
+          membersNotFound.append(e);
+        } 
+      });
+      memberEmails = memberEmails.filter((email) => !(email in membersNotFound));
+
+      memberEmails.forEach(async (e) => {
+        if(await Group.findOne({ members: { email: e}})) { //FUNZIONE DA IMPLEMENTARE
+          alreadyInGroup.append(e);
+        }
+      });
+      memberEmails = memberEmails.filter((email) => !(email in alreadyInGroup));
+
+      if(memberEmails.length > 0)
+        return res.status(401).json({ message: "All th emails are invalid"});
+      
+      if (group) return res.status(401).json({ message: "a group with the same name already exists"})
+      const new_group = new Group({name, memberEmails});
+      new_group.save()
+          .then(data => res.json(data))
+          .catch(err => { throw err })
     } catch (err) {
         res.status(500).json(err.message)
     }
