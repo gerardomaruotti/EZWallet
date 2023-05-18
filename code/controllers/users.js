@@ -76,7 +76,7 @@ export const createGroup = async (req, res) => {
 		memberEmails = memberEmails.filter((email) => !(email in membersNotFound));
 
 		memberEmails.forEach(async (e) => {
-			if (await Group.findOne({ members: { email: e } })) {
+			if (await Group.findOne({ members: { 'members.email': e } })) {
 				//FUNZIONE DA IMPLEMENTARE
 				alreadyInGroup.append(e);
 			}
