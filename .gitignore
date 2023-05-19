@@ -3,3 +3,4 @@ code/node_modules/
 code/coverage/
 code/data/
 code/.vscode
+code/api_request.http
