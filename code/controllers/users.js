@@ -67,41 +67,24 @@ export const getUser = async (req, res) => {
  */
 export const createGroup = async (req, res) => {
 	try {
-		const cookie = req.cookies;
-		if (!cookie.accessToken) {
-			return res.status(401).json({ message: 'Unauthorized' }); //unauthorized
-		}
-		let { name, memberEmails } = req.body;
-		const alreadyInGroup = [];
-		const membersNotFound = [];
+		if (!verifyAuth(req, res, { authType: 'Group' })) return res;
+		const { name, memberEmails } = req.body;
 
 		if (await Group.findOne({ name: name }))
 			return res
 				.status(401)
 				.json({ message: 'A group with the same name already exists' });
 
-		memberEmails.forEach(async (e) => {
-			if (!(await User.findOne({ email: e }))) {
-				membersNotFound.append(e);
-			}
-		});
-		memberEmails = memberEmails.filter((email) => !(email in membersNotFound));
+		const { validEmails, alreadyInGroup, notInGroup } =
+			checkGroupEmails(memberEmails);
 
-		memberEmails.forEach(async (e) => {
-			if (await Group.findOne({ members: { 'members.email': e } })) {
-				//FUNZIONE DA IMPLEMENTARE
-				alreadyInGroup.append(e);
-			}
-		});
-		memberEmails = memberEmails.filter((email) => !(email in alreadyInGroup));
+		if (validEmails.length > 0)
+			return res.status(401).json({ message: 'All the emails are invalid' });
 
-		// if (memberEmails.length > 0)
-		// 	return res.status(401).json({ message: 'All the emails are invalid' });
-
-		const new_group = new Group({ name, memberEmails }); //TODO: aggiungere i membri
+		const new_group = new Group({ name, memberEmails });
 		new_group
 			.save()
-			.then((data) => res.json(data))
+			.then((group) => res.json({ group, alreadyInGroup, notInGroup }))
 			.catch((err) => {
 				throw err;
 			});
@@ -172,6 +155,16 @@ export const getGroup = async (req, res) => {
  */
 export const addToGroup = async (req, res) => {
 	try {
+		if (!verifyAuth(req, res, { authType: 'Group' })) return res;
+
+		const group = await Group.findOne({ name: req.params.name });
+		if (!group) return res.status(401).json({ message: 'Group not found' });
+		const memberEmails = req.body.memberEmails;
+
+		const { validEmails, alreadyInGroup, notInGroup } =
+			checkGroupEmails(memberEmails);
+
+		// DA IMPLEMENTARE
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
@@ -259,4 +252,25 @@ export const deleteGroup = async (req, res) => {
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
+};
+
+const checkGroupEmails = async (memberEmails) => {
+	let alreadyInGroup = [];
+	let membersNotFound = [];
+
+	memberEmails.forEach(async (e) => {
+		if (!(await User.findOne({ email: e }))) {
+			membersNotFound.append(e);
+		}
+	});
+	memberEmails = memberEmails.filter((e) => !(e in membersNotFound));
+
+	memberEmails.forEach(async (e) => {
+		if (await Group.findOne({ members: { 'members.email': e } })) {
+			alreadyInGroup.append(e);
+		}
+	});
+	memberEmails = memberEmails.filter((e) => !(e in alreadyInGroup));
+
+	return { memberEmails, alreadyInGroup, membersNotFound };
 };
