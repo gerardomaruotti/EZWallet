@@ -1,3 +1,4 @@
+import { response } from 'express';
 import { categories, transactions } from '../models/model.js';
 import { Group, User } from '../models/User.js';
 import {
@@ -40,6 +41,23 @@ export const createCategory = (req, res) => {
  */
 export const updateCategory = async (req, res) => {
 	try {
+		const cookie = req.cookies;
+		if (!cookie.accessToken) {
+			return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
+		}
+		const { type, color } = req.body;
+		const { type: oldType } = req.params;
+		let data = await categories.findOne({ type: oldType });
+		if (!data) {
+			return res.status(401).json({ message: 'Category does not exist' });
+		}
+		if (type) {
+			data.type = type;
+		}
+		if (color) {
+			data.color = color;
+		}
+		data.save().then((data) => res.json(data));
 	} catch (error) {
 		res.status(400).json({ error: error.message });
 	}
@@ -54,6 +72,34 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
 	try {
+		const cookie = req.cookies;
+		if (!cookie.accessToken) {
+			return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
+		}
+		const { types } = req.body;
+		types.forEach(async (type) => {
+			let data = await categories.findOne({ type });
+			if (!data) {
+				return res.status(401).json({ message: 'Category does not exist' });
+			}
+			/**
+			 * MongoDB equivalent to the query "UPDATE transactions SET type = 'investment' WHERE type = 'type'"
+			 */
+			let responseData = {
+				message: 'Category deleted',
+				count: 0,
+			};
+			const typeTransactions = await transactions.find({ type });
+			responseData.count = typeTransactions.length;
+			transactions
+				.updateMany({ type }, { $set: { type: 'investment' } })
+				.then((result) => {
+					data
+						.remove()
+						.then((data) => res.json(responseData)) //warning
+						.status(200);
+				});
+		});
 	} catch (error) {
 		res.status(400).json({ error: error.message });
 	}
