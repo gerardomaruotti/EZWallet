@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
@@ -8,8 +8,7 @@ import jwt from 'jsonwebtoken'
  *  Example: {date: {$gte: "2023-04-30T00:00:00.000Z"}} returns all transactions whose `date` parameter indicates a date from 30/04/2023 (included) onwards
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
-export const handleDateFilterParams = (req) => {
-}
+export const handleDateFilterParams = (req) => {};
 
 /**
  * Handle possible authentication modes depending on `authType`
@@ -37,54 +36,80 @@ export const handleDateFilterParams = (req) => {
  *  Refreshes the accessToken if it has expired and the refreshToken is still valid
  */
 export const verifyAuth = (req, res, info) => {
-    const cookie = req.cookies
-    if (!cookie.accessToken || !cookie.refreshToken) {
-        res.status(401).json({ message: "Unauthorized" });
-        return false;
-    }
-    try {
-        const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
-        const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
-        if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
-        }
-        if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            res.status(401).json({ message: "Token is missing information" })
-            return false
-        }
-        if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            res.status(401).json({ message: "Mismatched users" });
-            return false;
-        }
-        return true
-    } catch (err) {
-        if (err.name === "TokenExpiredError") {
-            try {
-                const refreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
-                const newAccessToken = jwt.sign({
-                    username: refreshToken.username,
-                    email: refreshToken.email,
-                    id: refreshToken.id,
-                    role: refreshToken.role
-                }, process.env.ACCESS_KEY, { expiresIn: '1h' })
-                res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
-                res.locals.message = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
-                return true
-            } catch (err) {
-                if (err.name === "TokenExpiredError") {
-                    res.status(401).json({ message: "Perform login again" });
-                } else {
-                    res.status(401).json({ message: err.name });
-                }
-                return false;
-            }
-        } else {
-            res.status(401).json({ message: err.name });
-            return false;
-        }
-    }
-}
+	const cookie = req.cookies;
+	if (!cookie.accessToken || !cookie.refreshToken) {
+		return { authorized: false, cause: 'Unauthorized' };
+	}
+	try {
+		const decodedAccessToken = jwt.verify(
+			cookie.accessToken,
+			process.env.ACCESS_KEY
+		);
+		const decodedRefreshToken = jwt.verify(
+			cookie.refreshToken,
+			process.env.ACCESS_KEY
+		);
+		if (
+			!decodedAccessToken.username ||
+			!decodedAccessToken.email ||
+			!decodedAccessToken.role
+		) {
+			return { authorized: false, cause: 'Token is missing information' };
+		}
+		if (
+			!decodedRefreshToken.username ||
+			!decodedRefreshToken.email ||
+			!decodedRefreshToken.role
+		) {
+			return { authorized: false, cause: 'Token is missing information' };
+		}
+		if (
+			decodedAccessToken.username !== decodedRefreshToken.username ||
+			decodedAccessToken.email !== decodedRefreshToken.email ||
+			decodedAccessToken.role !== decodedRefreshToken.role
+		) {
+			return { authorized: false, cause: 'Mismatched users' };
+		}
+		return { authorized: true, cause: 'Authorized' };
+	} catch (err) {
+		if (err.name === 'TokenExpiredError') {
+			try {
+				const refreshToken = jwt.verify(
+					cookie.refreshToken,
+					process.env.ACCESS_KEY
+				);
+				const newAccessToken = jwt.sign(
+					{
+						username: refreshToken.username,
+						email: refreshToken.email,
+						id: refreshToken.id,
+						role: refreshToken.role,
+					},
+					process.env.ACCESS_KEY,
+					{ expiresIn: '1h' }
+				);
+				res.cookie('accessToken', newAccessToken, {
+					httpOnly: true,
+					path: '/api',
+					maxAge: 60 * 60 * 1000,
+					sameSite: 'none',
+					secure: true,
+				});
+				res.locals.refreshedTokenMessage =
+					'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls';
+				return { authorized: true, cause: 'Authorized' };
+			} catch (err) {
+				if (err.name === 'TokenExpiredError') {
+					return { authorized: false, cause: 'Perform login again' };
+				} else {
+					return { authorized: false, cause: err.name };
+				}
+			}
+		} else {
+			return { authorized: false, cause: err.name };
+		}
+	}
+};
 
 /**
  * Handle possible amount filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
@@ -93,5 +118,4 @@ export const verifyAuth = (req, res, info) => {
  *  The returned object must handle all possible combination of amount filtering parameters, including the case where none are present.
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
-export const handleAmountFilterParams = (req) => {
-}
+export const handleAmountFilterParams = (req) => {};

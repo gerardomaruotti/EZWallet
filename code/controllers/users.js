@@ -2,7 +2,7 @@ import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
 import { verifyAuth } from './utils.js';
 
-/**
+/** FATTA
  * Return all the users
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `email` and `role`
@@ -11,14 +11,20 @@ import { verifyAuth } from './utils.js';
  */
 export const getUsers = async (req, res) => {
 	try {
-		const users = await User.find();
+		const users = (await User.find()).map((user) => {
+			return {
+				username: user.username,
+				email: user.email,
+				role: user.role,
+			};
+		});
 		res.status(200).json(users);
 	} catch (error) {
 		res.status(500).json(error.message);
 	}
 };
 
-/**
+/** FATTA
  * Return information of a specific user
   - Request Body Content: None
   - Response `data` Content: An object having attributes `username`, `email` and `role`.
@@ -34,9 +40,15 @@ export const getUser = async (req, res) => {
 		const username = req.params.username;
 		const user = await User.findOne({ refreshToken: cookie.refreshToken });
 		if (!user) return res.status(401).json({ message: 'User not found' });
+		const responseUser = {
+			username: user.username,
+			email: user.email,
+			role: user.role,
+		};
+		if (!user) return res.status(401).json({ message: 'User not found' });
 		if (user.username !== username)
 			return res.status(401).json({ message: 'Unauthorized' });
-		res.status(200).json(user);
+		res.status(200).json(responseUser);
 	} catch (error) {
 		res.status(500).json(error.message);
 	}
@@ -59,7 +71,7 @@ export const createGroup = async (req, res) => {
 		if (!cookie.accessToken) {
 			return res.status(401).json({ message: 'Unauthorized' }); //unauthorized
 		}
-		const { name, memberEmails } = req.body;
+		let { name, memberEmails } = req.body;
 		const alreadyInGroup = [];
 		const membersNotFound = [];
 
@@ -83,14 +95,10 @@ export const createGroup = async (req, res) => {
 		});
 		memberEmails = memberEmails.filter((email) => !(email in alreadyInGroup));
 
-		if (memberEmails.length > 0)
-			return res.status(401).json({ message: 'All th emails are invalid' });
+		// if (memberEmails.length > 0)
+		// 	return res.status(401).json({ message: 'All the emails are invalid' });
 
-		if (group)
-			return res
-				.status(401)
-				.json({ message: 'a group with the same name already exists' });
-		const new_group = new Group({ name, memberEmails });
+		const new_group = new Group({ name, memberEmails }); //TODO: aggiungere i membri
 		new_group
 			.save()
 			.then((data) => res.json(data))
@@ -102,7 +110,7 @@ export const createGroup = async (req, res) => {
 	}
 };
 
-/**
+/** FATTA
  * Return all the groups
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having a string attribute for the `name` of the group
@@ -112,12 +120,19 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
 	try {
+		const groups = (await Group.find()).map((group) => {
+			return {
+				name: group.name,
+				members: group.members,
+			};
+		});
+		res.status(200).json(groups);
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
 };
 
-/**
+/** FATTA
  * Return information of a specific group
   - Request Body Content: None
   - Response `data` Content: An object having a string attribute for the `name` of the group and an array for the 
@@ -127,6 +142,18 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
 	try {
+		const cookie = req.cookies;
+		if (!cookie.accessToken || !cookie.refreshToken) {
+			return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
+		}
+		const name = req.params.name;
+		const group = await Group.findOne({ name: name });
+		if (!group) return res.status(401).json({ message: 'Group not found' });
+		const responseGroup = {
+			name: group.name,
+			members: group.members,
+		};
+		res.status(200).json(responseGroup);
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
@@ -179,40 +206,41 @@ export const removeFromGroup = async (req, res) => {
 export const deleteUser = async (req, res) => {
 	try {
 		const email = req.body.email;
-		console.log(email);
+		// console.log(email);
 		const user = await User.findOne({ email: email });
-		console.log(user);
+		// console.log(user);
 		const findTransactions = await transactions.find({
 			username: user.username,
 		});
 		console.log(findTransactions);
+		const transactionsNumber = findTransactions.length;
 		const deletedTransactions = await transactions.deleteMany({
-			username: user.username,
+			email: email,
 		});
-		const userGroup = await Group.find();
+		const userGroup = Group.find();
 		const emailExists = false;
 		userGroup.forEach((group) => {
 			group.members.forEach((member) => {
 				if (member.email === email) {
-					//remove member from group
 					emailExists = true;
+					//TODO: remove user from group
 				}
 			});
 		});
-		console.log(userGroup);
-		console.log(emailExists);
-		// const deleteUser = await User.deleteMany({
-		// 	email: email,
-		// });
-		// const deletedTransactions = await transactions.deleteMany({
-		// 	email: email,
-		// });
+		const deleteUser = await User.deleteMany({
+			email: email,
+		});
+		const response = {
+			deletedTransactionsNumber: transactionsNumber,
+			isRemovedFromGroup: emailExists,
+		};
+		res.json(response).status(200);
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
 };
 
-/**
+/** FATTA
  * Delete a group
   - Request Body Content: A string equal to the `name` of the group to be deleted
   - Response `data` Content: A message confirming successful deletion
@@ -221,6 +249,13 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
 	try {
+		const deletedGroup = await Group.deleteMany({
+			name: req.body.name,
+		});
+		if (!deletedGroup) {
+			return res.status(401).json({ message: 'Group not found' });
+		}
+		res.json({ message: 'Group deleted' }).status(200);
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
