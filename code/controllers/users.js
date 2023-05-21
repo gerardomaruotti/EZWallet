@@ -1,6 +1,6 @@
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
-import { verifyAuth } from './utils.js';
+import { verifyAuth, asyncFilter } from './utils.js';
 
 /** FATTA
  * Return all the users
@@ -39,7 +39,8 @@ export const getUser = async (req, res) => {
 		}
 		const username = req.params.username;
 		const user = await User.findOne({ refreshToken: cookie.refreshToken });
-		if (!user) return res.status(401).json({ message: 'User not found' });
+		if (!user) 
+			return res.status(401).json({ message: 'User not found' });
 		const responseUser = {
 			username: user.username,
 			email: user.email,
@@ -67,24 +68,26 @@ export const getUser = async (req, res) => {
  */
 export const createGroup = async (req, res) => {
 	try {
-		if (!verifyAuth(req, res, { authType: 'Group' })) return res;
-		const { name, memberEmails } = req.body;
+		if (!verifyAuth(req, res, { authType: 'Group' })) 
+			return res;
+
+		let { name, memberEmails } = req.body;
+
 
 		if (await Group.findOne({ name: name }))
-			return res
-				.status(401)
-				.json({ message: 'A group with the same name already exists' });
+			return res.status(401).json({ message: 'A group with the same name already exists' });
 
-		const { validEmails, alreadyInGroup, notInGroup } =
-			checkGroupEmails(memberEmails);
+		const {validEmails, alreadyInGroup, membersNotFound} = await checkGroupEmails(memberEmails);
 
-		if (validEmails.length > 0)
+		if (validEmails.length == 0)
 			return res.status(401).json({ message: 'All the emails are invalid' });
 
-		const new_group = new Group({ name, memberEmails });
+		const members = await Promise.all(validEmails.map(async (e) => { return { email: e, user: await User.findOne({email: e}) }; }));
+
+		const new_group = new Group({ name, members });
 		new_group
 			.save()
-			.then((group) => res.json({ group, alreadyInGroup, notInGroup }))
+			.then((group) => res.json({ group: {name: group.name, members: group.members.map((m) => m.email)}, alreadyInGroup, membersNotFound }))
 			.catch((err) => {
 				throw err;
 			});
@@ -254,23 +257,25 @@ export const deleteGroup = async (req, res) => {
 	}
 };
 
-const checkGroupEmails = async (memberEmails) => {
+const checkGroupEmails = async (memberEmails) =>{
 	let alreadyInGroup = [];
 	let membersNotFound = [];
 
-	memberEmails.forEach(async (e) => {
-		if (!(await User.findOne({ email: e }))) {
-			membersNotFound.append(e);
-		}
-	});
-	memberEmails = memberEmails.filter((e) => !(e in membersNotFound));
 
-	memberEmails.forEach(async (e) => {
-		if (await Group.findOne({ members: { 'members.email': e } })) {
-			alreadyInGroup.append(e);
-		}
+	memberEmails = await asyncFilter(memberEmails, async (e) => { 
+		const result = await User.findOne({ email: e });
+		if (!result)
+			membersNotFound.push(e);
+		return result;
 	});
-	memberEmails = memberEmails.filter((e) => !(e in alreadyInGroup));
 
-	return { memberEmails, alreadyInGroup, membersNotFound };
+	memberEmails = await asyncFilter(memberEmails, async (e) => { 
+		const result = await Group.findOne({ 'members.email': e });
+		if (result)
+			alreadyInGroup.push(e);
+		return !result;
+	});
+	
+	console.log(memberEmails, alreadyInGroup, membersNotFound);
+	return { validEmails: memberEmails, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound };
 };
