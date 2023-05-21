@@ -68,11 +68,13 @@ export const getUser = async (req, res) => {
  */
 export const createGroup = async (req, res) => {
 	try {
-		if (!verifyAuth(req, res, { authType: 'Group' })) 
-			return res;
-
 		let { name, memberEmails } = req.body;
+		if(name === undefined || memberEmails === undefined)
+			return res.status(401).json({ message: 'Missing parameters' });
 
+		const {authorized, cause} = verifyAuth(req, res, { authType: 'Group' })
+		if (!authorized) 
+			return res.status(401).json({ message: cause });
 
 		if (await Group.findOne({ name: name }))
 			return res.status(401).json({ message: 'A group with the same name already exists' });
@@ -105,10 +107,13 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
 	try {
+
+		//CONTROLLARE SE E' ADMIN
+
 		const groups = (await Group.find()).map((group) => {
 			return {
 				name: group.name,
-				members: group.members,
+				members: group.members.map((m) => m.email),
 			};
 		});
 		res.status(200).json(groups);
@@ -127,16 +132,18 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
 	try {
-		const cookie = req.cookies;
-		if (!cookie.accessToken || !cookie.refreshToken) {
-			return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
-		}
+		const {authorized, cause} = verifyAuth(req, res, { authType: 'Group' })
+		if (!authorized) 
+			return res.status(401).json({ message: cause });
+		
 		const name = req.params.name;
 		const group = await Group.findOne({ name: name });
-		if (!group) return res.status(401).json({ message: 'Group not found' });
+		if (!group) 
+			return res.status(401).json({ message: 'Group not found' });
+			
 		const responseGroup = {
 			name: group.name,
-			members: group.members,
+			members: group.members.map((m) => m.email),
 		};
 		res.status(200).json(responseGroup);
 	} catch (err) {
@@ -157,9 +164,13 @@ export const getGroup = async (req, res) => {
  */
 export const addToGroup = async (req, res) => {
 	try {
-		if (!verifyAuth(req, res, { authType: 'Group' })) return res;
-
 		let { name, memberEmails } = req.body;
+		if(name === undefined || memberEmails === undefined)
+			return res.status(401).json({ message: 'Missing parameters' });
+
+		const {authorized, cause} = verifyAuth(req, res, { authType: 'Group' })
+		if (!authorized) 
+			return res.status(401).json({ message: cause });
 
 		if (!await Group.findOne({ name: name })) 
 			return res.status(401).json({ message: 'Group not found' });
