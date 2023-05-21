@@ -140,7 +140,7 @@ export const getGroup = async (req, res) => {
 		const group = await Group.findOne({ name: name });
 		if (!group) 
 			return res.status(401).json({ message: 'Group not found' });
-			
+
 		const responseGroup = {
 			name: group.name,
 			members: group.members.map((m) => m.email),
@@ -264,12 +264,24 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
 	try {
+
+		//CONTROLLARE SE E' ADMIN
+		
+		let { name } = req.body;
+		if(name === undefined)
+			return res.status(401).json({ message: 'Missing parameters' });
+
+		const {authorized, cause} = verifyAuth(req, res, { authType: 'Group' })
+		if (!authorized) 
+			return res.status(401).json({ message: cause });
+
 		const deletedGroup = await Group.deleteMany({
 			name: req.body.name,
 		});
-		if (!deletedGroup) {
+
+		if (deletedGroup.deletedCount === 0)
 			return res.status(401).json({ message: 'Group not found' });
-		}
+
 		res.json({ message: 'Group deleted' }).status(200);
 	} catch (err) {
 		res.status(500).json(err.message);
