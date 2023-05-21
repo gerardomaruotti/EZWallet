@@ -88,9 +88,8 @@ export const createGroup = async (req, res) => {
 		new_group
 			.save()
 			.then((group) => res.json({ group: {name: group.name, members: group.members.map((m) => m.email)}, alreadyInGroup, membersNotFound }))
-			.catch((err) => {
-				throw err;
-			});
+			.catch((err) => { throw err; });
+
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
@@ -160,14 +159,23 @@ export const addToGroup = async (req, res) => {
 	try {
 		if (!verifyAuth(req, res, { authType: 'Group' })) return res;
 
-		const group = await Group.findOne({ name: req.params.name });
-		if (!group) return res.status(401).json({ message: 'Group not found' });
-		const memberEmails = req.body.memberEmails;
+		let { name, memberEmails } = req.body;
 
-		const { validEmails, alreadyInGroup, notInGroup } =
-			checkGroupEmails(memberEmails);
+		if (!await Group.findOne({ name: name })) 
+			return res.status(401).json({ message: 'Group not found' });
 
-		// DA IMPLEMENTARE
+		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
+		console.log(validEmails, alreadyInGroup, membersNotFound);
+
+		if (validEmails.length == 0)
+			return res.status(401).json({ message: 'All the emails are invalid' });
+
+		const membersToAdd = await Promise.all(validEmails.map(async (e) => { return { email: e, user: await User.findOne({email: e}) }; }));
+
+		Group.updateOne({ name: req.params.name }, { $push: { members: { $each: membersToAdd } } })
+			.then(async (group) => res.json({ group: {name: name, members: (await Group.findOne({ name:name })).members.map((m) => m.email)}, alreadyInGroup, membersNotFound }))
+			.catch((err) => { throw err; });
+
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
@@ -275,7 +283,6 @@ const checkGroupEmails = async (memberEmails) =>{
 			alreadyInGroup.push(e);
 		return !result;
 	});
-	
-	console.log(memberEmails, alreadyInGroup, membersNotFound);
+
 	return { validEmails: memberEmails, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound };
 };
