@@ -176,7 +176,6 @@ export const addToGroup = async (req, res) => {
 			return res.status(401).json({ message: 'Group not found' });
 
 		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
-		console.log(validEmails, alreadyInGroup, membersNotFound);
 
 		if (validEmails.length == 0)
 			return res.status(401).json({ message: 'All the emails are invalid' });
@@ -204,6 +203,28 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
 	try {
+		let { name, memberEmails } = req.body;
+		if(name === undefined || memberEmails === undefined)
+			return res.status(401).json({ message: 'Missing parameters' });
+
+		const {authorized, cause} = verifyAuth(req, res, { authType: 'Group' })
+		if (!authorized) 
+			return res.status(401).json({ message: cause });
+
+		if (!await Group.findOne({ name: name })) 
+			return res.status(401).json({ message: 'Group not found' });	
+
+		const { validEmails, membersNotFound, notInGroup } = await checkGroupEmails(memberEmails, name);
+
+		if (validEmails.length == 0)
+			return res.status(401).json({ message: 'All the emails are invalid' });
+		
+		const membersToRemove = await Promise.all(validEmails.map(async (e) => { return { email: e, user: await User.findOne({email: e}) }; }));
+
+		Group.updateOne({ name: req.params.name }, { $pull: { members: { $or: membersToRemove} } })
+			.then(async (group) => res.json({ group: {name: name, members: (await Group.findOne({ name:name })).members.map((m) => m.email)}, notInGroup, membersNotFound }))
+			.catch((err) => { throw err; });
+
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
@@ -220,10 +241,17 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
 	try {
+
+		//CONTROLARE SE E' ADMIN
+
 		const email = req.body.email;
-		// console.log(email);
+		if(email === undefined)
+			return res.status(401).json({ message: 'Missing parameters' });
+
 		const user = await User.findOne({ email: email });
-		// console.log(user);
+		if(!user)
+			return res.status(401).json({ message: 'User not found' });
+
 		const findTransactions = await transactions.find({
 			username: user.username,
 		});
@@ -266,7 +294,7 @@ export const deleteGroup = async (req, res) => {
 	try {
 
 		//CONTROLLARE SE E' ADMIN
-		
+
 		let { name } = req.body;
 		if(name === undefined)
 			return res.status(401).json({ message: 'Missing parameters' });
@@ -288,9 +316,10 @@ export const deleteGroup = async (req, res) => {
 	}
 };
 
-const checkGroupEmails = async (memberEmails) =>{
+const checkGroupEmails = async (memberEmails, groupName) =>{
 	let alreadyInGroup = [];
 	let membersNotFound = [];
+	let notInGroup = [];
 
 
 	memberEmails = await asyncFilter(memberEmails, async (e) => { 
@@ -300,12 +329,21 @@ const checkGroupEmails = async (memberEmails) =>{
 		return result;
 	});
 
-	memberEmails = await asyncFilter(memberEmails, async (e) => { 
-		const result = await Group.findOne({ 'members.email': e });
-		if (result)
-			alreadyInGroup.push(e);
-		return !result;
-	});
+	if(groupName === undefined) {
+		memberEmails = await asyncFilter(memberEmails, async (e) => { 
+			const result = await Group.findOne({ 'members.email': e });
+			if (result)
+				alreadyInGroup.push(e);
+			return !result;
+		});
+	} else {
+		memberEmails = await asyncFilter(memberEmails, async (e) => { 
+			const result = await Group.findOne({ name: groupName, 'members.email': e });
+			if (!result)
+				notInGroup.push(e);
+			return result;
+		});
+	}
 
-	return { validEmails: memberEmails, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound };
+	return { validEmails: memberEmails, alreadyInGroup: alreadyInGroup, membersNotFound: membersNotFound, notInGroup: notInGroup };
 };
