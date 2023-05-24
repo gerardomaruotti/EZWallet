@@ -431,7 +431,7 @@ export const deleteTransaction = async (req, res) => {
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+				.json({ message: 'Unauthorized: user is not a user!' });
 
 		let data = await transactions.deleteOne({ _id: req.body._id });
 		return res.json('deleted');
