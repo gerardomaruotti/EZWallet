@@ -229,7 +229,7 @@ export const getTransactionsByUser = async (req, res) => {
 	}
 };
 
-/**
+/** FATTA
  * Return all transactions made by a specific user filtered by a specific category
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects
@@ -238,7 +238,6 @@ export const getTransactionsByUser = async (req, res) => {
     - error 401 is returned if the user or the category does not exist
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
-
 	try {
 		const cookie = req.cookies;
 		if (!cookie.accessToken) {
