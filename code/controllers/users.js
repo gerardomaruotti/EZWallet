@@ -11,6 +11,14 @@ import { verifyAuth, asyncFilter } from './utils.js';
  */
 export const getUsers = async (req, res) => {
 	try {
+
+
+		  let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
+		  if (!AdminAuth.authorized)
+			return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
+
+
+
 		const users = (await User.find()).map((user) => {
 			return {
 				username: user.username,
@@ -33,10 +41,12 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
 	try {
-		const cookie = req.cookies;
-		if (!cookie.accessToken || !cookie.refreshToken) {
-			return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
-		}
+		
+		let UserAuth = verifyAuth(req, res, { authType: "User" });
+		if (!UserAuth.authorized)
+		  return res.status(401).json({ message: "Unauthorized: user is not recognized!" });
+
+
 		const username = req.params.username;
 		const user = await User.findOne({ refreshToken: cookie.refreshToken });
 		if (!user) return res.status(401).json({ message: 'User not found' });
@@ -122,7 +132,10 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
 	try {
-		//CONTROLLARE SE E' ADMIN
+		
+		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
+		if (!AdminAuth.authorized)
+		  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
 
 		const groups = (await Group.find()).map((group) => {
 			return {
@@ -295,7 +308,11 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
 	try {
-		//CONTROLARE SE E' ADMIN
+		
+
+		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
+		if (!AdminAuth.authorized)
+		  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
 
 		const email = req.body.email;
 		if (email === undefined)
@@ -344,7 +361,9 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
 	try {
-		//CONTROLLARE SE E' ADMIN
+		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
+		if (!AdminAuth.authorized)
+		  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
 
 		let { name } = req.body;
 		if (name === undefined)

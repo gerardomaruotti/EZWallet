@@ -343,9 +343,8 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
 	try {
-		let UserAuth = verifyAuth(req, res, { authType: "User" });
-		 if (!UserAuth.authorized)
-		return res.status(401).json({ message: "Unauthorized: user is not recognized!" });
+		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+		if (!authorized) return res.status(401).json({ message: cause });
 
 		const namegroup = req.params.name;
 
@@ -402,9 +401,8 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
-		if (!AdminAuth.authorized)
-		  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
+		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+		if (!authorized) return res.status(401).json({ message: cause });
 
 		const namegroup = req.params.name;
 		const type = req.params.category;
