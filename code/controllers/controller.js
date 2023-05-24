@@ -427,11 +427,11 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
  */
 export const deleteTransaction = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'User' });
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
-				.json({ message: 'Unauthorized: user is not a user!' });
+				.json({ message: 'Unauthorized: user is not an admin!' });
 
 		let data = await transactions.deleteOne({ _id: req.body._id });
 		return res.json('deleted');
