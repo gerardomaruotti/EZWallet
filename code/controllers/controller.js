@@ -238,10 +238,6 @@ export const getTransactionsByUser = async (req, res) => {
     - error 401 is returned if the user or the category does not exist
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
-	try {
-	} catch (error) {
-		res.status(400).json({ error: error.message });
-	}
 
 	try {
 		const cookie = req.cookies;
