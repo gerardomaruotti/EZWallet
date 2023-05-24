@@ -445,34 +445,34 @@ export const deleteTransaction = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
  */
-	export const deleteTransactions = async (req, res) => {
-		try {
-			let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
-			if (!AdminAuth.authorized)
-			  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
-		
-			const idList= req.body._ids
-	
-			if(idList.length>0){
-				
-				const existingTransactions= await transactions.find({ _id: { $in: idList }})
-		
-				if(existingTransactions.length<idList.length){
-					return res.status(401).json({message:"One or more id not found"})
-				}
-		 
-				let data =  await transactions.deleteMany( {_id: {$in: idList}});
-			
+export const deleteTransactions = async (req, res) => {
+	try {
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+		if (!AdminAuth.authorized)
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });
+
+		const idList = req.body._ids;
+
+		if (idList.length > 0) {
+			const existingTransactions = await transactions.find({
+				_id: { $in: idList },
+			});
+
+			if (existingTransactions.length < idList.length) {
+				return res.status(401).json({ message: 'One or more id not found' });
+			}
+
+			let data = await transactions.deleteMany({ _id: { $in: idList } });
+
 			res.json({
-				data: "Transactions deleted successfully",
-			  });
-			}
-			else{
-				return res.status(401).json({message: "Id list is empty!"})
-			}
-	
-	 
-		} catch (error) {
-			res.status(400).json({ error: "Transactions not found" })
+				data: 'Transactions deleted successfully',
+			});
+		} else {
+			return res.status(401).json({ message: 'Id list is empty!' });
 		}
+	} catch (error) {
+		res.status(400).json({ error: 'Transactions not found' });
 	}
+};
