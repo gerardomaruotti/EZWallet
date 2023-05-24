@@ -222,7 +222,35 @@ export const getTransactionsByUser = async (req, res) => {
 		//Distinction between route accessed by Admins or Regular users for functions that can be called by both
 		//and different behaviors and access rights
 		if (req.url.indexOf('/transactions/users/') >= 0) {
+			//Admin
+			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+			if (!AdminAuth.authorized)
+				return res
+					.status(401)
+					.json({ message: 'Unauthorized: user is not an admin!' });
+
+			const username = req.params.username;
+			const data = await transactions.find({ username });
+			if (data.length === 0) {
+				return res.status(200).json([]);
+			}
+			return res.json(data);
 		} else {
+			//User
+			let UserAuth = verifyAuth(req, res, { authType: 'User' });
+			if (!UserAuth.authorized)
+				return res
+					.status(401)
+					.json({ message: 'Unauthorized: user is not recognized!' });
+
+			const username = req.params.username;
+			const data = await transactions.find({ username });
+			if (data.length === 0) {
+				return res.status(200).json([]);
+			}
+			if (Object.keys(req.query).length === 0) {
+				return res.json(data);
+			}
 		}
 	} catch (error) {
 		res.status(400).json({ error: error.message });
