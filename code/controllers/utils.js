@@ -161,6 +161,13 @@ export const handleAmountFilterParams = (req) => {
 	}
 };
 
+// This function takes an array and a predicate function as arguments and returns a new array containing
+// only the elements of the original array for which the predicate function returns a truthy value.
+
+// It uses the built-in Array.prototype.map method to call the predicate function on each element of the
+// array, returning an array of promises. It then uses Promise.all to wait for all of the promises to
+// resolve before using the built-in Array.prototype.filter method to return only the elements of the
+// original array for which the predicate function returned a truthy value.
 export const asyncFilter = async (arr, predicate) => {
 	const results = await Promise.all(arr.map(predicate));
 

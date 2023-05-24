@@ -358,7 +358,8 @@ export const deleteUser = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
  */
-export const deleteGroup = async (req, res) => {
+export async function deleteGroup(req, res) {
+	// export const deleteGroup = async (req, res) => {
 	try {
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
@@ -384,8 +385,9 @@ export const deleteGroup = async (req, res) => {
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
-};
+}
 
+// This function takes in an array of member emails and a group name. It first filters out any emails that are not in the database, then checks if they are in the group. If no group name is specified, it only checks if they are in any group. It returns an object with the valid emails, emails that are already in the group, emails that are not in the group, and emails that are not in the database.
 const checkGroupEmails = async (memberEmails, groupName) => {
 	let alreadyInGroup = [];
 	let membersNotFound = [];
