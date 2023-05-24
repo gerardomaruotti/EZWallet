@@ -324,6 +324,71 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
 	try {
+		const cookie = req.cookies;
+		if (!cookie.accessToken) {
+			return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
+		}
+		const namegroup = req.params.name;
+		const type = req.params.category;
+		/**
+		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type AND transactions.username = categories.username AND transactions.type = categoryVar AND transactions.username = usernameVar" still need to check if category exists
+		 */
+		const categoryVar = type;
+		
+
+		const group = await Group.findOne({ name: namegroup });
+		if (!group) 
+			return res.status(401).json({ message: 'Group not found' });
+
+		let transactions_array=[];
+
+		const usernames = group.members.map((m) => m.username);
+		
+		usernames.forEach(usernameVar => {
+				transactions
+				.aggregate([
+					{
+						$lookup: {
+							from: 'categories',
+							localField: 'type',
+							foreignField: 'type',
+							as: 'joinedData',
+						},
+					},
+					{
+						$unwind: '$joinedData',
+					},
+					{
+						$match: {
+							'joinedData.type': categoryVar,
+							username: usernameVar,
+						},
+					},
+				])
+				.then((result) => {
+					let data = result.map((v) =>
+						Object.assign(
+							{},
+							{
+								username: v.username,
+								amount: v.amount,
+								type: v.type,
+								color: v.joinedData.color,
+								date: v.date,
+							}
+						)
+					);
+					//res.json(data, usernameVar, categoryVar);
+					transactions_array.append(data);
+					
+				})
+
+				.catch((error) => {
+					throw error;
+				});
+			})
+			res.json(data);
+			
 	} catch (error) {
 		res.status(400).json({ error: error.message });
 	}
