@@ -234,19 +234,59 @@ export const getTransactionsByUser = async (req, res) => {
 		//Distinction between route accessed by Admins or Regular users for functions that can be called by both
 		//and different behaviors and access rights
 		if (req.url.indexOf('/transactions/users/') >= 0) {
-			//Admin
+		//Admin	
 			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 			if (!AdminAuth.authorized)
 				return res
 					.status(401)
 					.json({ message: 'Unauthorized: user is not an admin!' });
 
-			const username = req.params.username;
-			const data = await transactions.find({ username });
-			if (data.length === 0) {
-				return res.status(200).json([]);
-			}
-			return res.json(data);
+					try {
+						const cookie = req.cookies
+						if (!cookie.accessToken) {
+							return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+						}
+						const username = req.params.username;
+						/**
+						 * MongoDB equivalent to the query "SELECT *
+				FROM transactions
+				LEFT JOIN categories ON transactions.type = categories.type
+				WHERE username = usernameVar
+				" still need to check if username exists. I also assume that you cant make a transaction with a non existing category
+						 */
+						const usernameVar = username;
+				
+					
+				console.log("usernameVar:", usernameVar);
+				
+				transactions.aggregate([
+					{
+					  $lookup: {
+						from: "categories",
+						localField: "type",
+						foreignField: "type",
+						as: "joinedData"
+					  }
+					},
+					{
+					  $unwind: "$joinedData"
+					},
+					{
+					  $match: {
+						 "username": usernameVar
+					  }
+					}
+				  ]).then((result) => {
+					let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date }));
+					if (data.length === 0) {
+						return res.status(200).json([]);
+					}
+					res.json(data);
+				}).catch(error => { throw (error) })
+					} catch (error) {
+						res.status(400).json({ error: error.message })
+					}
+
 		} else {
 			//User
 			let UserAuth = verifyAuth(req, res, { authType: 'User' });
@@ -255,21 +295,58 @@ export const getTransactionsByUser = async (req, res) => {
 					.status(401)
 					.json({ message: 'Unauthorized: user is not recognized!' });
 
-			const username = req.params.username;
-			const data = await transactions.find({ username });
-			if (data.length === 0) {
-				return res.status(200).json([]);
-			}
-			if (Object.keys(req.query).length === 0) {
-				return res.json(data);
-			}
+					try {
+						const cookie = req.cookies
+						if (!cookie.accessToken) {
+							return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+						}
+						const username = req.params.username;
+						/**
+						 * MongoDB equivalent to the query "SELECT *
+				FROM transactions
+				LEFT JOIN categories ON transactions.type = categories.type
+				WHERE username = usernameVar
+				" still need to check if username exists. I also assume that you cant make a transaction with a non existing category
+						 */
+						const usernameVar = username;
+				
+					
+				console.log("usernameVar:", usernameVar);
+				
+				transactions.aggregate([
+					{
+					  $lookup: {
+						from: "categories",
+						localField: "type",
+						foreignField: "type",
+						as: "joinedData"
+					  }
+					},
+					{
+					  $unwind: "$joinedData"
+					},
+					{
+					  $match: {
+						 "username": usernameVar
+					  }
+					}
+				  ]).then((result) => {
+					let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date }));
+					if (data.length === 0) {
+						return res.status(200).json([]);
+					}
+					res.json(data);
+				}).catch(error => { throw (error) })
+					} catch (error) {
+						res.status(400).json({ error: error.message })
+					}
 		}
 	} catch (error) {
 		res.status(400).json({ error: error.message });
 	}
 };
 
-/** FATTA
+/**
  * Return all transactions made by a specific user filtered by a specific category
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects
@@ -278,8 +355,8 @@ export const getTransactionsByUser = async (req, res) => {
     - error 401 is returned if the user or the category does not exist
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
-	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+ try {
+	let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
@@ -340,7 +417,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 	}
 };
 
-/** FATTA
+/**
  * Return all transactions made by members of a specific group
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
@@ -350,55 +427,66 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
 	try {
-		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+        const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
 
-		const namegroup = req.params.name;
+        const name = req.params.name;
+        
 
-		const group = await Group.findOne({ name: namegroup });
-		if (!group) return res.status(401).json({ message: 'Group not found' });
+		
+    
+        const group = await Group.findOne({ name });
+        if (!group) {
+          return res.status(404).json({ message: "Group not found." });
+        }
+    
+        const memberEmails = group.members.map(member => member.email);
+        console.log("emails:", memberEmails);
+    
+        const usernames = await User.find({ email: { $in: memberEmails } }).distinct('username');
+        console.log("usernames:", usernames);
 
-		let transactions_array = [];
-		const usernames = [];
-		const emails = [];
-		group.members.forEach((m) => {
-			emails.push(m.email);
-		});
 
-		for (const email of emails) {
-			const user = await User.findOne({ email: email });
-			usernames.push(user.username);
-		}
-		for (const username of usernames) {
-			const userTransactions = await transactions
-				.find({ username: username })
-				.then((result) => {
-					let data = result.map((v) =>
-						Object.assign(
-							{},
-							{
-								username: v.username,
-								amount: v.amount,
-								type: v.type,
-								color: v.color,
-								date: v.date,
-							}
-						)
-					);
-					transactions_array.push(data);
-				})
-				.catch((error) => {
-					res.json({ error: error.message }).status(401);
-				});
-		}
-
-		res.json(transactions_array).status(200);
-	} catch (error) {
-		res.status(400).json({ error: error.message });
-	}
+		
+        transactions
+			.aggregate([
+				{
+					$lookup: {
+						from: 'categories',
+						localField: 'type',
+						foreignField: 'type',
+						as: 'joinedData',
+					},
+				},
+				{
+					$unwind: '$joinedData',
+				}
+			])
+			.then((result) => {
+				let data = result.filter(item => usernames.includes(item.username)).map((v) =>
+					Object.assign(
+						{},
+						{
+							_id: v._id,
+							username: v.username,
+							amount: v.amount,
+							type: v.type,
+							color: v.joinedData.color,
+							date: v.date,
+						}
+					)
+				);
+				res.json(data);
+			})
+			.catch((error) => {
+				res.json({ error: error.message }).status(401);
+			});
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
 };
 
-/** FATTA
+/**
  * Return all transactions made by members of a specific group filtered by a specific category
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects.
@@ -407,55 +495,70 @@ export const getTransactionsByGroup = async (req, res) => {
     - empty array must be returned if there are no transactions made by the group with the specified category
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
-	try {
-		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+    try {
+        const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
+        const name = req.params.name;
+        
 
-		const namegroup = req.params.name;
+		
+    
+        const group = await Group.findOne({ name });
+        if (!group) {
+          return res.status(404).json({ message: "Group not found." });
+        }
+    
+        const memberEmails = group.members.map(member => member.email);
+        console.log("emails:", memberEmails);
+    
+        const usernames = await User.find({ email: { $in: memberEmails } }).distinct('username');
+        console.log("usernames:", usernames);
+
 		const type = req.params.category;
 		const categoryVar = type;
 
-		const group = await Group.findOne({ name: namegroup });
-		if (!group) return res.status(401).json({ message: 'Group not found' });
-
-		let transactions_array = [];
-		const usernames = [];
-		const emails = [];
-		group.members.forEach((m) => {
-			emails.push(m.email);
-		});
-
-		for (const email of emails) {
-			const user = await User.findOne({ email: email });
-			usernames.push(user.username);
-		}
-		for (const username of usernames) {
-			const userTransactions = await transactions
-				.find({ username: username, type: categoryVar })
-				.then((result) => {
-					let data = result.map((v) =>
-						Object.assign(
-							{},
-							{
-								username: v.username,
-								amount: v.amount,
-								type: v.type,
-								color: v.color,
-								date: v.date,
-							}
-						)
-					);
-					transactions_array.push(data);
-				})
-				.catch((error) => {
-					res.json({ error: error.message }).status(401);
-				});
-		}
-
-		res.json(transactions_array).status(200);
-	} catch (error) {
-		res.status(400).json({ error: error.message });
-	}
+		console.log('categoryVar:', categoryVar);
+        transactions
+			.aggregate([
+				{
+					$lookup: {
+						from: 'categories',
+						localField: 'type',
+						foreignField: 'type',
+						as: 'joinedData',
+					},
+				},
+				{
+					$unwind: '$joinedData',
+				},
+				{
+					$match: {
+						'joinedData.type': categoryVar,
+					},
+				},
+			])
+			.then((result) => {
+				let data = result.filter(item => usernames.includes(item.username)).map((v) =>
+					Object.assign(
+						{},
+						{
+							_id: v._id,
+							username: v.username,
+							amount: v.amount,
+							type: v.type,
+							color: v.joinedData.color,
+							date: v.date,
+						}
+					)
+				);
+				res.json(data);
+			})
+			.catch((error) => {
+				res.json({ error: error.message }).status(401);
+			});
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
 };
 
 /**
@@ -488,8 +591,8 @@ export const deleteTransaction = async (req, res) => {
     - error 401 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
  */
 export const deleteTransactions = async (req, res) => {
-	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+try {
+	let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
