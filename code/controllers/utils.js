@@ -8,7 +8,16 @@ import jwt from 'jsonwebtoken';
  *  Example: {date: {$gte: "2023-04-30T00:00:00.000Z"}} returns all transactions whose `date` parameter indicates a date from 30/04/2023 (included) onwards
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
-export const handleDateFilterParams = (req) => {};
+export const handleDateFilterParams = (req) => {
+	const { date, from, upTo } = req.query;
+	if (date && (from || upTo))
+		throw new Error('Cannot use date together with from or upTo');
+	if (date) return { date: { $gte: date } };
+	if (from && upTo) return { date: { $gte: from, $lte: upTo } };
+	if (from) return { date: { $gte: from } };
+	if (upTo) return { date: { $lte: upTo } };
+	return {};
+};
 
 /**
  * Handle possible authentication modes depending on `authType`
@@ -70,6 +79,23 @@ export const verifyAuth = (req, res, info) => {
 		) {
 			return { authorized: false, cause: 'Mismatched users' };
 		}
+		if (info.authType === 'User') {
+			if (decodedAccessToken.username !== info.username) {
+				return { authorized: false, cause: 'Mismatched users' };
+			} else if (decodedAccessToken.role !== 'Regular') {
+				return { authorized: false, cause: 'Mismatched users' };
+			}
+		} else if (info.authType === 'Admin') {
+			if (decodedAccessToken.role !== 'Admin') {
+				return { authorized: false, cause: 'Mismatched users' };
+			}
+		} else if (info.authType === 'Group') {
+			if (!decodedAccessToken.groups.includes(info.group)) {
+				return { authorized: false, cause: 'Mismatched users' };
+			}
+		} else {
+			return { authorized: false, cause: 'Invalid authType' };
+		}
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
 		if (err.name === 'TokenExpiredError') {
@@ -118,7 +144,22 @@ export const verifyAuth = (req, res, info) => {
  *  The returned object must handle all possible combination of amount filtering parameters, including the case where none are present.
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
-export const handleAmountFilterParams = (req) => {};
+export const handleAmountFilterParams = (req) => {
+	const amount = req.query.amount;
+	if (amount) {
+		if (amount[0] === '>') {
+			return { amount: { $gte: amount.slice(1) } };
+		} else if (amount[0] === '<') {
+			return { amount: { $lte: amount.slice(1) } };
+		} else if (amount[0] === '=') {
+			return { amount: amount.slice(1) };
+		} else {
+			return { amount: amount };
+		}
+	} else {
+		return {};
+	}
+};
 
 export const asyncFilter = async (arr, predicate) => {
 	const results = await Promise.all(arr.map(predicate));

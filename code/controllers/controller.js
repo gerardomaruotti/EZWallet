@@ -14,11 +14,12 @@ import {
  */
 export const createCategory = (req, res) => {
 	try {
-		
-		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
-			if (!AdminAuth.authorized)
-			  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
-		
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+		if (!AdminAuth.authorized)
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });
+
 		const { type, color } = req.body;
 		const new_categories = new categories({ type, color });
 		new_categories
@@ -42,10 +43,11 @@ export const createCategory = (req, res) => {
  */
 export const updateCategory = async (req, res) => {
 	try {
-		
-		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
-			if (!AdminAuth.authorized)
-			  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+		if (!AdminAuth.authorized)
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });
 
 		const { type, color } = req.body;
 		const { type: oldType } = req.params;
@@ -74,10 +76,11 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
 	try {
-		
-		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
-		  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });
 
 		const { types } = req.body;
 		types.forEach(async (type) => {
@@ -117,10 +120,12 @@ export const deleteCategory = async (req, res) => {
  */
 export const getCategories = async (req, res) => {
 	try {
-		let UserAuth = verifyAuth(req, res, { authType: "User" });
-			if (!UserAuth.authorized)
-			  return res.status(401).json({ message: "Unauthorized: user is not recognized!" });
-		
+		let UserAuth = verifyAuth(req, res, { authType: 'User' });
+		if (!UserAuth.authorized)
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not recognized!' });
+
 		let data = await categories.find({});
 
 		let filter = data.map((v) =>
@@ -142,11 +147,11 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
 	try {
-		
-		let UserAuth = verifyAuth(req, res, { authType: "User" });
-			if (!UserAuth.authorized)
-			  return res.status(401).json({ message: "Unauthorized: user is not recognized!" });
-
+		let UserAuth = verifyAuth(req, res, { authType: 'User' });
+		if (!UserAuth.authorized)
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not recognized!' });
 
 		const { username, amount, type } = req.body;
 		const new_transactions = new transactions({ username, amount, type });
@@ -170,11 +175,11 @@ export const createTransaction = async (req, res) => {
  */
 export const getAllTransactions = async (req, res) => {
 	try {
-		
-		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
-		  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
-		
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });
 
 		/**
 		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
@@ -274,9 +279,11 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: "Admin" });
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
-		  return res.status(401).json({ message: "Unauthorized: user is not an admin!" });
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });
 
 		const username = req.params.username;
 		const type = req.params.category;
