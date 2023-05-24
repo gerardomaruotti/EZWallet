@@ -152,8 +152,18 @@ export const createTransaction = async (req, res) => {
 			return res
 				.status(401)
 				.json({ message: 'Unauthorized: user is not recognized!' });
-
+				
 		const { username, amount, type } = req.body;
+
+	const typeLook=await categories.findOne({type: type}).exec();
+	if(!typeLook){
+		return res.status(401).json({ message: 'Category does not exist' });
+	}
+	const userLook=await User.findOne({username: username}).exec();
+	if(!userLook){
+		return res.status(401).json({ message: 'User does not exist' });
+	}
+
 		const new_transactions = new transactions({ username, amount, type });
 		new_transactions
 			.save()
@@ -233,6 +243,11 @@ export const getTransactionsByUser = async (req, res) => {
 	try {
 		//Distinction between route accessed by Admins or Regular users for functions that can be called by both
 		//and different behaviors and access rights
+		const username2 = req.params.username;
+	const userLook=await User.findOne({username: username2}).exec();
+	if(!userLook){
+		return res.status(401).json({ message: 'User does not exist' });
+	}
 		if (req.url.indexOf('/transactions/users/') >= 0) {
 		//Admin	
 			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
@@ -356,14 +371,24 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
  try {
+
+	const username = req.params.username;
+		const type = req.params.category;
+	const typeLook=await categories.findOne({type: type}).exec();
+	if(!typeLook){
+		return res.status(401).json({ message: 'Category does not exist' });
+	}
+	const userLook=await User.findOne({username: username}).exec();
+	if(!userLook){
+		return res.status(401).json({ message: 'User does not exist' });
+	}
 	let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
 				.json({ message: 'Unauthorized: user is not an admin!' });
 
-		const username = req.params.username;
-		const type = req.params.category;
+		
 		/**
 		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type AND transactions.username = categories.username AND transactions.type = categoryVar AND transactions.username = usernameVar" still need to check if category exists
 		 */
@@ -437,7 +462,7 @@ export const getTransactionsByGroup = async (req, res) => {
     
         const group = await Group.findOne({ name });
         if (!group) {
-          return res.status(404).json({ message: "Group not found." });
+          return res.status(401).json({ message: "Group not found." });
         }
     
         const memberEmails = group.members.map(member => member.email);
@@ -499,13 +524,16 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
         const name = req.params.name;
-        
-
-		
+		const type2 = req.params.category;
+	const typeLook=await categories.findOne({type: type2}).exec();
+	if(!typeLook){
+		return res.status(401).json({ message: 'Category does not exist' });
+	}
+	
     
         const group = await Group.findOne({ name });
         if (!group) {
-          return res.status(404).json({ message: "Group not found." });
+          return res.status(401).json({ message: "Group not found." });
         }
     
         const memberEmails = group.members.map(member => member.email);
@@ -570,6 +598,20 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
  */
 export const deleteTransaction = async (req, res) => {
 	try {
+
+        const username2 = req.params.username;
+		const id2 = req.params._id;
+
+	const userLook=await User.findOne({username: username2}).exec();
+	if(!userLook){
+		return res.status(401).json({ message: 'User does not exist' });
+	}
+
+		
+		const idLook= await transactions.findOne({ _id: id2 }).exec();
+		if (!idLook) {
+			return res.status(401).json({ message: 'Transaction not found.' });
+		}
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
