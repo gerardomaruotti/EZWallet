@@ -9,14 +9,65 @@ import jwt from 'jsonwebtoken';
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
-	const { date, from, upTo } = req.query;
-	if (date && (from || upTo))
-		throw new Error('Cannot use date together with from or upTo');
-	if (date) return { date: { $gte: date } };
-	if (from && upTo) return { date: { $gte: from, $lte: upTo } };
-	if (from) return { date: { $gte: from } };
-	if (upTo) return { date: { $lte: upTo } };
-	return {};
+	const username = req.params.username;
+	const date = req.body.date;
+	const usernameVar = username;
+	const dateVar = date;
+
+	console.log("usernameVar:", usernameVar);
+
+	let dateQuery = {};
+
+	if (dateVar && Array.isArray(dateVar)) {
+	for (const filter of dateVar) {
+		const [operator, value] = filter.split(" ");
+		const parsedValue = new Date(value);
+
+		dateQuery[operator] = parsedValue;
+	}
+	}
+
+	let aggregationPipeline = [
+	{
+		$lookup: {
+		from: "categories",
+		localField: "type",
+		foreignField: "type",
+		as: "joinedData"
+		}
+	},
+	{
+		$unwind: "$joinedData"
+	},
+	{
+		$match: {
+		username: usernameVar
+		}
+	}
+	];
+
+	if (Object.keys(dateQuery).length > 0) {
+	aggregationPipeline.push({
+		$match: {
+		date: dateQuery
+		}
+	});
+	}
+
+	transactions.aggregate(aggregationPipeline)
+	.then((result) => {
+		let data = result.map((v) =>
+		Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
+		);
+		if (data.length === 0) {
+		return [];
+		}
+		return data;
+	})
+	.catch((error) => {
+		throw error;
+	});
+
 };
 
 /**
@@ -146,60 +197,60 @@ export const verifyAuth = (req, res, info) => {
  */
 export const handleAmountFilterParams = (req) => {
 	const username = req.params.username;
-const amount = req.body.amount;
-const usernameVar = username;
-const amountVar = amount;
+	const amount = req.body.amount;
+	const usernameVar = username;
+	const amountVar = amount;
 
-console.log("usernameVar:", usernameVar);
+	console.log("usernameVar:", usernameVar);
 
-let amountQuery = {};
+	let amountQuery = {};
 
-if (amountVar && Array.isArray(amountVar)) {
-  for (const filter of amountVar) {
-    const [operator, value] = filter.split(" ");
-    const parsedValue = parseFloat(value);
+	if (amountVar && Array.isArray(amountVar)) {
+	for (const filter of amountVar) {
+		const [operator, value] = filter.split(" ");
+		const parsedValue = parseFloat(value);
 
-    amountQuery[operator] = parsedValue;
-  }
-}
+		amountQuery[operator] = parsedValue;
+	}
+	}
 
-let aggregationPipeline = [
-  {
-    $lookup: {
-      from: "categories",
-      localField: "type",
-      foreignField: "type",
-      as: "joinedData"
-    }
-  },
-  {
-    $unwind: "$joinedData"
-  },
-  {
-    $match: {
-      username: usernameVar
-    }
-  }
-];
+	let aggregationPipeline = [
+	{
+		$lookup: {
+		from: "categories",
+		localField: "type",
+		foreignField: "type",
+		as: "joinedData"
+		}
+	},
+	{
+		$unwind: "$joinedData"
+	},
+	{
+		$match: {
+		username: usernameVar
+		}
+	}
+	];
 
-if (Object.keys(amountQuery).length > 0) {
-  aggregationPipeline.push({
-    $match: {
-      amount: amountQuery
-    }
-  });
-}
+	if (Object.keys(amountQuery).length > 0) {
+	aggregationPipeline.push({
+		$match: {
+		amount: amountQuery
+		}
+	});
+	}
 
-transactions.aggregate(aggregationPipeline)
-  .then((result) => {
-    let data = result.map((v) =>
-      Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
-    );
-    return data;
-  })
-  .catch((error) => {
-    throw error;
-  });
+	transactions.aggregate(aggregationPipeline)
+	.then((result) => {
+		let data = result.map((v) =>
+		Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
+		);
+		return data;
+	})
+	.catch((error) => {
+		throw error;
+	});
 };
 
 // This function takes an array and a predicate function as arguments and returns a new array containing
