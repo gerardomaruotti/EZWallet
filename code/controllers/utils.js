@@ -145,20 +145,61 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
-	const amount = req.query.amount;
-	if (amount) {
-		if (amount[0] === '>') {
-			return { amount: { $gte: amount.slice(1) } };
-		} else if (amount[0] === '<') {
-			return { amount: { $lte: amount.slice(1) } };
-		} else if (amount[0] === '=') {
-			return { amount: amount.slice(1) };
-		} else {
-			return { amount: amount };
-		}
-	} else {
-		return {};
-	}
+	const username = req.params.username;
+const amount = req.body.amount;
+const usernameVar = username;
+const amountVar = amount;
+
+console.log("usernameVar:", usernameVar);
+
+let amountQuery = {};
+
+if (amountVar && Array.isArray(amountVar)) {
+  for (const filter of amountVar) {
+    const [operator, value] = filter.split(" ");
+    const parsedValue = parseFloat(value);
+
+    amountQuery[operator] = parsedValue;
+  }
+}
+
+let aggregationPipeline = [
+  {
+    $lookup: {
+      from: "categories",
+      localField: "type",
+      foreignField: "type",
+      as: "joinedData"
+    }
+  },
+  {
+    $unwind: "$joinedData"
+  },
+  {
+    $match: {
+      username: usernameVar
+    }
+  }
+];
+
+if (Object.keys(amountQuery).length > 0) {
+  aggregationPipeline.push({
+    $match: {
+      amount: amountQuery
+    }
+  });
+}
+
+transactions.aggregate(aggregationPipeline)
+  .then((result) => {
+    let data = result.map((v) =>
+      Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
+    );
+    return data;
+  })
+  .catch((error) => {
+    throw error;
+  });
 };
 
 // This function takes an array and a predicate function as arguments and returns a new array containing
