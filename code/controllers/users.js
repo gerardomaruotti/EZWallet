@@ -220,7 +220,6 @@ export const addToGroup = async (req, res) => {
 		if((memberEmails.some((email) => !isEmail(email))))
 			return res.status(400).json({error: 'Mail not valid'});
 		
-
 		const { validEmails, alreadyInGroup, membersNotFound } =
 			await checkGroupEmails(memberEmails);
 
@@ -343,10 +342,14 @@ export const deleteUser = async (req, res) => {
 
 		const email = req.body.email;
 		if (email === undefined)
-			return res.status(401).json({ message: 'Missing parameters' });
+			return res.status(400).json({ message: 'Missing parameters' });
+
+		if(!isEmail(email)){
+			return res.status(400).json({error: 'Mail not valid'});
+		}
 
 		const user = await User.findOne({ email: email });
-		if (!user) return res.status(401).json({ message: 'User not found' });
+		if (!user) return res.status(400).json({ message: 'User not found' });
 
 		const findTransactions = await transactions.find({
 			username: user.username,
@@ -372,6 +375,7 @@ export const deleteUser = async (req, res) => {
 		const response = {
 			deletedTransactionsNumber: transactionsNumber,
 			isRemovedFromGroup: emailExists,
+			refreshedTokenMessage: res.locals.refreshedTokenMessage
 		};
 		res.json(response).status(200);
 	} catch (err) {
@@ -397,7 +401,10 @@ export async function deleteGroup(req, res) {
 
 		let { name } = req.body;
 		if (name === undefined)
-			return res.status(401).json({ message: 'Missing parameters' });
+			return res.status(400).json({ message: 'Missing parameters' });
+
+		if(name === '')
+			return res.status(400).json({ message: 'the request body is an empty string' });
 
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
@@ -407,7 +414,7 @@ export async function deleteGroup(req, res) {
 		});
 
 		if (deletedGroup.deletedCount === 0)
-			return res.status(401).json({ message: 'Group not found' });
+			return res.status(400).json({ message: 'Group not found' });
 
 		res.json({ message: 'Group deleted' }).status(200);
 	} catch (err) {
