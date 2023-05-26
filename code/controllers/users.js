@@ -1,8 +1,8 @@
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
-import { verifyAuth, asyncFilter } from './utils.js';
+import { verifyAuth, asyncFilter, verifyMultipleAuth } from './utils.js';
 
-/** FATTA
+/** A POSTO
  * Return all the users
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `email` and `role`
@@ -11,11 +11,9 @@ import { verifyAuth, asyncFilter } from './utils.js';
  */
 export const getUsers = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		const {authorized, cause} = verifyAuth(req, res, { authType: 'Admin' })
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
 
 		const users = (await User.find()).map((user) => {
 			return {
@@ -39,15 +37,14 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
 	try {
-		let UserAuth = verifyAuth(req, res, { authType: 'User' });
-		if (!UserAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not recognized!' });
+		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
 
 		const username = req.params.username;
-		const user = await User.findOne({ refreshToken: cookie.refreshToken });
-		if (!user) return res.status(401).json({ message: 'User not found' });
+		const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
+		if (!user) 
+			return res.status(400).json({ message: 'User not found' });
 		const responseUser = {
 			username: user.username,
 			email: user.email,
@@ -368,7 +365,8 @@ export const deleteUser = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
  */
-export const deleteGroup = async (req, res) => {
+export async function deleteGroup(req, res) {
+	// export const deleteGroup = async (req, res) => {
 	try {
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
@@ -394,8 +392,9 @@ export const deleteGroup = async (req, res) => {
 	} catch (err) {
 		res.status(500).json(err.message);
 	}
-};
+}
 
+// This function takes in an array of member emails and a group name. It first filters out any emails that are not in the database, then checks if they are in the group. If no group name is specified, it only checks if they are in any group. It returns an object with the valid emails, emails that are already in the group, emails that are not in the group, and emails that are not in the database.
 const checkGroupEmails = async (memberEmails, groupName) => {
 	let alreadyInGroup = [];
 	let membersNotFound = [];
