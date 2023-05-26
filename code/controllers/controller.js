@@ -343,46 +343,14 @@ export const getTransactionsByUser = async (req, res) => {
 
 				console.log('usernameVar:', usernameVar);
 
-				transactions
-					.aggregate([
-						{
-							$lookup: {
-								from: 'categories',
-								localField: 'type',
-								foreignField: 'type',
-								as: 'joinedData',
-							},
-						},
-						{
-							$unwind: '$joinedData',
-						},
-						{
-							$match: {
-								username: usernameVar,
-							},
-						},
-					])
-					.then((result) => {
-						let data = result.map((v) =>
-							Object.assign(
-								{},
-								{
-									username: v.username,
-									amount: v.amount,
-									type: v.type,
-									date: v.date,
-									color: v.joinedData.color,
-								}
-							)
-						);
-						if (data.length === 0) {
-							return res.status(200).json([]);
-						}
-						res.status(200).json(data);
-					})
-					.catch((error) => {
-						throw error;
-					});
+				
+					
+         let data=handleDateFilterParams();
+		 if(data.length===0){
+			 return res.status(200).json([]);
+		 }
+		 res.status(200).json(data);
+					
 			} catch (error) {
 				res.status(400).json({ error: error.message });
 			}

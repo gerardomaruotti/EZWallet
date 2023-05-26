@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import { response } from 'express';
+import { categories, transactions } from '../models/model.js';
 
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
