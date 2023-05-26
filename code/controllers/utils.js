@@ -107,14 +107,19 @@ export const handleDateFilterParams = (req) => {
  */
 export const verifyAuth = (req, res, info) => {
 	const cookie = req.cookies;
+	console.log("cookie:", cookie);
 	if (!cookie.accessToken || !cookie.refreshToken) {
 		return { authorized: false, cause: 'Unauthorized' };
 	}
 	try {
-		const decodedAccessToken = jwt.verify(
+		console.log("sdfasdfasdfpr");
+		const decodedAccessToken = jwt.verify(//to do error no mi fa i console log doppo questo
 			cookie.accessToken,
 			process.env.ACCESS_KEY
 		);
+		console.log("decodedAccessToken.username:", decodedAccessToken.username);
+		console.log("decodedAccessToken.email:", decodedAccessToken.email);
+		console.log("decodedAccessToken.role:", decodedAccessToken.role);
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
@@ -142,9 +147,9 @@ export const verifyAuth = (req, res, info) => {
 		}
 		if (info.authType === 'User') {
 			if (decodedAccessToken.username !== info.username) {
-				return { authorized: false, cause: 'Mismatched users' };
+				return { authorized: false, cause: 'Mismatched users1' };
 			} else if (decodedAccessToken.role !== 'Regular') {
-				return { authorized: false, cause: 'Mismatched users' };
+				return { authorized: false, cause: 'Mismatched users2' };
 			}
 		} else if (info.authType === 'Admin') {
 			if (decodedAccessToken.role !== 'Admin') {
