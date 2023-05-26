@@ -1,7 +1,6 @@
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
 import { verifyAuth, asyncFilter, verifyMultipleAuth, isEmail } from './utils.js';
-import {query,validationResult} from 'express-validator';
 
 /** OK
  * Return all the users
@@ -165,11 +164,6 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
 	try {
-		const { authorized, cause } = verifyMultipleAuth(req, res, {
-			authType: ['User', 'Admin'],
-		});
-		if (!authorized) return res.status(401).json({ error: cause });
-
 		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
 		if (!authorized) 
 			return res.status(401).json({ error: cause });
@@ -252,17 +246,7 @@ export const addToGroup = async (req, res) => {
 			{ name: req.params.name },
 			{ $push: { members: { $each: membersToAdd } } }
 		)
-			.then(async (group) =>
-				res.json({
-					group: {
-						name: name,
-						members: (await Group.findOne({ name: name })).members.map((m) => {
-							m.email;
-						}),
-					},
-					alreadyInGroup,
-					membersNotFound,
-				res.json({ data: {
+			.then(async (group) => res.json({ data: {
 						group: {
 							name: name,
 							members: (await Group.findOne({ name: name })).members.map(
