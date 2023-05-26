@@ -1,8 +1,8 @@
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
-import { verifyAuth, asyncFilter } from './utils.js';
+import { verifyAuth, asyncFilter, verifyMultipleAuth } from './utils.js';
 
-/** FATTA
+/** A POSTO
  * Return all the users
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `email` and `role`
@@ -11,6 +11,10 @@ import { verifyAuth, asyncFilter } from './utils.js';
  */
 export const getUsers = async (req, res) => {
 	try {
+		const {authorized, cause} = verifyAuth(req, res, { authType: 'Admin' })
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
+
 		const users = (await User.find()).map((user) => {
 			return {
 				username: user.username,
@@ -33,14 +37,14 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
 	try {
-		const cookie = req.cookies;
-		if (!cookie.accessToken || !cookie.refreshToken) {
-			return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
-		}
+		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
+
 		const username = req.params.username;
-		const user = await User.findOne({ refreshToken: cookie.refreshToken });
+		const user = await User.findOne({ refreshToken: req.cookies.refreshToken });
 		if (!user) 
-			return res.status(401).json({ message: 'User not found' });
+			return res.status(400).json({ message: 'User not found' });
 		const responseUser = {
 			username: user.username,
 			email: user.email,
