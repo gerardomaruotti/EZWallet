@@ -247,27 +247,27 @@ export const removeFromGroup = async (req, res) => {
 		let { memberEmails } = req.body;
 
 		if (memberEmails === undefined)
-			return res.status(401).json({ message: 'Missing parameters' });
+			return res.status(401).json({ error: 'Missing parameters' });
 		
 		if(req.path.split('/').slice(-1)[0] === 'remove') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 			if (!authorized) 
-				return res.status(401).json({ message: cause });
+				return res.status(401).json({ error: cause });
 		} else if(req.path.split('/').slice(-1)[0] === 'pull') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
 			if (!authorized) 
-				return res.status(401).json({ message: cause });
+				return res.status(401).json({ error: cause });
 		} else {
 			return res.status(400).json({ error: 'Path not correct'});
 		}	
 
 		if (!(await Group.findOne({ name: name })))
-			return res.status(401).json({ message: 'Group not found' });
+			return res.status(401).json({ error: 'Group not found' });
 
 		const { validEmails, membersNotFound, notInGroup } = await checkGroupEmails(memberEmails, name);
 
 		if (validEmails.length == 0)
-			return res.status(401).json({ message: 'All the emails are invalid' });
+			return res.status(401).json({ error: 'All the emails are invalid' });
 
 		const membersToRemove = await Promise.all(
 			validEmails.map(async (e) => {
