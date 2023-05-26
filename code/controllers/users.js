@@ -1,6 +1,7 @@
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
 import { verifyAuth, asyncFilter, verifyMultipleAuth } from './utils.js';
+import {query,validationResult} from 'express-validator';
 
 /** A POSTO
  * Return all the users
@@ -156,20 +157,14 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
 	try {
-		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!authorized) return res.status(401).json({ message: cause });
-		
-		
-		else if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
 		
 
 		const name = req.params.name;
 		const group = await Group.findOne({ name: name });
-		if (!group) return res.status(400).json({ message: 'Group not found' });
+		if (!group) return res.status(400).json({ error: 'Group not found' });
 
 		const responseGroup = {
 			name: group.name,
@@ -198,23 +193,28 @@ export const addToGroup = async (req, res) => {
 		let { name } = req.params;
 		let { memberEmails } = req.body;
 		if (name === undefined || memberEmails === undefined)
-			return res.status(401).json({ message: 'Missing parameters' });
+			return res.status(400).json({ error: 'The request body does not contain all the necessary attributes' });
 
-		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-		if (!authorized) return res.status(401).json({ message: cause });
+		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
+			if (!authorized) 
+				return res.status(401).json({ error: cause });
 
 		if (!(await Group.findOne({ name: name })))
-			return res.status(400).json({ message: 'Group not found' });
+			return res.status(400).json({ error: 'Group not found' });
+
+		if((memberEmails.some((email) => !check(email).isEmail())))
+			return res.status(400).json({error: 'Mail not valid'});
+		
 
 		const { validEmails, alreadyInGroup, membersNotFound } =
 			await checkGroupEmails(memberEmails);
 
 		if (validEmails.length == 0)
-			return res.status(401).json({ message: 'All the emails are invalid' });
+			return res.status(400).json({ message: 'All the emails are invalid' });
 
 		const membersToAdd = await Promise.all(
 			validEmails.map(async (e) => {
-				return { email: e, user: await User.findOne({ email: e }) };
+				return { email: e.email, user: await User.findOne({ email: e.email }) };
 			})
 		);
 
@@ -227,7 +227,7 @@ export const addToGroup = async (req, res) => {
 					group: {
 						name: name,
 						members: (await Group.findOne({ name: name })).members.map(
-							(m) => m.email
+							(m) => {m.email}
 						),
 					},
 					alreadyInGroup,
@@ -275,7 +275,7 @@ export const removeFromGroup = async (req, res) => {
 
 		const membersToRemove = await Promise.all(
 			validEmails.map(async (e) => {
-				return { email: e, user: await User.findOne({ email: e }) };
+				return { email: e.email, user: await User.findOne({ email: e.email }) };
 			})
 		);
 
