@@ -11,14 +11,13 @@ import dotenv from 'dotenv';
  */
 dotenv.config();
 beforeAll(async () => {
-  const dbName = "testingDatabaseUsers";
-  const url = `${process.env.MONGO_URI}/${dbName}`;
+	const dbName = 'testingDatabaseUsers';
+	const url = `${process.env.MONGO_URI}/${dbName}`;
 
-  await mongoose.connect(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-
+	await mongoose.connect(url, {
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	});
 });
 
 /**
@@ -26,63 +25,63 @@ beforeAll(async () => {
  * This is done so that subsequent executions of the test suite start with an empty database.
  */
 afterAll(async () => {
-  await mongoose.connection.db.dropDatabase();
-  await mongoose.connection.close();
+	await mongoose.connection.db.dropDatabase();
+	await mongoose.connection.close();
 });
 
-describe("getUsers", () => {
-  /**
-   * Database is cleared before each test case, in order to allow insertion of data tailored for each specific test case.
-   */
-  beforeEach(async () => {
-    await User.deleteMany({})
-  })
+describe('getUsers', () => {
+	/**
+	 * Database is cleared before each test case, in order to allow insertion of data tailored for each specific test case.
+	 */
+	beforeEach(async () => {
+		await User.deleteMany({});
+	});
 
-  test("should return empty list if there are no users", (done) => {
-    request(app)
-      .get("/api/users")
-      .then((response) => {
-        expect(response.status).toBe(200)
-        expect(response.body).toHaveLength(0)
-        done()
-      })
-      .catch((err) => done(err))
-  })
+	test('should return empty list if there are no users', (done) => {
+		request(app)
+			.get('/api/users')
+			.then((response) => {
+				expect(response.status).toBe(200);
+				expect(response.body).toHaveLength(0);
+				done();
+			})
+			.catch((err) => done(err));
+	});
 
-  test("should retrieve list of all users", (done) => {
-    User.create({
-      username: "tester",
-      email: "test@test.com",
-      password: "tester",
-    }).then(() => {
-      request(app)
-        .get("/api/users")
-        .then((response) => {
-          expect(response.status).toBe(200)
-          expect(response.body).toHaveLength(1)
-          expect(response.body[0].username).toEqual("tester")
-          expect(response.body[0].email).toEqual("test@test.com")
-          expect(response.body[0].password).toEqual("tester")
-          expect(response.body[0].role).toEqual("Regular")
-          done() // Notify Jest that the test is complete
-        })
-        .catch((err) => done(err))
-    })
-  })
-})
+	test('should retrieve list of all users', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'test@test.com',
+			password: 'tester',
+		}).then(() => {
+			request(app)
+				.get('/api/users')
+				.then((response) => {
+					expect(response.status).toBe(200);
+					expect(response.body).toHaveLength(1);
+					expect(response.body[0].username).toEqual('tester');
+					expect(response.body[0].email).toEqual('test@test.com');
+					expect(response.body[0].password).toEqual('tester');
+					expect(response.body[0].role).toEqual('Regular');
+					done(); // Notify Jest that the test is complete
+				})
+				.catch((err) => done(err));
+		});
+	});
+});
 
-describe("getUser", () => { })
+describe('getUser', () => {});
 
-describe("createGroup", () => { })
+describe('createGroup', () => {});
 
-describe("getGroups", () => { })
+describe('getGroups', () => {});
 
-describe("getGroup", () => { })
+describe('getGroup', () => {});
 
-describe("addToGroup", () => { })
+describe('addToGroup', () => {});
 
-describe("removeFromGroup", () => { })
+describe('removeFromGroup', () => {});
 
-describe("deleteUser", () => { })
+describe('deleteUser', () => {});
 
-describe("deleteGroup", () => { })
+describe('deleteGroup', () => {});

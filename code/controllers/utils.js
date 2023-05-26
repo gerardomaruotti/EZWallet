@@ -8,7 +8,67 @@ import jwt from 'jsonwebtoken';
  *  Example: {date: {$gte: "2023-04-30T00:00:00.000Z"}} returns all transactions whose `date` parameter indicates a date from 30/04/2023 (included) onwards
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
-export const handleDateFilterParams = (req) => {};
+export const handleDateFilterParams = (req) => {
+	const username = req.params.username;
+	const date = req.body.date;
+	const usernameVar = username;
+	const dateVar = date;
+
+	console.log("usernameVar:", usernameVar);
+
+	let dateQuery = {};
+
+	if (dateVar && Array.isArray(dateVar)) {
+	for (const filter of dateVar) {
+		const [operator, value] = filter.split(" ");
+		const parsedValue = new Date(value);
+
+		dateQuery[operator] = parsedValue;
+	}
+	}
+
+	let aggregationPipeline = [
+	{
+		$lookup: {
+		from: "categories",
+		localField: "type",
+		foreignField: "type",
+		as: "joinedData"
+		}
+	},
+	{
+		$unwind: "$joinedData"
+	},
+	{
+		$match: {
+		username: usernameVar
+		}
+	}
+	];
+
+	if (Object.keys(dateQuery).length > 0) {
+	aggregationPipeline.push({
+		$match: {
+		date: dateQuery
+		}
+	});
+	}
+
+	transactions.aggregate(aggregationPipeline)
+	.then((result) => {
+		let data = result.map((v) =>
+		Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
+		);
+		if (data.length === 0) {
+		return [];
+		}
+		return data;
+	})
+	.catch((error) => {
+		throw error;
+	});
+
+};
 
 /**
  * Handle possible authentication modes depending on `authType`
@@ -70,6 +130,23 @@ export const verifyAuth = (req, res, info) => {
 		) {
 			return { authorized: false, cause: 'Mismatched users' };
 		}
+		if (info.authType === 'User') {
+			if (decodedAccessToken.username !== info.username) {
+				return { authorized: false, cause: 'Mismatched users' };
+			} else if (decodedAccessToken.role !== 'Regular') {
+				return { authorized: false, cause: 'Mismatched users' };
+			}
+		} else if (info.authType === 'Admin') {
+			if (decodedAccessToken.role !== 'Admin') {
+				return { authorized: false, cause: 'Mismatched users' };
+			}
+		} else if (info.authType === 'Group') {
+			if (!decodedAccessToken.groups.includes(info.group)) {
+				return { authorized: false, cause: 'Mismatched users' };
+			}
+		} else {
+			return { authorized: false, cause: 'Invalid authType' };
+		}
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
 		if (err.name === 'TokenExpiredError') {
@@ -118,13 +195,76 @@ export const verifyAuth = (req, res, info) => {
  *  The returned object must handle all possible combination of amount filtering parameters, including the case where none are present.
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
-export const handleAmountFilterParams = (req) => {};
+export const handleAmountFilterParams = (req) => {
+	const username = req.params.username;
+	const amount = req.body.amount;
+	const usernameVar = username;
+	const amountVar = amount;
 
+	console.log("usernameVar:", usernameVar);
+
+	let amountQuery = {};
+
+	if (amountVar && Array.isArray(amountVar)) {
+	for (const filter of amountVar) {
+		const [operator, value] = filter.split(" ");
+		const parsedValue = parseFloat(value);
+
+		amountQuery[operator] = parsedValue;
+	}
+	}
+
+	let aggregationPipeline = [
+	{
+		$lookup: {
+		from: "categories",
+		localField: "type",
+		foreignField: "type",
+		as: "joinedData"
+		}
+	},
+	{
+		$unwind: "$joinedData"
+	},
+	{
+		$match: {
+		username: usernameVar
+		}
+	}
+	];
+
+	if (Object.keys(amountQuery).length > 0) {
+	aggregationPipeline.push({
+		$match: {
+		amount: amountQuery
+		}
+	});
+	}
+
+	transactions.aggregate(aggregationPipeline)
+	.then((result) => {
+		let data = result.map((v) =>
+		Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
+		);
+		return data;
+	})
+	.catch((error) => {
+		throw error;
+	});
+};
+
+// This function takes an array and a predicate function as arguments and returns a new array containing
+// only the elements of the original array for which the predicate function returns a truthy value.
+
+// It uses the built-in Array.prototype.map method to call the predicate function on each element of the
+// array, returning an array of promises. It then uses Promise.all to wait for all of the promises to
+// resolve before using the built-in Array.prototype.filter method to return only the elements of the
+// original array for which the predicate function returned a truthy value.
 export const asyncFilter = async (arr, predicate) => {
 	const results = await Promise.all(arr.map(predicate));
 
 	return arr.filter((_v, index) => results[index]);
-}
+};
 
 export const verifyMultipleAuth = (req, res, info) => {
 	
