@@ -1,6 +1,6 @@
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
-import { verifyAuth, asyncFilter, verifyMultipleAuth } from './utils.js';
+import { verifyAuth, asyncFilter, verifyMultipleAuth, isEmail } from './utils.js';
 import {query,validationResult} from 'express-validator';
 
 /** OK
@@ -136,13 +136,13 @@ export const getGroups = async (req, res) => {
 		const groups = (await Group.find()).map((group) => {
 			return {
 				name: group.name,
-				members: group.members.map((m) => m.email),
-				refreshedTokenMessage: res.locals.refreshedTokenMessage,
+				members: group.members.map((m) => m.email)
+
 			};
 		});
-		res.status(200).json(groups);
-	} catch (err) {
-		res.status(500).json(err.message);
+		res.status(200).json({ data: groups, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+	} catch (error) {
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -159,7 +159,6 @@ export const getGroup = async (req, res) => {
 		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
 		if (!authorized) 
 			return res.status(401).json({ error: cause });
-		
 
 		const name = req.params.name;
 		const group = await Group.findOne({ name: name });
@@ -167,12 +166,11 @@ export const getGroup = async (req, res) => {
 
 		const responseGroup = {
 			name: group.name,
-			members: group.members.map((m) => m.email),
-			refreshedTokenMessage: res.locals.refreshedTokenMessage
+			members: group.members.map((m) => m.email)
 		};
-		res.status(200).json(responseGroup);
-	} catch (err) {
-		res.status(500).json(err.message);
+		res.status(200).json({ data: responseGroup, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+	} catch (error) {
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -194,14 +192,22 @@ export const addToGroup = async (req, res) => {
 		if (name === undefined || memberEmails === undefined)
 			return res.status(400).json({ error: 'The request body does not contain all the necessary attributes' });
 
-		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
-			if (!authorized) 
-				return res.status(401).json({ error: cause });
+			if(req.path.split('/').slice(-1)[0] === 'add') {
+				const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+				if (!authorized) 
+					return res.status(401).json({ error: cause });
+			} else if(req.path.split('/').slice(-1)[0] === 'insert') {
+				const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+				if (!authorized) 
+					return res.status(401).json({ error: cause });
+			} else {
+				return res.status(400).json({ error: 'Path not correct'});
+			}	
 
 		if (!(await Group.findOne({ name: name })))
 			return res.status(400).json({ error: 'Group not found' });
 
-		if((memberEmails.some((email) => !check(email).isEmail())))
+		if((memberEmails.some((email) => !isEmail(email))))
 			return res.status(400).json({error: 'Mail not valid'});
 		
 
@@ -209,7 +215,7 @@ export const addToGroup = async (req, res) => {
 			await checkGroupEmails(memberEmails);
 
 		if (validEmails.length == 0)
-			return res.status(400).json({ message: 'All the emails are invalid' });
+			return res.status(400).json({ error: 'All the emails are invalid' });
 
 		const membersToAdd = await Promise.all(
 			validEmails.map(async (e) => {
@@ -222,22 +228,23 @@ export const addToGroup = async (req, res) => {
 			{ $push: { members: { $each: membersToAdd } } }
 		)
 			.then(async (group) =>
-				res.json({
-					group: {
-						name: name,
-						members: (await Group.findOne({ name: name })).members.map(
-							(m) => {m.email}
-						),
-					},
-					alreadyInGroup,
-					membersNotFound,
+				res.json({ data: {
+						group: {
+							name: name,
+							members: (await Group.findOne({ name: name })).members.map(
+								(m) => {m.email}
+							),
+						},
+						alreadyInGroup,
+						membersNotFound,
+					}, refreshedTokenMessage: res.locals.refreshedTokenMessage
 				})
 			)
 			.catch((err) => {
 				throw err;
 			});
-	} catch (err) {
-		res.status(500).json(err.message);
+	} catch (error) {
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -302,7 +309,7 @@ export const removeFromGroup = async (req, res) => {
 				throw err;
 			});
 	} catch (err) {
-		res.status(500).json(err.message);
+		res.status(500).json({ error: err.message });
 	}
 };
 
