@@ -292,7 +292,19 @@ export const asyncFilter = async (arr, predicate) => {
 	return arr.filter((_v, index) => results[index]);
 };
 
-export const verifyMultipleAuth = (req, res, info) => {};
+export const verifyMultipleAuth = (req, res, info) => {
+	let message = '';
+	return { authorized: info.authType.some((type, index) => {
+		const {authorized, cause } = verifyAuth(req, res, type);
+		if(authorized)
+			return true;
+		message += cause;
+		if(index !== info.authType.length)
+			message += ' or ';
+		return false
+	}), 
+	cause: message };
+};
 
 export const isEmail = (email) => {
 	return true;

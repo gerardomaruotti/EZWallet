@@ -62,7 +62,7 @@ export const getUser = async (req, res) => {
 	}
 };
 
-/** OK
+/** OKOK
  * Create a new group
   - Request Body Content: An object having a string attribute for the `name` of the group and an array that lists all the `memberEmails`
   - Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name`
@@ -77,10 +77,11 @@ export const createGroup = async (req, res) => {
 	try {
 		let { name, memberEmails } = req.body;
 		if (name === undefined || memberEmails === undefined)
-			return res.status(401).json({ message: 'Missing parameters' });
+			return res.status(401).json({ error: 'Missing parameters' });
 
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-		if (!authorized) return res.status(401).json({ error: cause });
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
 
 		if (await Group.findOne({ name: name }))
 			return res
@@ -107,9 +108,7 @@ export const createGroup = async (req, res) => {
 					data: {
 						group: {
 							name: group.name,
-							members: group.members.map((m) => {
-								m.email;
-							}),
+							members: group.members.map((m) => ({ email: m.email }))
 						},
 						alreadyInGroup,
 						membersNotFound,
@@ -125,7 +124,7 @@ export const createGroup = async (req, res) => {
 	}
 };
 
-/** FATTA
+/** OKOK
  * Return all the groups
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having a string attribute for the `name` of the group
@@ -135,16 +134,14 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
 
 		const groups = (await Group.find()).map((group) => {
 			return {
 				name: group.name,
-				members: group.members.map((m) => m.email)
+				members: group.members.map((m) => ({ email: m.email }))
 
 			};
 		});
@@ -154,7 +151,7 @@ export const getGroups = async (req, res) => {
 	}
 };
 
-/** FATTA
+/** OKOK
  * Return information of a specific group
   - Request Body Content: None
   - Response `data` Content: An object having a string attribute for the `name` of the group and an array for the 
@@ -165,6 +162,7 @@ export const getGroups = async (req, res) => {
 export const getGroup = async (req, res) => {
 	try {
 		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
+
 		if (!authorized) 
 			return res.status(401).json({ error: cause });
 
@@ -174,9 +172,8 @@ export const getGroup = async (req, res) => {
 
 		const responseGroup = {
 			name: group.name,
-			members: group.members.map((m) => m.email),
-			refreshedTokenMessage: res.locals.refreshedTokenMessage,
-			members: group.members.map((m) => m.email)
+			members: group.members.map((m) => ({ email: m.email })),
+			members: group.members.map((m) => ({ email: m.email }))
 		};
 		res.status(200).json({ data: responseGroup, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 	} catch (error) {
@@ -204,27 +201,21 @@ export const addToGroup = async (req, res) => {
 				error: 'The request body does not contain all the necessary attributes',
 			});
 
-		const { authorized, cause } = verifyMultipleAuth(req, res, {
-			authType: ['User', 'Admin'],
-		});
-		if (!authorized) return res.status(401).json({ error: cause });
-			if(req.path.split('/').slice(-1)[0] === 'add') {
-				const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-				if (!authorized) 
-					return res.status(401).json({ error: cause });
-			} else if(req.path.split('/').slice(-1)[0] === 'insert') {
-				const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
-				if (!authorized) 
-					return res.status(401).json({ error: cause });
-			} else {
-				return res.status(400).json({ error: 'Path not correct'});
-			}	
+
+		if(req.path.split('/').slice(-1)[0] === 'add') {
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+			if (!authorized) 
+				return res.status(401).json({ error: cause });
+		} else if(req.path.split('/').slice(-1)[0] === 'insert') {
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+			if (!authorized) 
+				return res.status(401).json({ error: cause });
+		} else {
+			return res.status(400).json({ error: 'Path not correct'});
+		}	
 
 		if (!(await Group.findOne({ name: name })))
 			return res.status(400).json({ error: 'Group not found' });
-
-		if (memberEmails.some((email) => !check(email).isEmail()))
-			return res.status(400).json({ error: 'Mail not valid' });
 
 		if((memberEmails.some((email) => !isEmail(email))))
 			return res.status(400).json({error: 'Mail not valid'});
@@ -250,8 +241,8 @@ export const addToGroup = async (req, res) => {
 						group: {
 							name: name,
 							members: (await Group.findOne({ name: name })).members.map(
-								(m) => {m.email}
-							),
+								(m) => ({ email: m.email })
+							)
 						},
 						alreadyInGroup,
 						membersNotFound,
@@ -319,9 +310,7 @@ export const removeFromGroup = async (req, res) => {
 				res.json({
 					group: {
 						name: name,
-						members: (await Group.findOne({ name: name })).members.map((m) => {
-							m.email;
-						}),
+						members: (await Group.findOne({ name: name })).members.map((m) => ({ email: m.email }))
 					},
 					notInGroup,
 					membersNotFound,
@@ -362,7 +351,7 @@ export const deleteUser = async (req, res) => {
 		const findTransactions = await transactions.find({
 			username: user.username,
 		});
-		console.log(findTransactions);
+
 		const transactionsNumber = findTransactions.length;
 		const deletedTransactions = await transactions.deleteMany({
 			email: email,
@@ -456,17 +445,9 @@ const checkGroupEmails = async (memberEmails, groupName) => {
 	}
 
 	return {
-		validEmails: memberEmails.map((email) => {
-			email;
-		}),
-		alreadyInGroup: alreadyInGroup.map((email) => {
-			email;
-		}),
-		membersNotFound: membersNotFound.map((email) => {
-			email;
-		}),
-		notInGroup: notInGroup.map((email) => {
-			email;
-		}),
+		validEmails: memberEmails.map((email) => ({	email })),
+		alreadyInGroup: alreadyInGroup.map((email) => ({ email })),
+		membersNotFound: membersNotFound.map((email) => ({ email })),
+		notInGroup: notInGroup.map((email) => ({ email }))
 	};
 };
