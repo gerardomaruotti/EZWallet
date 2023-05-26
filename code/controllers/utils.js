@@ -14,60 +14,70 @@ export const handleDateFilterParams = (req) => {
 	const usernameVar = username;
 	const dateVar = date;
 
-	console.log("usernameVar:", usernameVar);
+	console.log('usernameVar:', usernameVar);
 
 	let dateQuery = {};
 
 	if (dateVar && Array.isArray(dateVar)) {
-	for (const filter of dateVar) {
-		const [operator, value] = filter.split(" ");
-		const parsedValue = new Date(value);
+		for (const filter of dateVar) {
+			const [operator, value] = filter.split(' ');
+			const parsedValue = new Date(value);
 
-		dateQuery[operator] = parsedValue;
-	}
+			dateQuery[operator] = parsedValue;
+		}
 	}
 
 	let aggregationPipeline = [
-	{
-		$lookup: {
-		from: "categories",
-		localField: "type",
-		foreignField: "type",
-		as: "joinedData"
-		}
-	},
-	{
-		$unwind: "$joinedData"
-	},
-	{
-		$match: {
-		username: usernameVar
-		}
-	}
+		{
+			$lookup: {
+				from: 'categories',
+				localField: 'type',
+				foreignField: 'type',
+				as: 'joinedData',
+			},
+		},
+		{
+			$unwind: '$joinedData',
+		},
+		{
+			$match: {
+				username: usernameVar,
+			},
+		},
 	];
 
 	if (Object.keys(dateQuery).length > 0) {
-	aggregationPipeline.push({
-		$match: {
-		date: dateQuery
-		}
-	});
+		aggregationPipeline.push({
+			$match: {
+				date: dateQuery,
+			},
+		});
 	}
 
-	transactions.aggregate(aggregationPipeline)
-	.then((result) => {
-		let data = result.map((v) =>
-		Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
-		);
-		if (data.length === 0) {
-		return [];
-		}
-		return data;
-	})
-	.catch((error) => {
-		throw error;
-	});
-
+	transactions
+		.aggregate(aggregationPipeline)
+		.then((result) => {
+			let data = result.map((v) =>
+				Object.assign(
+					{},
+					{
+						_id: v._id,
+						username: v.username,
+						amount: v.amount,
+						type: v.type,
+						color: v.joinedData.color,
+						date: v.date,
+					}
+				)
+			);
+			if (data.length === 0) {
+				return [];
+			}
+			return data;
+		})
+		.catch((error) => {
+			throw error;
+		});
 };
 
 /**
@@ -206,56 +216,67 @@ export const handleAmountFilterParams = (req) => {
 	const usernameVar = username;
 	const amountVar = amount;
 
-	console.log("usernameVar:", usernameVar);
+	console.log('usernameVar:', usernameVar);
 
 	let amountQuery = {};
 
 	if (amountVar && Array.isArray(amountVar)) {
-	for (const filter of amountVar) {
-		const [operator, value] = filter.split(" ");
-		const parsedValue = parseFloat(value);
+		for (const filter of amountVar) {
+			const [operator, value] = filter.split(' ');
+			const parsedValue = parseFloat(value);
 
-		amountQuery[operator] = parsedValue;
-	}
+			amountQuery[operator] = parsedValue;
+		}
 	}
 
 	let aggregationPipeline = [
-	{
-		$lookup: {
-		from: "categories",
-		localField: "type",
-		foreignField: "type",
-		as: "joinedData"
-		}
-	},
-	{
-		$unwind: "$joinedData"
-	},
-	{
-		$match: {
-		username: usernameVar
-		}
-	}
+		{
+			$lookup: {
+				from: 'categories',
+				localField: 'type',
+				foreignField: 'type',
+				as: 'joinedData',
+			},
+		},
+		{
+			$unwind: '$joinedData',
+		},
+		{
+			$match: {
+				username: usernameVar,
+			},
+		},
 	];
 
 	if (Object.keys(amountQuery).length > 0) {
-	aggregationPipeline.push({
-		$match: {
-		amount: amountQuery
-		}
-	});
+		aggregationPipeline.push({
+			$match: {
+				amount: amountQuery,
+			},
+		});
 	}
 
-	transactions.aggregate(aggregationPipeline)
-	.then((result) => {
-		let data = result.map((v) =>
-		Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date })
-		);
-		return data;
-	})
-	.catch((error) => {
-		throw error;
-	});
+	transactions
+		.aggregate(aggregationPipeline)
+		.then((result) => {
+			let data = result.map((v) =>
+				Object.assign(
+					{},
+					{
+						_id: v._id,
+						username: v.username,
+						amount: v.amount,
+						type: v.type,
+						color: v.joinedData.color,
+						date: v.date,
+					}
+				)
+			);
+			return data;
+		})
+		.catch((error) => {
+			throw error;
+		});
 };
 
 // This function takes an array and a predicate function as arguments and returns a new array containing
@@ -271,6 +292,4 @@ export const asyncFilter = async (arr, predicate) => {
 	return arr.filter((_v, index) => results[index]);
 };
 
-export const verifyMultipleAuth = (req, res, info) => {
-	
-}
+export const verifyMultipleAuth = (req, res, info) => {};

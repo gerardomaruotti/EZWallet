@@ -152,17 +152,17 @@ export const createTransaction = async (req, res) => {
 			return res
 				.status(401)
 				.json({ message: 'Unauthorized: user is not recognized!' });
-				
+
 		const { username, amount, type } = req.body;
 
-	const typeLook=await categories.findOne({type: type}).exec();
-	if(!typeLook){
-		return res.status(401).json({ message: 'Category does not exist' });
-	}
-	const userLook=await User.findOne({username: username}).exec();
-	if(!userLook){
-		return res.status(401).json({ message: 'User does not exist' });
-	}
+		const typeLook = await categories.findOne({ type: type }).exec();
+		if (!typeLook) {
+			return res.status(401).json({ message: 'Category does not exist' });
+		}
+		const userLook = await User.findOne({ username: username }).exec();
+		if (!userLook) {
+			return res.status(401).json({ message: 'User does not exist' });
+		}
 
 		const new_transactions = new transactions({ username, amount, type });
 		new_transactions
@@ -210,7 +210,13 @@ export const getAllTransactions = async (req, res) => {
 				let data = result.map((v) =>
 					Object.assign(
 						{},
-						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
+						{
+							username: v.username,
+							amount: v.amount,
+							type: v.type,
+							date: v.date,
+							color: v.joinedData.color,
+						}
 					)
 				);
 				res.status(200).json(data);
@@ -237,65 +243,81 @@ export const getTransactionsByUser = async (req, res) => {
 		//Distinction between route accessed by Admins or Regular users for functions that can be called by both
 		//and different behaviors and access rights
 		const username = req.params.username;
-		if(username === undefined){return res.status(401).json({ message: 'missing parameters' });}
-	const userLook=await User.findOne({username: username}).exec();
-	if(!userLook){
-		return res.status(401).json({ message: 'User does not exist' });
-	}
+		if (username === undefined) {
+			return res.status(401).json({ message: 'missing parameters' });
+		}
+		const userLook = await User.findOne({ username: username }).exec();
+		if (!userLook) {
+			return res.status(401).json({ message: 'User does not exist' });
+		}
 		if (req.url.indexOf('/transactions/users/') >= 0) {
-		//Admin	
+			//Admin
 			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 			if (!AdminAuth.authorized)
 				return res
 					.status(401)
 					.json({ message: 'Unauthorized: user is not an admin!' });
 
-					try {
-						const cookie = req.cookies
-						if (!cookie.accessToken) {
-							return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-						}
-						const username = req.params.username;
-						/**
+			try {
+				const cookie = req.cookies;
+				if (!cookie.accessToken) {
+					return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
+				}
+				const username = req.params.username;
+				/**
 						 * MongoDB equivalent to the query "SELECT *
 				FROM transactions
 				LEFT JOIN categories ON transactions.type = categories.type
 				WHERE username = usernameVar
 				" still need to check if username exists. I also assume that you cant make a transaction with a non existing category
 						 */
-						const usernameVar = username;
-				
-					
-				console.log("usernameVar:", usernameVar);
-				
-				transactions.aggregate([
-					{
-					  $lookup: {
-						from: "categories",
-						localField: "type",
-						foreignField: "type",
-						as: "joinedData"
-					  }
-					},
-					{
-					  $unwind: "$joinedData"
-					},
-					{
-					  $match: {
-						 "username": usernameVar
-					  }
-					}
-				  ]).then((result) => {
-					let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }));
-					if (data.length === 0) {
-						return res.status(200).json([]);
-					}
-					res.status(200).json(data);
-				}).catch(error => { throw (error) })
-					} catch (error) {
-						res.status(400).json({ error: error.message })
-					}
+				const usernameVar = username;
 
+				console.log('usernameVar:', usernameVar);
+
+				transactions
+					.aggregate([
+						{
+							$lookup: {
+								from: 'categories',
+								localField: 'type',
+								foreignField: 'type',
+								as: 'joinedData',
+							},
+						},
+						{
+							$unwind: '$joinedData',
+						},
+						{
+							$match: {
+								username: usernameVar,
+							},
+						},
+					])
+					.then((result) => {
+						let data = result.map((v) =>
+							Object.assign(
+								{},
+								{
+									username: v.username,
+									amount: v.amount,
+									type: v.type,
+									date: v.date,
+									color: v.joinedData.color,
+								}
+							)
+						);
+						if (data.length === 0) {
+							return res.status(200).json([]);
+						}
+						res.status(200).json(data);
+					})
+					.catch((error) => {
+						throw error;
+					});
+			} catch (error) {
+				res.status(400).json({ error: error.message });
+			}
 		} else {
 			//User
 			let UserAuth = verifyAuth(req, res, { authType: 'User' });
@@ -304,51 +326,66 @@ export const getTransactionsByUser = async (req, res) => {
 					.status(401)
 					.json({ message: 'Unauthorized: user is not recognized!' });
 
-					try {
-						const cookie = req.cookies
-						if (!cookie.accessToken) {
-							return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-						}
-						const username = req.params.username;
-						/**
+			try {
+				const cookie = req.cookies;
+				if (!cookie.accessToken) {
+					return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
+				}
+				const username = req.params.username;
+				/**
 						 * MongoDB equivalent to the query "SELECT *
 				FROM transactions
 				LEFT JOIN categories ON transactions.type = categories.type
 				WHERE username = usernameVar
 				" still need to check if username exists. I also assume that you cant make a transaction with a non existing category
 						 */
-						const usernameVar = username;
-				
-					
-				console.log("usernameVar:", usernameVar);
-				
-				transactions.aggregate([
-					{
-					  $lookup: {
-						from: "categories",
-						localField: "type",
-						foreignField: "type",
-						as: "joinedData"
-					  }
-					},
-					{
-					  $unwind: "$joinedData"
-					},
-					{
-					  $match: {
-						 "username": usernameVar
-					  }
-					}
-				  ]).then((result) => {
-					let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }));
-					if (data.length === 0) {
-						return res.status(200).json([]);
-					}
-					res.status(200).json(data);
-				}).catch(error => { throw (error) })
-					} catch (error) {
-						res.status(400).json({ error: error.message })
-					}
+				const usernameVar = username;
+
+				console.log('usernameVar:', usernameVar);
+
+				transactions
+					.aggregate([
+						{
+							$lookup: {
+								from: 'categories',
+								localField: 'type',
+								foreignField: 'type',
+								as: 'joinedData',
+							},
+						},
+						{
+							$unwind: '$joinedData',
+						},
+						{
+							$match: {
+								username: usernameVar,
+							},
+						},
+					])
+					.then((result) => {
+						let data = result.map((v) =>
+							Object.assign(
+								{},
+								{
+									username: v.username,
+									amount: v.amount,
+									type: v.type,
+									date: v.date,
+									color: v.joinedData.color,
+								}
+							)
+						);
+						if (data.length === 0) {
+							return res.status(200).json([]);
+						}
+						res.status(200).json(data);
+					})
+					.catch((error) => {
+						throw error;
+					});
+			} catch (error) {
+				res.status(400).json({ error: error.message });
+			}
 		}
 	} catch (error) {
 		res.status(400).json({ error: error.message });
@@ -364,35 +401,34 @@ export const getTransactionsByUser = async (req, res) => {
     - error 401 is returned if the user or the category does not exist
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
- try {
-
-	const username = req.params.username;
-	if(username === undefined){return res.status(401).json({ message: 'missing parameters' });}
+	try {
+		const username = req.params.username;
+		if (username === undefined) {
+			return res.status(401).json({ message: 'missing parameters' });
+		}
 		const type = req.params.category;
-		if(type === undefined){return res.status(401).json({ message: 'missing parameters' });}
-	
-	const typeLook=await categories.findOne({type: type}).exec();
-	if(!typeLook){
-		return res.status(400).json({ message: 'Category does not exist' });
-	}
-	const userLook=await User.findOne({username: username}).exec();
-	if(!userLook){
-		return res.status(400).json({ message: 'User does not exist' });
-	}
-	let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+		if (type === undefined) {
+			return res.status(401).json({ message: 'missing parameters' });
+		}
+
+		const typeLook = await categories.findOne({ type: type }).exec();
+		if (!typeLook) {
+			return res.status(400).json({ message: 'Category does not exist' });
+		}
+		const userLook = await User.findOne({ username: username }).exec();
+		if (!userLook) {
+			return res.status(400).json({ message: 'User does not exist' });
+		}
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
 				.json({ message: 'Unauthorized: user is not an admin!' });
-	
-	let UserAuth = verifyAuth(req, res, { authType: 'User' });
-	if (!UserAuth.authorized)
-		return res
-			.status(401)
-			.json({ message: 'Unauthorized: user' });
-	
 
-		
+		let UserAuth = verifyAuth(req, res, { authType: 'User' });
+		if (!UserAuth.authorized)
+			return res.status(401).json({ message: 'Unauthorized: user' });
+
 		/**
 		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type AND transactions.username = categories.username AND transactions.type = categoryVar AND transactions.username = usernameVar" still need to check if category exists
 		 */
@@ -426,7 +462,13 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 				let data = result.map((v) =>
 					Object.assign(
 						{},
-						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
+						{
+							username: v.username,
+							amount: v.amount,
+							type: v.type,
+							date: v.date,
+							color: v.joinedData.color,
+						}
 					)
 				);
 				res.status(200).json(data, usernameVar, categoryVar);
@@ -449,35 +491,36 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
 	try {
-        const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
 
-		if (req.url.indexOf('transactions/groups') >= 0){ 
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });}
+		if (req.url.indexOf('transactions/groups') >= 0) {
+			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+			if (!AdminAuth.authorized)
+				return res
+					.status(401)
+					.json({ message: 'Unauthorized: user is not an admin!' });
+		}
 
-        const name = req.params.name;
-        if(name === undefined){return res.status(401).json({ message: 'missing parameters' });}
+		const name = req.params.name;
+		if (name === undefined) {
+			return res.status(401).json({ message: 'missing parameters' });
+		}
 
-		
-    
-        const group = await Group.findOne({ name });
-        if (!group) {
-          return res.status(400).json({ message: "Group not found." });
-        }
-    
-        const memberEmails = group.members.map(member => member.email);
-        console.log("emails:", memberEmails);
-    
-        const usernames = await User.find({ email: { $in: memberEmails } }).distinct('username');
-        console.log("usernames:", usernames);
+		const group = await Group.findOne({ name });
+		if (!group) {
+			return res.status(400).json({ message: 'Group not found.' });
+		}
 
+		const memberEmails = group.members.map((member) => member.email);
+		console.log('emails:', memberEmails);
 
-		
-        transactions
+		const usernames = await User.find({
+			email: { $in: memberEmails },
+		}).distinct('username');
+		console.log('usernames:', usernames);
+
+		transactions
 			.aggregate([
 				{
 					$lookup: {
@@ -489,23 +532,31 @@ export const getTransactionsByGroup = async (req, res) => {
 				},
 				{
 					$unwind: '$joinedData',
-				}
+				},
 			])
 			.then((result) => {
-				let data = result.filter(item => usernames.includes(item.username)).map((v) =>
-					Object.assign(
-						{},
-						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
-					)
-				);
+				let data = result
+					.filter((item) => usernames.includes(item.username))
+					.map((v) =>
+						Object.assign(
+							{},
+							{
+								username: v.username,
+								amount: v.amount,
+								type: v.type,
+								date: v.date,
+								color: v.joinedData.color,
+							}
+						)
+					);
 				res.status(200).json(data);
 			})
 			.catch((error) => {
 				res.json({ error: error.message }).status(401);
 			});
-      } catch (error) {
-        res.status(400).json({ error: error.message });
-      }
+	} catch (error) {
+		res.status(400).json({ error: error.message });
+	}
 };
 
 /**
@@ -517,35 +568,40 @@ export const getTransactionsByGroup = async (req, res) => {
     - empty array must be returned if there are no transactions made by the group with the specified category
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
-    try {
-        const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+	try {
+		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
-        const name = req.params.name;
-		if(name === undefined){return res.status(401).json({ message: 'missing parameters' });}
+		const name = req.params.name;
+		if (name === undefined) {
+			return res.status(401).json({ message: 'missing parameters' });
+		}
 		const type2 = req.params.category;
-		if(type2 === undefined){return res.status(401).json({ message: 'missing parameters' });}
-	const typeLook=await categories.findOne({type: type2}).exec();
-	if(!typeLook){
-		return res.status(400).json({ message: 'Category does not exist' });
-	}
-	
-    
-        const group = await Group.findOne({ name });
-        if (!group) {
-          return res.status(400).json({ message: "Group not found." });
-        }
-    
-        const memberEmails = group.members.map(member => member.email);
-        console.log("emails:", memberEmails);
-    
-        const usernames = await User.find({ email: { $in: memberEmails } }).distinct('username');
-        console.log("usernames:", usernames);
+		if (type2 === undefined) {
+			return res.status(401).json({ message: 'missing parameters' });
+		}
+		const typeLook = await categories.findOne({ type: type2 }).exec();
+		if (!typeLook) {
+			return res.status(400).json({ message: 'Category does not exist' });
+		}
+
+		const group = await Group.findOne({ name });
+		if (!group) {
+			return res.status(400).json({ message: 'Group not found.' });
+		}
+
+		const memberEmails = group.members.map((member) => member.email);
+		console.log('emails:', memberEmails);
+
+		const usernames = await User.find({
+			email: { $in: memberEmails },
+		}).distinct('username');
+		console.log('usernames:', usernames);
 
 		const type = req.params.category;
 		const categoryVar = type;
 
 		console.log('categoryVar:', categoryVar);
-        transactions
+		transactions
 			.aggregate([
 				{
 					$lookup: {
@@ -565,20 +621,28 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 				},
 			])
 			.then((result) => {
-				let data = result.filter(item => usernames.includes(item.username)).map((v) =>
-					Object.assign(
-						{},
-						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
-					)
-				);
+				let data = result
+					.filter((item) => usernames.includes(item.username))
+					.map((v) =>
+						Object.assign(
+							{},
+							{
+								username: v.username,
+								amount: v.amount,
+								type: v.type,
+								date: v.date,
+								color: v.joinedData.color,
+							}
+						)
+					);
 				res.status(200).json(data);
 			})
 			.catch((error) => {
 				res.json({ error: error.message }).status(401);
 			});
-      } catch (error) {
-        res.status(400).json({ error: error.message });
-      }
+	} catch (error) {
+		res.status(400).json({ error: error.message });
+	}
 };
 
 /**
@@ -590,17 +654,15 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
  */
 export const deleteTransaction = async (req, res) => {
 	try {
-
-        const username2 = req.params.username;
+		const username2 = req.params.username;
 		const id2 = req.params._id;
 
-	const userLook=await User.findOne({username: username2}).exec();
-	if(!userLook){
-		return res.status(401).json({ message: 'User does not exist' });
-	}
+		const userLook = await User.findOne({ username: username2 }).exec();
+		if (!userLook) {
+			return res.status(401).json({ message: 'User does not exist' });
+		}
 
-		
-		const idLook= await transactions.findOne({ _id: id2 }).exec();
+		const idLook = await transactions.findOne({ _id: id2 }).exec();
 		if (!idLook) {
 			return res.status(400).json({ message: 'Transaction not found.' });
 		}
@@ -625,8 +687,8 @@ export const deleteTransaction = async (req, res) => {
     - error 401 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
  */
 export const deleteTransactions = async (req, res) => {
-try {
-	let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+	try {
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
