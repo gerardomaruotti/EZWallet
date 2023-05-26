@@ -210,17 +210,10 @@ export const getAllTransactions = async (req, res) => {
 				let data = result.map((v) =>
 					Object.assign(
 						{},
-						{
-							_id: v._id,
-							username: v.username,
-							amount: v.amount,
-							type: v.type,
-							color: v.categories_info.color,
-							date: v.date,
-						}
+						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
 					)
 				);
-				res.json(data);
+				res.status(200).json(data);
 			})
 			.catch((error) => {
 				throw error;
@@ -243,8 +236,9 @@ export const getTransactionsByUser = async (req, res) => {
 	try {
 		//Distinction between route accessed by Admins or Regular users for functions that can be called by both
 		//and different behaviors and access rights
-		const username2 = req.params.username;
-	const userLook=await User.findOne({username: username2}).exec();
+		const username = req.params.username;
+		if(username === undefined){return res.status(401).json({ message: 'missing parameters' });}
+	const userLook=await User.findOne({username: username}).exec();
 	if(!userLook){
 		return res.status(401).json({ message: 'User does not exist' });
 	}
@@ -292,11 +286,11 @@ export const getTransactionsByUser = async (req, res) => {
 					  }
 					}
 				  ]).then((result) => {
-					let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date }));
+					let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }));
 					if (data.length === 0) {
 						return res.status(200).json([]);
 					}
-					res.json(data);
+					res.status(200).json(data);
 				}).catch(error => { throw (error) })
 					} catch (error) {
 						res.status(400).json({ error: error.message })
@@ -346,11 +340,11 @@ export const getTransactionsByUser = async (req, res) => {
 					  }
 					}
 				  ]).then((result) => {
-					let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.joinedData.color, date: v.date }));
+					let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }));
 					if (data.length === 0) {
 						return res.status(200).json([]);
 					}
-					res.json(data);
+					res.status(200).json(data);
 				}).catch(error => { throw (error) })
 					} catch (error) {
 						res.status(400).json({ error: error.message })
@@ -373,20 +367,30 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  try {
 
 	const username = req.params.username;
+	if(username === undefined){return res.status(401).json({ message: 'missing parameters' });}
 		const type = req.params.category;
+		if(type === undefined){return res.status(401).json({ message: 'missing parameters' });}
+	
 	const typeLook=await categories.findOne({type: type}).exec();
 	if(!typeLook){
-		return res.status(401).json({ message: 'Category does not exist' });
+		return res.status(400).json({ message: 'Category does not exist' });
 	}
 	const userLook=await User.findOne({username: username}).exec();
 	if(!userLook){
-		return res.status(401).json({ message: 'User does not exist' });
+		return res.status(400).json({ message: 'User does not exist' });
 	}
 	let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
 				.status(401)
 				.json({ message: 'Unauthorized: user is not an admin!' });
+	
+	let UserAuth = verifyAuth(req, res, { authType: 'User' });
+	if (!UserAuth.authorized)
+		return res
+			.status(401)
+			.json({ message: 'Unauthorized: user' });
+	
 
 		
 		/**
@@ -422,17 +426,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 				let data = result.map((v) =>
 					Object.assign(
 						{},
-						{
-							_id: v._id,
-							username: v.username,
-							amount: v.amount,
-							type: v.type,
-							color: v.joinedData.color,
-							date: v.date,
-						}
+						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
 					)
 				);
-				res.json(data, usernameVar, categoryVar);
+				res.status(200).json(data, usernameVar, categoryVar);
 			})
 			.catch((error) => {
 				throw error;
@@ -455,14 +452,21 @@ export const getTransactionsByGroup = async (req, res) => {
         const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
 
+		if (req.url.indexOf('transactions/groups') >= 0){ 
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+		if (!AdminAuth.authorized)
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });}
+
         const name = req.params.name;
-        
+        if(name === undefined){return res.status(401).json({ message: 'missing parameters' });}
 
 		
     
         const group = await Group.findOne({ name });
         if (!group) {
-          return res.status(401).json({ message: "Group not found." });
+          return res.status(400).json({ message: "Group not found." });
         }
     
         const memberEmails = group.members.map(member => member.email);
@@ -491,17 +495,10 @@ export const getTransactionsByGroup = async (req, res) => {
 				let data = result.filter(item => usernames.includes(item.username)).map((v) =>
 					Object.assign(
 						{},
-						{
-							_id: v._id,
-							username: v.username,
-							amount: v.amount,
-							type: v.type,
-							color: v.joinedData.color,
-							date: v.date,
-						}
+						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
 					)
 				);
-				res.json(data);
+				res.status(200).json(data);
 			})
 			.catch((error) => {
 				res.json({ error: error.message }).status(401);
@@ -524,16 +521,18 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
         const name = req.params.name;
+		if(name === undefined){return res.status(401).json({ message: 'missing parameters' });}
 		const type2 = req.params.category;
+		if(type2 === undefined){return res.status(401).json({ message: 'missing parameters' });}
 	const typeLook=await categories.findOne({type: type2}).exec();
 	if(!typeLook){
-		return res.status(401).json({ message: 'Category does not exist' });
+		return res.status(400).json({ message: 'Category does not exist' });
 	}
 	
     
         const group = await Group.findOne({ name });
         if (!group) {
-          return res.status(401).json({ message: "Group not found." });
+          return res.status(400).json({ message: "Group not found." });
         }
     
         const memberEmails = group.members.map(member => member.email);
@@ -569,17 +568,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 				let data = result.filter(item => usernames.includes(item.username)).map((v) =>
 					Object.assign(
 						{},
-						{
-							_id: v._id,
-							username: v.username,
-							amount: v.amount,
-							type: v.type,
-							color: v.joinedData.color,
-							date: v.date,
-						}
+						{ username: v.username, amount: v.amount, type: v.type,  date: v.date, color: v.joinedData.color }
 					)
 				);
-				res.json(data);
+				res.status(200).json(data);
 			})
 			.catch((error) => {
 				res.json({ error: error.message }).status(401);
@@ -610,12 +602,12 @@ export const deleteTransaction = async (req, res) => {
 		
 		const idLook= await transactions.findOne({ _id: id2 }).exec();
 		if (!idLook) {
-			return res.status(401).json({ message: 'Transaction not found.' });
+			return res.status(400).json({ message: 'Transaction not found.' });
 		}
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized)
 			return res
-				.status(401)
+				.status(400)
 				.json({ message: 'Unauthorized: user is not an admin!' });
 
 		let data = await transactions.deleteOne({ _id: req.body._id });
