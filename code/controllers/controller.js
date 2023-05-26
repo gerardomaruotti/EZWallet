@@ -367,7 +367,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  try {
 
 	const username = req.params.username;
+	if(username === undefined){return res.status(401).json({ message: 'missing parameters' });}
 		const type = req.params.category;
+		if(type === undefined){return res.status(401).json({ message: 'missing parameters' });}
+	
 	const typeLook=await categories.findOne({type: type}).exec();
 	if(!typeLook){
 		return res.status(400).json({ message: 'Category does not exist' });
@@ -457,7 +460,7 @@ export const getTransactionsByGroup = async (req, res) => {
 				.json({ message: 'Unauthorized: user is not an admin!' });}
 
         const name = req.params.name;
-        
+        if(name === undefined){return res.status(401).json({ message: 'missing parameters' });}
 
 		
     
@@ -518,7 +521,9 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
         const name = req.params.name;
+		if(name === undefined){return res.status(401).json({ message: 'missing parameters' });}
 		const type2 = req.params.category;
+		if(type2 === undefined){return res.status(401).json({ message: 'missing parameters' });}
 	const typeLook=await categories.findOne({type: type2}).exec();
 	if(!typeLook){
 		return res.status(400).json({ message: 'Category does not exist' });
