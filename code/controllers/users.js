@@ -140,6 +140,7 @@ export const getGroups = async (req, res) => {
 			return {
 				name: group.name,
 				members: group.members.map((m) => m.email),
+				refreshedTokenMessage: res.locals.refreshedTokenMessage,
 			};
 		});
 		res.status(200).json(groups);
@@ -159,15 +160,24 @@ export const getGroups = async (req, res) => {
 export const getGroup = async (req, res) => {
 	try {
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!authorized) return res.status(401).json({ message: cause });
+		
+		
+		else if (!AdminAuth.authorized)
+			return res
+				.status(401)
+				.json({ message: 'Unauthorized: user is not an admin!' });
+		
 
 		const name = req.params.name;
 		const group = await Group.findOne({ name: name });
-		if (!group) return res.status(401).json({ message: 'Group not found' });
+		if (!group) return res.status(400).json({ message: 'Group not found' });
 
 		const responseGroup = {
 			name: group.name,
 			members: group.members.map((m) => m.email),
+			refreshedTokenMessage: res.locals.refreshedTokenMessage
 		};
 		res.status(200).json(responseGroup);
 	} catch (err) {
@@ -197,7 +207,7 @@ export const addToGroup = async (req, res) => {
 		if (!authorized) return res.status(401).json({ message: cause });
 
 		if (!(await Group.findOne({ name: name })))
-			return res.status(401).json({ message: 'Group not found' });
+			return res.status(400).json({ message: 'Group not found' });
 
 		const { validEmails, alreadyInGroup, membersNotFound } =
 			await checkGroupEmails(memberEmails);
