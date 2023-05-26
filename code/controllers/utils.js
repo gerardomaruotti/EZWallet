@@ -288,3 +288,7 @@ export const asyncFilter = async (arr, predicate) => {
 };
 
 export const verifyMultipleAuth = (req, res, info) => {};
+
+export const isEmail = (email) => {
+	return true;
+}
