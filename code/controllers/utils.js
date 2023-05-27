@@ -107,19 +107,20 @@ export const handleDateFilterParams = (req) => {
  */
 export const verifyAuth = (req, res, info) => {
 	const cookie = req.cookies;
-	console.log("cookie:", cookie);
+	console.log('cookie:', cookie);
 	if (!cookie.accessToken || !cookie.refreshToken) {
 		return { authorized: false, cause: 'Unauthorized' };
 	}
 	try {
-		console.log("sdfasdfasdfpr");
-		const decodedAccessToken = jwt.verify(//to do error no mi fa i console log doppo questo
+		console.log('sdfasdfasdfpr');
+		const decodedAccessToken = jwt.verify(
+			//to do error no mi fa i console log doppo questo
 			cookie.accessToken,
 			process.env.ACCESS_KEY
 		);
-		console.log("decodedAccessToken.username:", decodedAccessToken.username);
-		console.log("decodedAccessToken.email:", decodedAccessToken.email);
-		console.log("decodedAccessToken.role:", decodedAccessToken.role);
+		console.log('decodedAccessToken.username:', decodedAccessToken.username);
+		console.log('decodedAccessToken.email:', decodedAccessToken.email);
+		console.log('decodedAccessToken.role:', decodedAccessToken.role);
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
@@ -294,18 +295,18 @@ export const asyncFilter = async (arr, predicate) => {
 
 export const verifyMultipleAuth = (req, res, info) => {
 	let message = '';
-	return { authorized: info.authType.some((type, index) => {
-		const {authorized, cause } = verifyAuth(req, res, type);
-		if(authorized)
-			return true;
-		message += cause;
-		if(index !== info.authType.length)
-			message += ' or ';
-		return false
-	}), 
-	cause: message };
+	return {
+		authorized: info.authType.some((type, index) => {
+			const { authorized, cause } = verifyAuth(req, res, type);
+			if (authorized) return true;
+			message += cause;
+			if (index !== info.authType.length) message += ' or ';
+			return false;
+		}),
+		cause: message,
+	};
 };
 
 export const isEmail = (email) => {
 	return true;
-}
+};

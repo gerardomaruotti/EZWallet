@@ -15,16 +15,32 @@ import {
 export const createCategory = (req, res) => {
 	try {
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 
 		const { type, color } = req.body;
+		if (!type || !color) {
+			return res.status(400).json({ message: 'Missing parameters' });
+		}
+		if (type === '' || color === '') {
+			return res.status(400).json({ message: 'Invalid parameters' });
+		}
 		const new_categories = new categories({ type, color });
+		categories.findOne({ type }).then((data) => {
+			if (data) {
+				return res.status(400).json({ message: 'Category already exists' });
+			}
+		});
 		new_categories
 			.save()
-			.then((data) => res.json(data))
+			.then((data) => {
+				res.status(200).json({
+					data: {
+						type: data.type,
+						color: data.color,
+					},
+					refreshedTokenMessage: res.locals.refreshedTokenMessage,
+				});
+			})
 			.catch((err) => {
 				throw err;
 			});
@@ -44,24 +60,49 @@ export const createCategory = (req, res) => {
 export const updateCategory = async (req, res) => {
 	try {
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 
 		const { type, color } = req.body;
 		const { type: oldType } = req.params;
-		let data = await categories.findOne({ type: oldType });
-		if (!data) {
-			return res.status(401).json({ message: 'Category does not exist' });
+		if (!type || !color) {
+			return res.status(400).json({ message: 'Missing parameters' });
 		}
-		if (type) {
-			data.type = type;
+		if (type === '' || color === '') {
+			return res.status(400).json({ message: 'Invalid parameters' });
 		}
-		if (color) {
-			data.color = color;
+		let checkParamCategory = await categories.findOne({ type: oldType });
+		if (!checkParamCategory) {
+			return res.status(400).json({ message: 'Category does not exist' });
 		}
-		data.save().then((data) => res.json(data));
+		//check if parameters category exists
+		let checkBodyCategory = await categories.findOne({ type });
+		if (checkBodyCategory) {
+			return res.status(400).json({ message: 'Category already exists' });
+		}
+		//update transactions
+		const typeTransactions = await transactions.find({ type: oldType });
+		transactions
+			.updateMany({ type: oldType }, { $set: { type } })
+			.then((result) => {
+				//update category
+				categories
+					.updateOne({ type: oldType }, { $set: { type, color } })
+					.then((result) => {
+						res.status(200).json({
+							data: {
+								message: 'Category edited successfully',
+								count: typeTransactions.count,
+							},
+							refreshedTokenMessage: res.locals.refreshedTokenMessage,
+						});
+					})
+					.catch((err) => {
+						throw err;
+					});
+			})
+			.catch((err) => {
+				throw err;
+			});
 	} catch (error) {
 		res.status(400).json({ error: error.message });
 	}
@@ -77,20 +118,24 @@ export const updateCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
 	try {
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 
 		const { types } = req.body;
+		if (!types) {
+			return res.status(400).json({ message: 'Missing parameters' });
+		}
+		if (types === '') {
+			return res.status(400).json({ message: 'Invalid parameters' });
+		}
+		let checkCategoriesNumber = await categories.find({ type: types });
+		if (checkCategoriesNumber.length == 1) {
+			return res.status(400).json({ message: 'Only one category remaining!' });
+		}
 		types.forEach(async (type) => {
 			let data = await categories.findOne({ type });
 			if (!data) {
-				return res.status(401).json({ message: 'Category does not exist' });
+				return res.status(400).json({ message: 'Category does not exist' });
 			}
-			/**
-			 * MongoDB equivalent to the query "UPDATE transactions SET type = 'investment' WHERE type = 'type'"
-			 */
 			let responseData = {
 				message: 'Category deleted',
 				count: 0,
@@ -100,10 +145,12 @@ export const deleteCategory = async (req, res) => {
 			transactions
 				.updateMany({ type }, { $set: { type: 'investment' } })
 				.then((result) => {
-					data
-						.remove()
-						.then((data) => res.json(responseData)) //warning
-						.status(200);
+					data.remove().then((data) =>
+						res.status(200).json({
+							data: responseData,
+							refreshedTokenMessage: res.locals.refreshedTokenMessage,
+						})
+					); //warning
 				});
 		});
 	} catch (error) {
@@ -121,10 +168,7 @@ export const deleteCategory = async (req, res) => {
 export const getCategories = async (req, res) => {
 	try {
 		let UserAuth = verifyAuth(req, res, { authType: 'User' });
-		if (!UserAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not recognized!' });
+		if (!UserAuth.authorized) return res.status(401).json({ error: cause });
 
 		let data = await categories.find({});
 
@@ -132,7 +176,10 @@ export const getCategories = async (req, res) => {
 			Object.assign({}, { type: v.type, color: v.color })
 		);
 
-		return res.json(filter);
+		return res.status(200).json({
+			data: filter,
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(400).json({ error: error.message });
 	}
@@ -148,10 +195,7 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
 	try {
 		let UserAuth = verifyAuth(req, res, { authType: 'User' });
-		if (!UserAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not recognized!' });
+		if (!UserAuth.authorized) return res.status(401).json({ error: cause });
 
 		const { username, amount, type } = req.body;
 
@@ -186,10 +230,7 @@ export const createTransaction = async (req, res) => {
 export const getAllTransactions = async (req, res) => {
 	try {
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 
 		/**
 		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
@@ -253,10 +294,7 @@ export const getTransactionsByUser = async (req, res) => {
 		if (req.url.indexOf('/transactions/users/') >= 0) {
 			//Admin
 			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-			if (!AdminAuth.authorized)
-				return res
-					.status(401)
-					.json({ message: 'Unauthorized: user is not an admin!' });
+			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 
 			try {
 				const cookie = req.cookies;
@@ -321,10 +359,7 @@ export const getTransactionsByUser = async (req, res) => {
 		} else {
 			//User
 			let UserAuth = verifyAuth(req, res, { authType: 'User' });
-			if (!UserAuth.authorized)
-				return res
-					.status(401)
-					.json({ message: 'Unauthorized: user is not recognized!' });
+			if (!UserAuth.authorized) return res.status(401).json({ error: cause });
 
 			try {
 				const cookie = req.cookies;
@@ -420,14 +455,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 			return res.status(400).json({ message: 'User does not exist' });
 		}
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 
 		let UserAuth = verifyAuth(req, res, { authType: 'User' });
-		if (!UserAuth.authorized)
-			return res.status(401).json({ message: 'Unauthorized: user' });
+		if (!UserAuth.authorized) return res.status(401).json({ error: cause });
 
 		/**
 		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type AND transactions.username = categories.username AND transactions.type = categoryVar AND transactions.username = usernameVar" still need to check if category exists
@@ -496,10 +527,7 @@ export const getTransactionsByGroup = async (req, res) => {
 
 		if (req.url.indexOf('transactions/groups') >= 0) {
 			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-			if (!AdminAuth.authorized)
-				return res
-					.status(401)
-					.json({ message: 'Unauthorized: user is not an admin!' });
+			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 		}
 
 		const name = req.params.name;
@@ -570,7 +598,7 @@ export const getTransactionsByGroup = async (req, res) => {
 export const getTransactionsByGroupByCategory = async (req, res) => {
 	try {
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-		if (!authorized) return res.status(401).json({ message: cause });
+		if (!authorized) return res.status(401).json({ error: cause });
 		const name = req.params.name;
 		if (name === undefined) {
 			return res.status(401).json({ message: 'missing parameters' });
@@ -667,10 +695,7 @@ export const deleteTransaction = async (req, res) => {
 			return res.status(400).json({ message: 'Transaction not found.' });
 		}
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(400)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		if (!AdminAuth.authorized) return res.status(400).json({ error: cause });
 
 		let data = await transactions.deleteOne({ _id: req.body._id });
 		return res.json('deleted');
@@ -689,10 +714,7 @@ export const deleteTransaction = async (req, res) => {
 export const deleteTransactions = async (req, res) => {
 	try {
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res
-				.status(401)
-				.json({ message: 'Unauthorized: user is not an admin!' });
+		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 
 		const idList = req.body._ids;
 

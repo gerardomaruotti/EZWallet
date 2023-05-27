@@ -1,6 +1,11 @@
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
-import { verifyAuth, asyncFilter, verifyMultipleAuth, isEmail } from './utils.js';
+import {
+	verifyAuth,
+	asyncFilter,
+	verifyMultipleAuth,
+	isEmail,
+} from './utils.js';
 
 /** OK
  * Return all the users
@@ -80,8 +85,7 @@ export const createGroup = async (req, res) => {
 			return res.status(401).json({ error: 'Missing parameters' });
 
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-		if (!authorized) 
-			return res.status(401).json({ error: cause });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		if (await Group.findOne({ name: name }))
 			return res
@@ -108,7 +112,7 @@ export const createGroup = async (req, res) => {
 					data: {
 						group: {
 							name: group.name,
-							members: group.members.map((m) => ({ email: m.email }))
+							members: group.members.map((m) => ({ email: m.email })),
 						},
 						alreadyInGroup,
 						membersNotFound,
@@ -135,17 +139,20 @@ export const createGroup = async (req, res) => {
 export const getGroups = async (req, res) => {
 	try {
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
-		if (!authorized) 
-			return res.status(401).json({ error: cause });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		const groups = (await Group.find()).map((group) => {
 			return {
 				name: group.name,
-				members: group.members.map((m) => ({ email: m.email }))
-
+				members: group.members.map((m) => ({ email: m.email })),
 			};
 		});
-		res.status(200).json({ data: groups, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+		res
+			.status(200)
+			.json({
+				data: groups,
+				refreshedTokenMessage: res.locals.refreshedTokenMessage,
+			});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -161,10 +168,11 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
 	try {
-		const {authorized, cause} = verifyMultipleAuth(req, res, { authType: ['User', 'Admin']})
+		const { authorized, cause } = verifyMultipleAuth(req, res, {
+			authType: ['User', 'Admin'],
+		});
 
-		if (!authorized) 
-			return res.status(401).json({ error: cause });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		const name = req.params.name;
 		const group = await Group.findOne({ name: name });
@@ -173,9 +181,14 @@ export const getGroup = async (req, res) => {
 		const responseGroup = {
 			name: group.name,
 			members: group.members.map((m) => ({ email: m.email })),
-			members: group.members.map((m) => ({ email: m.email }))
+			members: group.members.map((m) => ({ email: m.email })),
 		};
-		res.status(200).json({ data: responseGroup, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+		res
+			.status(200)
+			.json({
+				data: responseGroup,
+				refreshedTokenMessage: res.locals.refreshedTokenMessage,
+			});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -201,25 +214,22 @@ export const addToGroup = async (req, res) => {
 				error: 'The request body does not contain all the necessary attributes',
 			});
 
-
-		if(req.path.split('/').slice(-1)[0] === 'add') {
+		if (req.path.split('/').slice(-1)[0] === 'add') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-			if (!authorized) 
-				return res.status(401).json({ error: cause });
-		} else if(req.path.split('/').slice(-1)[0] === 'insert') {
+			if (!authorized) return res.status(401).json({ error: cause });
+		} else if (req.path.split('/').slice(-1)[0] === 'insert') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
-			if (!authorized) 
-				return res.status(401).json({ error: cause });
+			if (!authorized) return res.status(401).json({ error: cause });
 		} else {
-			return res.status(400).json({ error: 'Path not correct'});
-		}	
+			return res.status(400).json({ error: 'Path not correct' });
+		}
 
 		if (!(await Group.findOne({ name: name })))
 			return res.status(400).json({ error: 'Group not found' });
 
-		if((memberEmails.some((email) => !isEmail(email))))
-			return res.status(400).json({error: 'Mail not valid'});
-		
+		if (memberEmails.some((email) => !isEmail(email)))
+			return res.status(400).json({ error: 'Mail not valid' });
+
 		const { validEmails, alreadyInGroup, membersNotFound } =
 			await checkGroupEmails(memberEmails);
 
@@ -236,16 +246,19 @@ export const addToGroup = async (req, res) => {
 			{ name: req.params.name },
 			{ $push: { members: { $each: membersToAdd } } }
 		)
-			.then(async (group) => res.json({ data: {
+			.then(async (group) =>
+				res.json({
+					data: {
 						group: {
 							name: name,
 							members: (await Group.findOne({ name: name })).members.map(
 								(m) => ({ email: m.email })
-							)
+							),
 						},
 						alreadyInGroup,
 						membersNotFound,
-					}, refreshedTokenMessage: res.locals.refreshedTokenMessage
+					},
+					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 				})
 			)
 			.catch((err) => {
@@ -309,7 +322,9 @@ export const removeFromGroup = async (req, res) => {
 				res.json({
 					group: {
 						name: name,
-						members: (await Group.findOne({ name: name })).members.map((m) => ({ email: m.email }))
+						members: (await Group.findOne({ name: name })).members.map((m) => ({
+							email: m.email,
+						})),
 					},
 					notInGroup,
 					membersNotFound,
@@ -344,8 +359,8 @@ export const deleteUser = async (req, res) => {
 		if (email === undefined)
 			return res.status(400).json({ message: 'Missing parameters' });
 
-		if(!isEmail(email)){
-			return res.status(400).json({error: 'Mail not valid'});
+		if (!isEmail(email)) {
+			return res.status(400).json({ error: 'Mail not valid' });
 		}
 
 		const user = await User.findOne({ email: email });
@@ -375,7 +390,7 @@ export const deleteUser = async (req, res) => {
 		const response = {
 			deletedTransactionsNumber: transactionsNumber,
 			isRemovedFromGroup: emailExists,
-			refreshedTokenMessage: res.locals.refreshedTokenMessage
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		};
 		res.json(response).status(200);
 	} catch (err) {
@@ -403,8 +418,10 @@ export async function deleteGroup(req, res) {
 		if (name === undefined)
 			return res.status(400).json({ message: 'Missing parameters' });
 
-		if(name === '')
-			return res.status(400).json({ message: 'the request body is an empty string' });
+		if (name === '')
+			return res
+				.status(400)
+				.json({ message: 'the request body is an empty string' });
 
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
 		if (!authorized) return res.status(401).json({ message: cause });
@@ -452,9 +469,9 @@ const checkGroupEmails = async (memberEmails, groupName) => {
 	}
 
 	return {
-		validEmails: memberEmails.map((email) => ({	email })),
+		validEmails: memberEmails.map((email) => ({ email })),
 		alreadyInGroup: alreadyInGroup.map((email) => ({ email })),
 		membersNotFound: membersNotFound.map((email) => ({ email })),
-		notInGroup: notInGroup.map((email) => ({ email }))
+		notInGroup: notInGroup.map((email) => ({ email })),
 	};
 };
