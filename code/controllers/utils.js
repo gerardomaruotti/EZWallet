@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import { Group } from '../models/User.js';
+
 
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
@@ -105,22 +107,89 @@ export const handleDateFilterParams = (req) => {
  * @returns true if the user satisfies all the conditions of the specified `authType` and false if at least one condition is not satisfied
  *  Refreshes the accessToken if it has expired and the refreshToken is still valid
  */
+
 export const verifyAuth = (req, res, info) => {
+    const cookie = req.cookies
+    if (!cookie.accessToken || !cookie.refreshToken) {
+        return { authorized: false, cause: "Unauthorized" };
+    }
+	
+	
+    try {
+        const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
+        const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
+
+        if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
+            return { authorized: false, cause: "Token is missing information" }
+        }
+        if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
+            return { authorized: false, cause: "Token is missing information" }
+        }
+        if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
+            return { authorized: false, cause: "Mismatched users" };
+        }
+
+		if (info.authType === "User") {
+			if(req.params.username !== undefined && req.params.username !== decodedAccessToken.username) {
+				return { authorized: false, cause: "Requested user different from the logged one" };
+			}
+		} else if (info.authType === "Admin") {
+			if(decodedAccessToken.role !== 'Admin') {
+				return { authorized: false, cause: 'Not admin' };
+			}
+
+		} else if (info.authType === "Group") {
+
+			//DA CONTROLLARE
+			/*
+			if(req.params.name !== undefined && !(await Group.findOne({name: req.params.name, 'members.email': decodedAccessToken.email}))) { 
+				return { authorized: false, cause: 'User not in group' };
+			}
+			*/
+		}
+		
+
+        return { authorized: true, cause: "Authorized" }
+    } catch (err) {
+        if (err.name === "TokenExpiredError") {
+            try {
+                const refreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
+                const newAccessToken = jwt.sign({
+                    username: refreshToken.username,
+                    email: refreshToken.email,
+                    id: refreshToken.id,
+                    role: refreshToken.role
+                }, process.env.ACCESS_KEY, { expiresIn: '1h' })
+                res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
+                res.locals.refreshedTokenMessage= 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
+                return { authorized: true, cause: "Authorized" }
+            } catch (err) {
+                if (err.name === "TokenExpiredError") {
+                    return { authorized: false, cause: "Perform login again" }
+                } else {
+                    return { authorized: false, cause: err.name }
+                }
+            }
+        } else {
+            return { authorized: false, cause: err.name };
+        }
+    }
+}
+
+export const verifyAuthOld = (req, res, info) => {
 	const cookie = req.cookies;
-	console.log('cookie:', cookie);
+
 	if (!cookie.accessToken || !cookie.refreshToken) {
 		return { authorized: false, cause: 'Unauthorized' };
 	}
 	try {
-		console.log('sdfasdfasdfpr');
+
 		const decodedAccessToken = jwt.verify(
 			//to do error no mi fa i console log doppo questo
 			cookie.accessToken,
 			process.env.ACCESS_KEY
 		);
-		console.log('decodedAccessToken.username:', decodedAccessToken.username);
-		console.log('decodedAccessToken.email:', decodedAccessToken.email);
-		console.log('decodedAccessToken.role:', decodedAccessToken.role);
+
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
@@ -148,7 +217,7 @@ export const verifyAuth = (req, res, info) => {
 		}
 		if (info.authType === 'User') {
 			if (decodedAccessToken.username !== info.username) {
-				return { authorized: false, cause: 'Mismatched users1' };
+				return { authorized: false, cause: 'Mismatched users ' + decodedAccessToken.username + ' != ' + info.username };
 			} else if (decodedAccessToken.role !== 'Regular') {
 				return { authorized: false, cause: 'Mismatched users2' };
 			}
@@ -294,13 +363,20 @@ export const asyncFilter = async (arr, predicate) => {
 };
 
 export const verifyMultipleAuth = (req, res, info) => {
-	let message = '';
+	let message = null;
+
 	return {
-		authorized: info.authType.some((type, index) => {
-			const { authorized, cause } = verifyAuth(req, res, type);
+		authorized: info.authType.some((type) => {
+			const { authorized, cause } = verifyAuth(req, res, { authType: type });
+
 			if (authorized) return true;
-			message += cause;
-			if (index !== info.authType.length) message += ' or ';
+			if (message === null) {
+				message = cause;
+			} else {
+				if (!message.includes(cause)) 
+					message += ' or ' + cause;
+				}
+
 			return false;
 		}),
 		cause: message,
