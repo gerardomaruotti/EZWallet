@@ -274,7 +274,6 @@ export const getAllTransactions = async (req, res) => {
 							type: v.type,
 							date: v.date,
 							color: v.joinedData.color,
-							id: v._id,
 						}
 					)
 				);
@@ -400,7 +399,10 @@ export const getTransactionsByUser = async (req, res) => {
 						 */
 				const usernameVar = username;
 
-				transactions
+				let dateQuery = handleDateFilterParams(req);
+				console.log(dateQuery);
+
+				let aggregationPipeline = transactions
 					.aggregate([
 						{
 							$lookup: {
@@ -548,7 +550,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 	}
 };
 
-/**
+/** OK
  * Return all transactions made by members of a specific group
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
@@ -559,16 +561,16 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 export const getTransactionsByGroup = async (req, res) => {
 	try {
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-		if (!authorized) return res.status(401).json({ message: cause });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		if (req.url.indexOf('transactions/groups') >= 0) {
-			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
+			let { AdminAuth, cause } = verifyAuth(req, res, { authType: 'Admin' });
 			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 		}
 
 		const name = req.params.name;
 		if (name === undefined) {
-			return res.status(401).json({ message: 'missing parameters' });
+			return res.status(400).json({ message: 'missing parameters' });
 		}
 
 		const group = await Group.findOne({ name });
@@ -613,7 +615,10 @@ export const getTransactionsByGroup = async (req, res) => {
 							}
 						)
 					);
-				res.status(200).json(data);
+				res.status(200).json({
+					data: data,
+					refreshedTokenMessage: res.locals.refreshedTokenMessage,
+				});
 			})
 			.catch((error) => {
 				res.json({ error: error.message }).status(401);
@@ -623,7 +628,7 @@ export const getTransactionsByGroup = async (req, res) => {
 	}
 };
 
-/**
+/** OK
  * Return all transactions made by members of a specific group filtered by a specific category
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects.
@@ -633,15 +638,20 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
 	try {
-		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
-		if (!authorized) return res.status(401).json({ error: cause });
+		if (req.url.indexOf('transactions/groups') >= 0) {
+			let { AdminAuth, cause } = verifyAuth(req, res, { authType: 'Admin' });
+			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
+		} else {
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+			if (!authorized) return res.status(401).json({ error: cause });
+		}
 		const name = req.params.name;
 		if (name === undefined) {
-			return res.status(401).json({ message: 'missing parameters' });
+			return res.status(400).json({ message: 'missing parameters' });
 		}
 		const type2 = req.params.category;
 		if (type2 === undefined) {
-			return res.status(401).json({ message: 'missing parameters' });
+			return res.status(400).json({ message: 'missing parameters' });
 		}
 		const typeLook = await categories.findOne({ type: type2 }).exec();
 		if (!typeLook) {
@@ -654,17 +664,14 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 		}
 
 		const memberEmails = group.members.map((member) => member.email);
-		console.log('emails:', memberEmails);
 
 		const usernames = await User.find({
 			email: { $in: memberEmails },
 		}).distinct('username');
-		console.log('usernames:', usernames);
 
 		const type = req.params.category;
 		const categoryVar = type;
 
-		console.log('categoryVar:', categoryVar);
 		transactions
 			.aggregate([
 				{
@@ -699,7 +706,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 							}
 						)
 					);
-				res.status(200).json(data);
+				res.status(200).json({
+					data: data,
+					refreshedTokenMessage: res.locals.refreshedTokenMessage,
+				});
 			})
 			.catch((error) => {
 				res.json({ error: error.message }).status(401);

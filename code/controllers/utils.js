@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Group } from '../models/User.js';
 
-
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
  * @param req the request object that can contain query parameters
@@ -11,75 +10,27 @@ import { Group } from '../models/User.js';
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
-	const username = req.params.username;
-	const date = req.body.date;
-	const usernameVar = username;
-	const dateVar = date;
+	const { date, from, upTo } = req.query;
 
-	console.log('usernameVar:', usernameVar);
+	let filter = {};
 
-	let dateQuery = {};
-
-	if (dateVar && Array.isArray(dateVar)) {
-		for (const filter of dateVar) {
-			const [operator, value] = filter.split(' ');
-			const parsedValue = new Date(value);
-
-			dateQuery[operator] = parsedValue;
-		}
+	if (date && (from || upTo)) {
+		throw new Error(
+			'Cannot use `date` parameter together with `from` or `upTo`'
+		);
 	}
 
-	let aggregationPipeline = [
-		{
-			$lookup: {
-				from: 'categories',
-				localField: 'type',
-				foreignField: 'type',
-				as: 'joinedData',
-			},
-		},
-		{
-			$unwind: '$joinedData',
-		},
-		{
-			$match: {
-				username: usernameVar,
-			},
-		},
-	];
-
-	if (Object.keys(dateQuery).length > 0) {
-		aggregationPipeline.push({
-			$match: {
-				date: dateQuery,
-			},
-		});
+	if (date) {
+		filter.date = { $gte: date };
+	} else if (from && upTo) {
+		filter.date = { $gte: from, $lte: upTo };
+	} else if (from) {
+		filter.date = { $gte: from };
+	} else if (upTo) {
+		filter.date = { $lte: upTo };
 	}
 
-	transactions
-		.aggregate(aggregationPipeline)
-		.then((result) => {
-			let data = result.map((v) =>
-				Object.assign(
-					{},
-					{
-						_id: v._id,
-						username: v.username,
-						amount: v.amount,
-						type: v.type,
-						color: v.joinedData.color,
-						date: v.date,
-					}
-				)
-			);
-			if (data.length === 0) {
-				return [];
-			}
-			return data;
-		})
-		.catch((error) => {
-			throw error;
-		});
+	return filter;
 };
 
 /**
@@ -109,37 +60,58 @@ export const handleDateFilterParams = (req) => {
  */
 
 export const verifyAuth = (req, res, info) => {
-    const cookie = req.cookies
-    if (!cookie.accessToken || !cookie.refreshToken) {
-        return { authorized: false, cause: "Unauthorized" };
-    }
-	
-	
-    try {
-        const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
-        const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
+	const cookie = req.cookies;
+	if (!cookie.accessToken || !cookie.refreshToken) {
+		return { authorized: false, cause: 'Unauthorized' };
+	}
 
-        if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
-            return { authorized: false, cause: "Token is missing information" }
-        }
-        if (!decodedRefreshToken.username || !decodedRefreshToken.email || !decodedRefreshToken.role) {
-            return { authorized: false, cause: "Token is missing information" }
-        }
-        if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
-            return { authorized: false, cause: "Mismatched users" };
-        }
+	try {
+		const decodedAccessToken = jwt.verify(
+			cookie.accessToken,
+			process.env.ACCESS_KEY
+		);
+		const decodedRefreshToken = jwt.verify(
+			cookie.refreshToken,
+			process.env.ACCESS_KEY
+		);
 
-		if (info.authType === "User") {
-			if(req.params.username !== undefined && req.params.username !== decodedAccessToken.username) {
-				return { authorized: false, cause: "Requested user different from the logged one" };
+		if (
+			!decodedAccessToken.username ||
+			!decodedAccessToken.email ||
+			!decodedAccessToken.role
+		) {
+			return { authorized: false, cause: 'Token is missing information' };
+		}
+		if (
+			!decodedRefreshToken.username ||
+			!decodedRefreshToken.email ||
+			!decodedRefreshToken.role
+		) {
+			return { authorized: false, cause: 'Token is missing information' };
+		}
+		if (
+			decodedAccessToken.username !== decodedRefreshToken.username ||
+			decodedAccessToken.email !== decodedRefreshToken.email ||
+			decodedAccessToken.role !== decodedRefreshToken.role
+		) {
+			return { authorized: false, cause: 'Mismatched users' };
+		}
+
+		if (info.authType === 'User') {
+			if (
+				req.params.username !== undefined &&
+				req.params.username !== decodedAccessToken.username
+			) {
+				return {
+					authorized: false,
+					cause: 'Requested user different from the logged one',
+				};
 			}
-		} else if (info.authType === "Admin") {
-			if(decodedAccessToken.role !== 'Admin') {
+		} else if (info.authType === 'Admin') {
+			if (decodedAccessToken.role !== 'Admin') {
 				return { authorized: false, cause: 'Not admin' };
 			}
-
-		} else if (info.authType === "Group") {
-
+		} else if (info.authType === 'Group') {
 			//DA CONTROLLARE
 			/*
 			if(req.params.name !== undefined && !(await Group.findOne({name: req.params.name, 'members.email': decodedAccessToken.email}))) { 
@@ -147,34 +119,47 @@ export const verifyAuth = (req, res, info) => {
 			}
 			*/
 		}
-		
 
-        return { authorized: true, cause: "Authorized" }
-    } catch (err) {
-        if (err.name === "TokenExpiredError") {
-            try {
-                const refreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY)
-                const newAccessToken = jwt.sign({
-                    username: refreshToken.username,
-                    email: refreshToken.email,
-                    id: refreshToken.id,
-                    role: refreshToken.role
-                }, process.env.ACCESS_KEY, { expiresIn: '1h' })
-                res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
-                res.locals.refreshedTokenMessage= 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
-                return { authorized: true, cause: "Authorized" }
-            } catch (err) {
-                if (err.name === "TokenExpiredError") {
-                    return { authorized: false, cause: "Perform login again" }
-                } else {
-                    return { authorized: false, cause: err.name }
-                }
-            }
-        } else {
-            return { authorized: false, cause: err.name };
-        }
-    }
-}
+		return { authorized: true, cause: 'Authorized' };
+	} catch (err) {
+		if (err.name === 'TokenExpiredError') {
+			try {
+				const refreshToken = jwt.verify(
+					cookie.refreshToken,
+					process.env.ACCESS_KEY
+				);
+				const newAccessToken = jwt.sign(
+					{
+						username: refreshToken.username,
+						email: refreshToken.email,
+						id: refreshToken.id,
+						role: refreshToken.role,
+					},
+					process.env.ACCESS_KEY,
+					{ expiresIn: '1h' }
+				);
+				res.cookie('accessToken', newAccessToken, {
+					httpOnly: true,
+					path: '/api',
+					maxAge: 60 * 60 * 1000,
+					sameSite: 'none',
+					secure: true,
+				});
+				res.locals.refreshedTokenMessage =
+					'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls';
+				return { authorized: true, cause: 'Authorized' };
+			} catch (err) {
+				if (err.name === 'TokenExpiredError') {
+					return { authorized: false, cause: 'Perform login again' };
+				} else {
+					return { authorized: false, cause: err.name };
+				}
+			}
+		} else {
+			return { authorized: false, cause: err.name };
+		}
+	}
+};
 
 /**
  * Handle possible amount filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
@@ -276,9 +261,8 @@ export const verifyMultipleAuth = (req, res, info) => {
 			if (message === null) {
 				message = cause;
 			} else {
-				if (!message.includes(cause)) 
-					message += ' or ' + cause;
-				}
+				if (!message.includes(cause)) message += ' or ' + cause;
+			}
 
 			return false;
 		}),
@@ -287,24 +271,20 @@ export const verifyMultipleAuth = (req, res, info) => {
 };
 
 export const isEmail = (email) => {
-	
-  var validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+	var validRegex =
+		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
-  if (email.match(validRegex)) {
+	if (email.match(validRegex)) {
+		alert('Valid email address!');
 
-    alert("Valid email address!");
+		document.form1.text1.focus();
 
-    document.form1.text1.focus();
+		return true;
+	} else {
+		alert('Invalid email address!');
 
-    return true;
+		document.form1.text1.focus();
 
-  } else {
-
-    alert("Invalid email address!");
-
-    document.form1.text1.focus();
-
-    return false;
-
-  }
+		return false;
+	}
 };

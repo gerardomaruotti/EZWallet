@@ -147,12 +147,10 @@ export const getGroups = async (req, res) => {
 				members: group.members.map((m) => ({ email: m.email })),
 			};
 		});
-		res
-			.status(200)
-			.json({
-				data: groups,
-				refreshedTokenMessage: res.locals.refreshedTokenMessage,
-			});
+		res.status(200).json({
+			data: groups,
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -183,12 +181,10 @@ export const getGroup = async (req, res) => {
 			members: group.members.map((m) => ({ email: m.email })),
 			members: group.members.map((m) => ({ email: m.email })),
 		};
-		res
-			.status(200)
-			.json({
-				data: responseGroup,
-				refreshedTokenMessage: res.locals.refreshedTokenMessage,
-			});
+		res.status(200).json({
+			data: responseGroup,
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -311,21 +307,29 @@ export const removeFromGroup = async (req, res) => {
 		if (validEmails.length == 0)
 			return res.status(401).json({ error: 'All the emails are invalid' });
 
-		if ((await Group.findOne({ name: name })).members.length <= validEmails.length)
-			return res.status(401).json({ error: 'Group will be empty after removing members' });
+		if (
+			(await Group.findOne({ name: name })).members.length <= validEmails.length
+		)
+			return res
+				.status(401)
+				.json({ error: 'Group will be empty after removing members' });
 
 		deleteFromGroup(name, validEmails)
 			.then(async (group) =>
-				res.json({ data : {
-					group: {
-						name: name,
-						members: (await Group.findOne({ name: name })).members.map((m) => ({
-							email: m.email,
-						})),
+				res.json({
+					data: {
+						group: {
+							name: name,
+							members: (await Group.findOne({ name: name })).members.map(
+								(m) => ({
+									email: m.email,
+								})
+							),
+						},
+						notInGroup,
+						membersNotFound,
 					},
-					notInGroup,
-					membersNotFound,
-				}, refreshedTokenMessage: res.locals.refreshedTokenMessage
+					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 				})
 			)
 			.catch((err) => {
@@ -370,18 +374,19 @@ export const deleteUser = async (req, res) => {
 		console.log(email);
 
 		//NON FUNZIONA
-		const deletedGroup = await deleteFromGroup(groupName, [{ email: email }])
+		const deletedGroup = await deleteFromGroup(groupName, [{ email: email }]);
 		console.log(deletedGroup.modifiedCount);
-		
+
 		const deleteUser = await User.deleteMany({
 			email: email,
 		});
 
-		const response = { data: {
+		const response = {
+			data: {
 				deletedTransactionsNumber: transactionsNumber,
 				isRemovedFromGroup: emailExists,
 				refreshedTokenMessage: res.locals.refreshedTokenMessage,
-			}
+			},
 		};
 		res.json(response).status(200);
 	} catch (error) {
@@ -396,7 +401,7 @@ export const deleteUser = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
  */
- export const deleteGroup = async (req, res) => {
+export const deleteGroup = async (req, res) => {
 	try {
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
 		if (!authorized) return res.status(401).json({ error: cause });
@@ -405,8 +410,7 @@ export const deleteUser = async (req, res) => {
 		if (name === undefined)
 			return res.status(400).json({ error: 'Missing parameters' });
 
-		if (name === '')
-			return res.status(400).json({ error: 'Empty name' });
+		if (name === '') return res.status(400).json({ error: 'Empty name' });
 
 		const deletedGroup = await Group.deleteMany({
 			name: req.body.name,
@@ -419,7 +423,7 @@ export const deleteUser = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
-}
+};
 
 // This function takes in an array of member emails and a group name. It first filters out any emails that are not in the database, then checks if they are in the group. If no group name is specified, it only checks if they are in any group. It returns an object with the valid emails, emails that are already in the group, emails that are not in the group, and emails that are not in the database.
 const checkGroupEmails = async (memberEmails, groupName) => {
@@ -464,7 +468,9 @@ const deleteFromGroup = async (name, emails) => {
 			return { email: e.email, user: await User.findOne({ email: e.email }) };
 		})
 	);
-	
-	return Group.updateOne({ name: name }, { $pull: { members: { $or: membersToRemove } } });
+
+	return Group.updateOne(
+		{ name: name },
+		{ $pull: { members: { $or: membersToRemove } } }
+	);
 };
-	
