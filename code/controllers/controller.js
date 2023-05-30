@@ -5,6 +5,7 @@ import {
 	handleDateFilterParams,
 	handleAmountFilterParams,
 	verifyAuth,
+	verifyMultipleAuth,
 } from './utils.js';
 
 /**
@@ -131,27 +132,28 @@ export const deleteCategory = async (req, res) => {
 		if (checkCategoriesNumber.length == 1) {
 			return res.status(400).json({ message: 'Only one category remaining!' });
 		}
-		types.forEach(async (type) => {
+
+		let responseData = {
+			message: 'Categories deleted',
+			count: 0,
+		};
+
+		for (const type of types) {
 			let data = await categories.findOne({ type });
 			if (!data) {
 				return res.status(400).json({ message: 'Category does not exist' });
 			}
-			let responseData = {
-				message: 'Category deleted',
-				count: 0,
-			};
+
 			const typeTransactions = await transactions.find({ type });
-			responseData.count = typeTransactions.length;
-			transactions
-				.updateMany({ type }, { $set: { type: 'investment' } })
-				.then((result) => {
-					data.remove().then((data) =>
-						res.status(200).json({
-							data: responseData,
-							refreshedTokenMessage: res.locals.refreshedTokenMessage,
-						})
-					); //warning
-				});
+			responseData.count += typeTransactions.length;
+
+			await transactions.updateMany({ type }, { $set: { type: 'investment' } });
+			await data.remove();
+		}
+
+		res.status(200).json({
+			data: responseData,
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
 		res.status(400).json({ error: error.message });
@@ -167,8 +169,10 @@ export const deleteCategory = async (req, res) => {
  */
 export const getCategories = async (req, res) => {
 	try {
-		let UserAuth = verifyAuth(req, res, { authType: 'User' });
-		if (!UserAuth.authorized) return res.status(401).json({ error: cause });
+		const { authorized, cause } = verifyMultipleAuth(req, res, {
+			authType: ['User', 'Admin'],
+		});
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		let data = await categories.find({});
 
@@ -194,8 +198,10 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
 	try {
-		let UserAuth = verifyAuth(req, res, { authType: 'User' });
-		if (!UserAuth.authorized) return res.status(401).json({ error: cause });
+		const { authorized, cause } = verifyMultipleAuth(req, res, {
+			authType: ['User', 'Admin'],
+		});
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		const { username, amount, type } = req.body;
 
@@ -437,6 +443,11 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
 	try {
+		const { authorized, cause } = verifyMultipleAuth(req, res, {
+			authType: ['User', 'Admin'],
+		});
+		if (!authorized) return res.status(401).json({ error: cause });
+
 		const username = req.params.username;
 		if (username === undefined) {
 			return res.status(401).json({ message: 'missing parameters' });
@@ -454,11 +465,6 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		if (!userLook) {
 			return res.status(400).json({ message: 'User does not exist' });
 		}
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
-
-		let UserAuth = verifyAuth(req, res, { authType: 'User' });
-		if (!UserAuth.authorized) return res.status(401).json({ error: cause });
 
 		/**
 		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type AND transactions.username = categories.username AND transactions.type = categoryVar AND transactions.username = usernameVar" still need to check if category exists
@@ -682,6 +688,11 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
  */
 export const deleteTransaction = async (req, res) => {
 	try {
+		const { authorized, cause } = verifyMultipleAuth(req, res, {
+			authType: ['User', 'Admin'],
+		});
+		if (!authorized) return res.status(401).json({ error: cause });
+
 		const username2 = req.params.username;
 		const id2 = req.params._id;
 
