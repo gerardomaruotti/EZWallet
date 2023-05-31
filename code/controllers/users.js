@@ -82,11 +82,11 @@ export const createGroup = async (req, res) => {
 		let { name, memberEmails } = req.body;
 		if (name === undefined || memberEmails === undefined)
 			return res.status(401).json({ error: 'Missing parameters' });
-		console.log(verifyAuth(req, res, { authType: 'Group' }));
+
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Simple' });
-		console.log(authorized, cause);
+
 		if (!authorized) return res.status(401).json({ error: cause });
-		console.log('authorised');
+
 		if (await Group.findOne({ name: name }))
 			return res
 				.status(401)
@@ -166,15 +166,12 @@ export const getGroups = async (req, res) => {
  */
 export const getGroup = async (req, res) => {
 	try {
-		const { authorized, cause } = verifyMultipleAuth(req, res, {
-			authType: ['User', 'Admin'],
-		});
-
-		if (!authorized) return res.status(401).json({ error: cause });
-
-		const name = req.params.name;
-		const group = await Group.findOne({ name: name });
-		if (!group) return res.status(400).json({ error: 'Group not found' });
+		const group = await Group.findOne({ name: req.params.name });
+			if (!group) return res.status(400).json({ error: 'Group not found' });
+		
+		const { authorized, cause } = verifyMultipleAuth(req, res, {authType: ['Group', 'Admin'], groupEmails: group.members.map((m) => m.email)});
+		if (!authorized) 
+			return res.status(401).json({ error: cause });
 
 		const responseGroup = {
 			name: group.name,
@@ -210,8 +207,12 @@ export const addToGroup = async (req, res) => {
 				error: 'The request body does not contain all the necessary attributes',
 			});
 
+		const group = await Group.findOne({ name: name })
+		if (!group)
+			return res.status(400).json({ error: 'Group not found' });
+
 		if (req.path.split('/').slice(-1)[0] === 'add') {
-			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
 			if (!authorized) return res.status(401).json({ error: cause });
 		} else if (req.path.split('/').slice(-1)[0] === 'insert') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
@@ -222,9 +223,6 @@ export const addToGroup = async (req, res) => {
 		
 		if (memberEmails.some((email) => !isEmail(email)))
 			return res.status(400).json({ error: 'Mail not correct formatted' });
-
-		if (!(await Group.findOne({ name: name })))
-			return res.status(400).json({ error: 'Group not found' });
 
 		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
 
@@ -278,12 +276,15 @@ export const removeFromGroup = async (req, res) => {
 	try {
 		let { name } = req.params;
 		let { memberEmails } = req.body;
-
 		if (memberEmails === undefined)
 			return res.status(401).json({ error: 'Missing parameters' });
 
+		const group = await Group.findOne({ name: name });
+		if (!group)
+			return res.status(401).json({ error: 'Group not found' });
+
 		if (req.path.split('/').slice(-1)[0] === 'remove') {
-			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
 			if (!authorized) return res.status(401).json({ error: cause });
 		} else if (req.path.split('/').slice(-1)[0] === 'pull') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
@@ -295,9 +296,6 @@ export const removeFromGroup = async (req, res) => {
 		if (memberEmails.some((email) => !isEmail(email)))
 			return res.status(400).json({ error: 'Mail not correct formatted' });
 
-		if (!(await Group.findOne({ name: name })))
-			return res.status(401).json({ error: 'Group not found' });
-
 		const { validEmails, membersNotFound, notInGroup } = await checkGroupEmails(
 			memberEmails,
 			name
@@ -306,16 +304,12 @@ export const removeFromGroup = async (req, res) => {
 		if (validEmails.length == 0)
 			return res.status(401).json({ error: 'All the emails are invalid' });
 
-		if (
-			(await Group.findOne({ name: name })).members.length <= validEmails.length
-		)
-			return res
-				.status(401)
-				.json({ error: 'Group will be empty after removing members' });
+		if (group.members.length <= validEmails.length)
+			return res.status(401).json({ error: 'Group will be empty after removing members' });
 
-			Group.updateOne(
-					{ name: name },
-					{ $pull: { members: { email: { $in: validEmails.map((e) => e.email)} } } })
+		Group.updateOne(
+				{ name: name },
+				{ $pull: { members: { email: { $in: validEmails.map((e) => e.email)} } } })
 			.then(async (group) =>
 				res.json({
 					data: {

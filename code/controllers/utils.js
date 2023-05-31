@@ -61,6 +61,7 @@ export const handleDateFilterParams = (req) => {
 
 export const verifyAuth = (req, res, info) => {
 	const cookie = req.cookies;
+
 	if (!cookie.accessToken || !cookie.refreshToken) {
 		return { authorized: false, cause: 'Unauthorized' };
 	}
@@ -112,12 +113,10 @@ export const verifyAuth = (req, res, info) => {
 				return { authorized: false, cause: 'Not admin' };
 			}
 		} else if (info.authType === 'Group') {
-			//DA CONTROLLARE
-			/*
-			if(req.params.name !== undefined && !(await Group.findOne({name: req.params.name, 'members.email': decodedAccessToken.email}))) { 
+			console.log('groupEmail', info.groupEmails);
+			if(!info.groupEmails || !info.groupEmails.includes(decodedAccessToken.email)) {
 				return { authorized: false, cause: 'User not in group' };
 			}
-			*/
 		}
 
 		return { authorized: true, cause: 'Authorized' };
@@ -173,8 +172,6 @@ export const handleAmountFilterParams = (req) => {
 	const amount = req.body.amount;
 	const usernameVar = username;
 	const amountVar = amount;
-
-	console.log('usernameVar:', usernameVar);
 
 	let amountQuery = {};
 
@@ -255,7 +252,7 @@ export const verifyMultipleAuth = (req, res, info) => {
 
 	return {
 		authorized: info.authType.some((type) => {
-			const { authorized, cause } = verifyAuth(req, res, { authType: type });
+			const { authorized, cause } = verifyAuth(req, res, { ...info, authType: type });
 
 			if (authorized) return true;
 			if (message === null) {
