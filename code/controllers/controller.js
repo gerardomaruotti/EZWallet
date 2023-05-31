@@ -290,7 +290,7 @@ export const getAllTransactions = async (req, res) => {
 	}
 };
 
-/** OK (ADMIN) - OK (USER) TODO: FILTER BY QUERY PARAMS
+/** OK (ADMIN) - OK (USER)
  * Return all transactions made by a specific user
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
@@ -299,10 +299,20 @@ export const getAllTransactions = async (req, res) => {
     - empty array is returned if there are no transactions made by the user
     - if there are query parameters and the function has been called by a Regular user then the returned transactions must be filtered according to the query parameters
  */
+/*
+- Request Parameters: A string equal to the `username` of the involved user
+  - Example: `/api/users/Mario/transactions` (user route)
+  - Example: `/api/transactions/users/Mario` (admin route)
+- Request Body Content: None
+- Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
+  - Example: `res.status(200).json({data: [{username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"}, {username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green"} ] refreshedTokenMessage: res.locals.refreshedTokenMessage})`
+- Returns a 400 error if the username passed as a route parameter does not represent a user in the database
+- Returns a 401 error if called by an authenticated user who is not the same user as the one in the route (authType = User) if the route is `/api/users/:username/transactions`
+- Returns a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `/api/transactions/users/:username`
+- Can be filtered by date and amount if the necessary query parameters are present and if the route is `/api/users/:username/transactions
+*/
 export const getTransactionsByUser = async (req, res) => {
 	try {
-		//Distinction between route accessed by Admins or Regular users for functions that can be called by both
-		//and different behaviors and access rights
 		const cookie = req.cookies;
 		const username = req.params.username;
 		if (username === undefined) {
@@ -329,14 +339,7 @@ export const getTransactionsByUser = async (req, res) => {
 				if (!cookie.accessToken) {
 					return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
 				}
-				const username = req.params.username;
-				/**
-						 * MongoDB equivalent to the query "SELECT *
-				FROM transactions
-				LEFT JOIN categories ON transactions.type = categories.type
-				WHERE username = usernameVar
-				" still need to check if username exists. I also assume that you cant make a transaction with a non existing category
-						 */
+
 				transactions
 					.aggregate([
 						{
@@ -389,20 +392,35 @@ export const getTransactionsByUser = async (req, res) => {
 			if (!UserAuth.authorized) return res.status(401).json({ error: cause });
 
 			try {
-				const username = req.params.username;
-				/**
-						 * MongoDB equivalent to the query "SELECT *
-				FROM transactions
-				LEFT JOIN categories ON transactions.type = categories.type
-				WHERE username = usernameVar
-				" still need to check if username exists. I also assume that you cant make a transaction with a non existing category
-						 */
-				const usernameVar = username;
-
-				let dateQuery = handleDateFilterParams(req);
-				console.log(dateQuery);
-
-				let aggregationPipeline = transactions
+				if (req.query) {
+					const filter = {
+						username,
+						...handleDateFilterParams(req),
+						...handleAmountFilterParams(req),
+					};
+					let filteredTransactions = await transactions.find({
+						username: username,
+						...filter,
+					});
+					const allCategories = await categories.find();
+					let data = filteredTransactions.map((v) =>
+						Object.assign(
+							{},
+							{
+								username: v.username,
+								amount: v.amount,
+								type: v.type,
+								date: v.date,
+								color: allCategories.find((c) => c.type === v.type).color,
+							}
+						)
+					);
+					return res.status(200).json({
+						data: data,
+						refreshedTokenMessage: res.locals.refreshedTokenMessage,
+					});
+				}
+				transactions
 					.aggregate([
 						{
 							$lookup: {
@@ -417,7 +435,7 @@ export const getTransactionsByUser = async (req, res) => {
 						},
 						{
 							$match: {
-								username: usernameVar,
+								username: username,
 							},
 						},
 					])

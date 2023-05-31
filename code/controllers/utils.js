@@ -11,7 +11,6 @@ import { Group } from '../models/User.js';
  */
 export const handleDateFilterParams = (req) => {
 	const { date, from, upTo } = req.query;
-
 	let filter = {};
 
 	if (date && (from || upTo)) {
@@ -20,16 +19,42 @@ export const handleDateFilterParams = (req) => {
 		);
 	}
 
-	if (date) {
-		filter.date = { $gte: date };
-	} else if (from && upTo) {
-		filter.date = { $gte: from, $lte: upTo };
-	} else if (from) {
-		filter.date = { $gte: from };
-	} else if (upTo) {
-		filter.date = { $lte: upTo };
+	if (from) {
+		const fromDate = new Date(from);
+		if (isNaN(fromDate.getTime())) {
+			throw new Error('Invalid `from` parameter');
+		}
+		filter.date = { $gte: fromDate };
 	}
 
+	if (upTo) {
+		const upToDate = new Date(upTo);
+		if (isNaN(upToDate.getTime())) {
+			throw new Error('Invalid `upTo` parameter');
+		}
+		if (filter.date) {
+			filter.date.$lte = upToDate;
+		} else {
+			filter.date = { $lte: upToDate };
+		}
+	}
+
+	if (date) {
+		const dateObj = new Date(date);
+		if (isNaN(dateObj.getTime())) {
+			throw new Error('Invalid `date` parameter');
+		}
+		const startOfDay = new Date(
+			dateObj.getFullYear(),
+			dateObj.getMonth(),
+			dateObj.getDate()
+		);
+		const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+		filter.date = { $gte: startOfDay, $lte: endOfDay };
+	}
+	if (Object.keys(filter).length === 0) {
+		filter = null;
+	}
 	return filter;
 };
 
@@ -167,74 +192,33 @@ export const verifyAuth = (req, res, info) => {
  * @returns an object that can be used for filtering MongoDB queries according to the `amount` parameter.
  *  The returned object must handle all possible combination of amount filtering parameters, including the case where none are present.
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
+ * @throws an error if the value of any of the two query parameters is not a numerical value
  */
 export const handleAmountFilterParams = (req) => {
-	const username = req.params.username;
-	const amount = req.body.amount;
-	const usernameVar = username;
-	const amountVar = amount;
+	const { min, max } = req.query;
+	let filter = {};
 
-	console.log('usernameVar:', usernameVar);
+	if (min && isNaN(min)) {
+		throw new Error('Invalid `min` parameter');
+	}
 
-	let amountQuery = {};
+	if (max && isNaN(max)) {
+		throw new Error('Invalid `max` parameter');
+	}
 
-	if (amountVar && Array.isArray(amountVar)) {
-		for (const filter of amountVar) {
-			const [operator, value] = filter.split(' ');
-			const parsedValue = parseFloat(value);
+	if (min) {
+		filter.amount = { $gte: parseInt(min) };
+	}
 
-			amountQuery[operator] = parsedValue;
+	if (max) {
+		if (filter.amount) {
+			filter.amount.$lte = parseInt(max);
+		} else {
+			filter.amount = { $lte: parseInt(max) };
 		}
 	}
 
-	let aggregationPipeline = [
-		{
-			$lookup: {
-				from: 'categories',
-				localField: 'type',
-				foreignField: 'type',
-				as: 'joinedData',
-			},
-		},
-		{
-			$unwind: '$joinedData',
-		},
-		{
-			$match: {
-				username: usernameVar,
-			},
-		},
-	];
-
-	if (Object.keys(amountQuery).length > 0) {
-		aggregationPipeline.push({
-			$match: {
-				amount: amountQuery,
-			},
-		});
-	}
-
-	transactions
-		.aggregate(aggregationPipeline)
-		.then((result) => {
-			let data = result.map((v) =>
-				Object.assign(
-					{},
-					{
-						_id: v._id,
-						username: v.username,
-						amount: v.amount,
-						type: v.type,
-						color: v.joinedData.color,
-						date: v.date,
-					}
-				)
-			);
-			return data;
-		})
-		.catch((error) => {
-			throw error;
-		});
+	return filter;
 };
 
 // This function takes an array and a predicate function as arguments and returns a new array containing
@@ -271,7 +255,8 @@ export const verifyMultipleAuth = (req, res, info) => {
 };
 
 export const isEmail = (email) => {
-	var validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+	var validRegex =
+		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
-	return email.match(validRegex) ? true : false;	
+	return email.match(validRegex) ? true : false;
 };
