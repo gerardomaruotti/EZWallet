@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { User } from '../models/User.js';
 import jwt from 'jsonwebtoken';
-import { verifyAuth } from './utils.js';
+import { verifyAuth, isEmail } from './utils.js';
 
 /**
  * Register a new user in the system
@@ -13,18 +13,26 @@ import { verifyAuth } from './utils.js';
 export const register = async (req, res) => {
 	try {
 		const { username, email, password } = req.body;
-		const existingUser = await User.findOne({ email: req.body.email });
-		if (existingUser)
-			return res.status(400).json({ message: 'you are already registered' });
+		if (username === undefined || email === undefined || password === undefined)
+			return res.status(400).json({ error: 'Missing parameters' });
+
+		if (username === '' || email === '' || password === '') 
+			return res.status(400).json({ error: 'Empty string in parameters' });
+		
+		if(!isEmail(email))
+			return res.status(400).json({ error: 'Email not correct formatted' });
+		
+		if ((await User.findOne({ email: email })) || (await User.findOne({ email: email })))
+			return res.status(400).json({ message: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
-		const newUser = await User.create({
+		await User.create({
 			username,
 			email,
 			password: hashedPassword,
 		});
-		res.status(200).json('user added succesfully');
-	} catch (err) {
-		res.status(400).json(err);
+		res.status(200).json({ data: { message: 'User added succesfully' } });
+	} catch (error) {
+		res.status(400).json({ error: error.message });
 	}
 };
 
@@ -38,19 +46,27 @@ export const register = async (req, res) => {
 export const registerAdmin = async (req, res) => {
 	try {
 		const { username, email, password } = req.body;
-		const existingUser = await User.findOne({ email: req.body.email });
-		if (existingUser)
-			return res.status(400).json({ message: 'you are already registered' });
+		if (username === undefined || email === undefined || password === undefined)
+			return res.status(400).json({ error: 'Missing parameters' });
+
+		if (username === '' || email === '' || password === '') 
+			return res.status(400).json({ error: 'Empty string in parameters' });
+		
+		if(!isEmail(email))
+			return res.status(400).json({ error: 'Email not correct formatted' });
+		
+		if ((await User.findOne({ email: email })) || (await User.findOne({ email: email })))
+			return res.status(400).json({ message: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
-		const newUser = await User.create({
+		await User.create({
 			username,
 			email,
 			password: hashedPassword,
 			role: 'Admin',
 		});
-		res.status(200).json('admin added succesfully');
-	} catch (err) {
-		res.status(500).json(err);
+		res.status(200).json({ data: { message: 'Admin added succesfully' } });
+	} catch (error) {
+		res.status(400).json({ error: error.message });
 	}
 };
 
@@ -64,12 +80,18 @@ export const registerAdmin = async (req, res) => {
  */
 export const login = async (req, res) => {
 	const { email, password } = req.body;
-	const cookie = req.cookies;
+	if (email === undefined || password === undefined)
+		return res.status(400).json({ error: 'Missing parameters' });
+
+	if (email === '' || password === '')
+		return res.status(400).json({ error: 'Empty string in parameters' });
+
 	const existingUser = await User.findOne({ email: email });
-	if (!existingUser) return res.status(400).json('please you need to register');
+	if (!existingUser) return res.status(400).json('User need to register');
+
 	try {
 		const match = await bcrypt.compare(password, existingUser.password);
-		if (!match) return res.status(400).json('wrong credentials');
+		if (!match) return res.status(400).json('Wrong credentials');
 		//CREATE ACCESSTOKEN
 		const accessToken = jwt.sign(
 			{
@@ -114,9 +136,9 @@ export const login = async (req, res) => {
 		res
 			.status(200)
 			.json({ data: { accessToken: accessToken, refreshToken: refreshToken } });
-	} catch (error) {
-		res.status(400).json(error);
-	}
+		} catch (error) {
+			res.status(400).json({ error: error.message });
+		}
 };
 
 /**
@@ -129,9 +151,11 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;
-	if (!refreshToken) return res.status(400).json('user not found');
+	if (!refreshToken) return res.status(400).json('User not logged in');
+
 	const user = await User.findOne({ refreshToken: refreshToken });
-	if (!user) return res.status(400).json('user not found');
+	if (!user) return res.status(400).json('User not found');
+
 	try {
 		user.refreshToken = null;
 		res.cookie('accessToken', '', {
@@ -148,9 +172,9 @@ export const logout = async (req, res) => {
 			sameSite: 'none',
 			secure: true,
 		});
-		const savedUser = await user.save();
-		res.status(200).json('logged out');
+		await user.save();
+		res.status(200).json({ data: { message: 'User logged out' } });
 	} catch (error) {
-		res.status(400).json(error);
+		res.status(400).json({ error: error.message });
 	}
 };

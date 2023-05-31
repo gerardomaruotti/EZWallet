@@ -81,7 +81,7 @@ export const createGroup = async (req, res) => {
 	try {
 		let { name, memberEmails } = req.body;
 		if (name === undefined || memberEmails === undefined)
-			return res.status(401).json({ error: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Simple' });
 
@@ -96,7 +96,7 @@ export const createGroup = async (req, res) => {
 			await checkGroupEmails(memberEmails);
 
 		if (validEmails.length == 0)
-			return res.status(401).json({ error: 'All the emails are invalid' });
+			return res.status(400).json({ error: 'All the emails are invalid' });
 
 		const members = await Promise.all(
 			validEmails.map(async (e) => {

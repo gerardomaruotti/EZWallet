@@ -21,15 +21,15 @@ export const createCategory = (req, res) => {
 
 		const { type, color } = req.body;
 		if (!type || !color) {
-			return res.status(400).json({ message: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		if (type === '' || color === '') {
-			return res.status(400).json({ message: 'Invalid parameters' });
+			return res.status(400).json({ error: 'Invalid parameters' });
 		}
 		const new_categories = new categories({ type, color });
 		categories.findOne({ type }).then((data) => {
 			if (data) {
-				return res.status(400).json({ message: 'Category already exists' });
+				return res.status(400).json({ error: 'Category already exists' });
 			}
 		});
 		new_categories
@@ -67,19 +67,19 @@ export const updateCategory = async (req, res) => {
 		const { type, color } = req.body;
 		const { type: oldType } = req.params;
 		if (!type || !color) {
-			return res.status(400).json({ message: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		if (type === '' || color === '') {
-			return res.status(400).json({ message: 'Invalid parameters' });
+			return res.status(400).json({ error: 'Invalid parameters' });
 		}
 		let checkParamCategory = await categories.findOne({ type: oldType });
 		if (!checkParamCategory) {
-			return res.status(400).json({ message: 'Category does not exist' });
+			return res.status(400).json({ error: 'Category does not exist' });
 		}
 		//check if parameters category exists
 		let checkBodyCategory = await categories.findOne({ type });
 		if (checkBodyCategory) {
-			return res.status(400).json({ message: 'Category already exists' });
+			return res.status(400).json({ error: 'Category already exists' });
 		}
 		//update transactions
 		const typeTransactions = await transactions.find({ type: oldType });
@@ -124,14 +124,14 @@ export const deleteCategory = async (req, res) => {
 
 		const { types } = req.body;
 		if (!types) {
-			return res.status(400).json({ message: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		if (types === '') {
-			return res.status(400).json({ message: 'Invalid parameters' });
+			return res.status(400).json({ error: 'Invalid parameters' });
 		}
 		let checkCategoriesNumber = await categories.find();
 		if (checkCategoriesNumber.length == 1) {
-			return res.status(400).json({ message: 'Only one category remaining!' });
+			return res.status(400).json({ error: 'Only one category remaining!' });
 		}
 
 		let responseData = {
@@ -142,7 +142,7 @@ export const deleteCategory = async (req, res) => {
 		for (const type of types) {
 			let data = await categories.findOne({ type });
 			if (!data) {
-				return res.status(400).json({ message: 'Category does not exist' });
+				return res.status(400).json({ error: 'Category does not exist' });
 			}
 
 			const typeTransactions = await transactions.find({ type });
@@ -208,11 +208,11 @@ export const createTransaction = async (req, res) => {
 
 		const typeLook = await categories.findOne({ type: type }).exec();
 		if (!typeLook) {
-			return res.status(400).json({ message: 'Category does not exist' });
+			return res.status(400).json({ error: 'Category does not exist' });
 		}
 		const userLook = await User.findOne({ username: username }).exec();
 		if (!userLook) {
-			return res.status(400).json({ message: 'User does not exist' });
+			return res.status(400).json({ error: 'User does not exist' });
 		}
 
 		const new_transactions = new transactions({ username, amount, type });
@@ -316,18 +316,18 @@ export const getTransactionsByUser = async (req, res) => {
 		const cookie = req.cookies;
 		const username = req.params.username;
 		if (username === undefined) {
-			return res.status(400).json({ message: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		const userLook = await User.findOne({ username: username }).exec();
 		if (!userLook) {
-			return res.status(400).json({ message: 'User does not exist' });
+			return res.status(400).json({ error: 'User does not exist' });
 		}
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
 		);
 		if (username !== decodedRefreshToken.username) {
-			return res.status(401).json({ message: 'Unauthorized' });
+			return res.status(401).json({ error: 'Unauthorized' });
 		}
 		if (req.url.indexOf('/transactions/users/') >= 0) {
 			//Admin
@@ -337,7 +337,7 @@ export const getTransactionsByUser = async (req, res) => {
 			try {
 				const cookie = req.cookies;
 				if (!cookie.accessToken) {
-					return res.status(401).json({ message: 'Unauthorized' }); // unauthorized
+					return res.status(401).json({ error: 'Unauthorized' }); // unauthorized
 				}
 
 				transactions
@@ -490,7 +490,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 
 		const username = req.params.username;
 		if (username === undefined) {
-			return res.status(400).json({ message: 'missing parameters' });
+			return res.status(400).json({ error: 'missing parameters' });
 		}
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
@@ -500,20 +500,20 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 			username !== decodedRefreshToken.username &&
 			decodedRefreshToken.role !== 'Admin'
 		) {
-			return res.status(401).json({ message: 'Unauthorized' });
+			return res.status(401).json({ error: 'Unauthorized' });
 		}
 		const type = req.params.category;
 		if (type === undefined) {
-			return res.status(400).json({ message: 'missing parameters' });
+			return res.status(400).json({ error: 'missing parameters' });
 		}
 
 		const typeLook = await categories.findOne({ type: type }).exec();
 		if (!typeLook) {
-			return res.status(400).json({ message: 'Category does not exist' });
+			return res.status(400).json({ error: 'Category does not exist' });
 		}
 		const userLook = await User.findOne({ username: username }).exec();
 		if (!userLook) {
-			return res.status(400).json({ message: 'User does not exist' });
+			return res.status(400).json({ error: 'User does not exist' });
 		}
 
 		/**
@@ -578,7 +578,12 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
 	try {
-		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+		const group = await Group.findOne({ name });
+		if (!group) {
+			return res.status(400).json({ error: 'Group not found.' });
+		}
+
+		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
 		if (!authorized) return res.status(401).json({ error: cause });
 
 		if (req.url.indexOf('transactions/groups') >= 0) {
@@ -588,13 +593,10 @@ export const getTransactionsByGroup = async (req, res) => {
 
 		const name = req.params.name;
 		if (name === undefined) {
-			return res.status(400).json({ message: 'missing parameters' });
+			return res.status(400).json({ error: 'missing parameters' });
 		}
 
-		const group = await Group.findOne({ name });
-		if (!group) {
-			return res.status(400).json({ message: 'Group not found.' });
-		}
+
 
 		const memberEmails = group.members.map((member) => member.email);
 		console.log('emails:', memberEmails);
@@ -656,29 +658,28 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
 	try {
+		const group = await Group.findOne({ name });
+		if (!group) {
+			return res.status(400).json({ error: 'Group not found.' });
+		}
 		if (req.url.indexOf('transactions/groups') >= 0) {
 			let { AdminAuth, cause } = verifyAuth(req, res, { authType: 'Admin' });
 			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
 		} else {
-			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group' });
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
 			if (!authorized) return res.status(401).json({ error: cause });
 		}
 		const name = req.params.name;
 		if (name === undefined) {
-			return res.status(400).json({ message: 'missing parameters' });
+			return res.status(400).json({ error: 'missing parameters' });
 		}
 		const type2 = req.params.category;
 		if (type2 === undefined) {
-			return res.status(400).json({ message: 'missing parameters' });
+			return res.status(400).json({ error: 'missing parameters' });
 		}
 		const typeLook = await categories.findOne({ type: type2 }).exec();
 		if (!typeLook) {
-			return res.status(400).json({ message: 'Category does not exist' });
-		}
-
-		const group = await Group.findOne({ name });
-		if (!group) {
-			return res.status(400).json({ message: 'Group not found.' });
+			return res.status(400).json({ error: 'Category does not exist' });
 		}
 
 		const memberEmails = group.members.map((member) => member.email);
@@ -755,17 +756,17 @@ export const deleteTransaction = async (req, res) => {
 		const id = req.body._id;
 
 		if (id === undefined) {
-			return res.status(400).json({ message: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 		}
 
 		const userLook = await User.findOne({ username: username }).exec();
 		if (!userLook) {
-			return res.status(400).json({ message: 'User does not exist' });
+			return res.status(400).json({ error: 'User does not exist' });
 		}
 
 		const idLook = await transactions.findOne({ _id: id }).exec();
 		if (!idLook) {
-			return res.status(400).json({ message: 'Transaction not found.' });
+			return res.status(400).json({ error: 'Transaction not found.' });
 		}
 		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
 		if (!AdminAuth.authorized) return res.status(400).json({ error: cause });
@@ -795,11 +796,11 @@ export const deleteTransactions = async (req, res) => {
 		const idList = req.body._ids;
 
 		if (!idList) {
-			return res.status(400).json({ message: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		for (let i = 0; i < idList.length; i++) {
 			if (idList[i] == '') {
-				return res.status(400).json({ message: 'Empty parameter' });
+				return res.status(400).json({ error: 'Empty parameter' });
 			}
 		}
 
@@ -809,7 +810,7 @@ export const deleteTransactions = async (req, res) => {
 			});
 
 			if (existingTransactions.length < idList.length) {
-				return res.status(400).json({ message: 'One or more id not found' });
+				return res.status(400).json({ error: 'One or more id not found' });
 			}
 
 			let data = await transactions.deleteMany({ _id: { $in: idList } });
@@ -819,7 +820,7 @@ export const deleteTransactions = async (req, res) => {
 				refreshedTokenMessage: res.locals.refreshedTokenMessage,
 			});
 		} else {
-			return res.status(400).json({ message: 'Id list is empty!' });
+			return res.status(400).json({ error: 'Id list is empty!' });
 		}
 	} catch (error) {
 		res.status(400).json({ error: 'Transactions not found' });
