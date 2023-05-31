@@ -219,15 +219,14 @@ export const addToGroup = async (req, res) => {
 		} else {
 			return res.status(400).json({ error: 'Path not correct' });
 		}
-
+		
 		if (memberEmails.some((email) => !isEmail(email)))
 			return res.status(400).json({ error: 'Mail not correct formatted' });
 
 		if (!(await Group.findOne({ name: name })))
 			return res.status(400).json({ error: 'Group not found' });
 
-		const { validEmails, alreadyInGroup, membersNotFound } =
-			await checkGroupEmails(memberEmails);
+		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
 
 		if (validEmails.length == 0)
 			return res.status(400).json({ error: 'All the emails are invalid' });
@@ -314,7 +313,9 @@ export const removeFromGroup = async (req, res) => {
 				.status(401)
 				.json({ error: 'Group will be empty after removing members' });
 
-		deleteFromGroup(name, validEmails)
+			Group.updateOne(
+					{ name: name },
+					{ $pull: { members: { email: { $in: validEmails.map((e) => e.email)} } } })
 			.then(async (group) =>
 				res.json({
 					data: {
@@ -340,7 +341,7 @@ export const removeFromGroup = async (req, res) => {
 	}
 };
 
-/**
+/** OKOK
  * Delete a user
   - Request Parameters: None
   - Request Body Content: A string equal to the `email` of the user to be deleted
@@ -368,23 +369,27 @@ export const deleteUser = async (req, res) => {
 		const deletedTransactions = await transactions.deleteMany({
 			email: email,
 		});
-		console.log(deletedTransactions.deletedCount);
 
-		const groupName = await Group.findOne({ 'members.email': email }).name;
-		console.log(email);
+		const group = await Group.findOne({ 'members.email': email });
 
-		//NON FUNZIONA
-		const deletedGroup = await deleteFromGroup(groupName, [{ email: email }]);
-		console.log(deletedGroup.modifiedCount);
+		let deletedGroup;
+		if(group.members.length == 1) {
+			deletedGroup = await Group.deleteMany({
+				name: group.name,
+			});
+		} else {
+			deletedGroup = await Group.updateOne(
+				{ name: group.name },
+				{ $pull: { members: { email: email } } }
+			);
+		}
 
-		const deleteUser = await User.deleteMany({
-			email: email,
-		});
+		await User.deleteMany({ email: email });
 
 		const response = {
 			data: {
-				deletedTransactionsNumber: transactionsNumber,
-				isRemovedFromGroup: emailExists,
+				deletedTransaction: deletedTransactions.deletedCount,
+				deleteFromGroup: deletedGroup.modifiedCount > 0 || deletedGroup.deletedCount > 0,
 				refreshedTokenMessage: res.locals.refreshedTokenMessage,
 			},
 		};
@@ -462,15 +467,3 @@ const checkGroupEmails = async (memberEmails, groupName) => {
 	};
 };
 
-const deleteFromGroup = async (name, emails) => {
-	const membersToRemove = await Promise.all(
-		emails.map(async (e) => {
-			return { email: e.email, user: await User.findOne({ email: e.email }) };
-		})
-	);
-
-	return Group.updateOne(
-		{ name: name },
-		{ $pull: { members: { $or: membersToRemove } } }
-	);
-};

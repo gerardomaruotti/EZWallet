@@ -271,20 +271,7 @@ export const verifyMultipleAuth = (req, res, info) => {
 };
 
 export const isEmail = (email) => {
-	var validRegex =
-		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+	var validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
-	if (email.match(validRegex)) {
-		alert('Valid email address!');
-
-		document.form1.text1.focus();
-
-		return true;
-	} else {
-		alert('Invalid email address!');
-
-		document.form1.text1.focus();
-
-		return false;
-	}
+	return email.match(validRegex) ? true : false;	
 };
