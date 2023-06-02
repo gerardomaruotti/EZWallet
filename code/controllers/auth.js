@@ -32,7 +32,7 @@ export const register = async (req, res) => {
 		});
 		res.status(200).json({ data: { message: 'User added succesfully' } });
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(400).json({ error: error });
 	}
 };
 
@@ -66,7 +66,7 @@ export const registerAdmin = async (req, res) => {
 		});
 		res.status(200).json({ data: { message: 'Admin added succesfully' } });
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(400).json({ error: error });
 	}
 };
 
@@ -137,7 +137,7 @@ export const login = async (req, res) => {
 			.status(200)
 			.json({ data: { accessToken: accessToken, refreshToken: refreshToken } });
 		} catch (error) {
-			res.status(400).json({ error: error.message });
+			res.status(400).json({ error: error });
 		}
 };
 
@@ -175,6 +175,6 @@ export const logout = async (req, res) => {
 		await user.save();
 		res.status(200).json({ data: { message: 'User logged out' } });
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(400).json({ error: error });
 	}
 };

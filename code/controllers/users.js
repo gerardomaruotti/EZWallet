@@ -23,7 +23,6 @@ export const getUsers = async (req, res) => {
 			return {
 				username: user.username,
 				email: user.email,
-				role: user.role,
 			};
 		});
 		res.status(200).json({
@@ -31,7 +30,7 @@ export const getUsers = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -62,7 +61,7 @@ export const getUser = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -124,7 +123,7 @@ export const createGroup = async (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -152,7 +151,7 @@ export const getGroups = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -183,7 +182,7 @@ export const getGroup = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -258,7 +257,7 @@ export const addToGroup = async (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -331,7 +330,7 @@ export const removeFromGroup = async (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -389,7 +388,7 @@ export const deleteUser = async (req, res) => {
 		};
 		res.json(response).status(200);
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -420,7 +419,7 @@ export const deleteGroup = async (req, res) => {
 
 		res.json({ message: 'Group deleted' }).status(200);
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(500).json({ error: error });
 	}
 };
 

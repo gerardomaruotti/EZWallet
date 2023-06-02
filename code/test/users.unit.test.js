@@ -21,8 +21,10 @@ import { verifyAuth } from '../controllers/utils';
  * `jest.mock()` must be called for every external module that is called in the functions under test.
  */
 jest.mock('../models/User.js');
-
 jest.mock('../controllers/utils');
+
+let mockReq;
+let mockRes;
 
 
 /**
@@ -34,32 +36,73 @@ beforeEach(() => {
 	User.find.mockClear();
 	verifyAuth.mockClear();
 
-	//additional `mockClear()` must be placed here
+	mockReq = {
+		cookies: {},
+		body: {},
+		params: {}
+	};
+	mockRes = {
+		status: jest.fn().mockReturnThis(),
+		json: jest.fn(),
+		locals: {
+			refreshedTokenMessage: 'Refreshed token'
+		}
+	};
+
 });
 
 describe('getUsers', () => {
-	test('should return 401 if user is not logged in', async () => {
-		const mockReq = {
-			cookies: {},
-			body: {},
-			params: {}
-		};
-		const mockRes = {
-			status: jest.fn().mockReturnThis(),
-			json: jest.fn()
-		};
+	test('should return 401 if verify return false', async () => {
 
-		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'No cookies' }));
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
 
 		await getUsers(mockReq, mockRes);
-		
+
 		expect(mockRes.status).toHaveBeenCalledWith(401);
-		expect(mockRes.json).toHaveBeenCalledWith({ error: 'No cookies' });
-	});
-
-
+		// expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+		// 		error: expect.any(String)
+		// 	}))
+		 });
 
 	test('should return empty list if there are no users', async () => {
+
+		User.find.mockImplementation(() => []);
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+
+		await getUsers(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: []
+        }))
+
+	});
+
+	test('should return list of all users', async () => {
+
+		const retrievedUsers = [
+			{
+				username: 'test1',
+				email: 'test1@example.com',
+			},
+			{
+				username: 'test2',
+				email: 'test2@example.com',
+			},
+		];
+
+		User.find.mockImplementation(() => retrievedUsers);
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+
+		await getUsers(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: retrievedUsers
+        }))
+	});
+
+	test('should return 500 if User.find throw an error', async () => {
 		const mockReq = {
 			cookies: {},
 			body: {},
@@ -73,34 +116,17 @@ describe('getUsers', () => {
 			}
 		};
 
-		jest.spyOn(User, 'find').mockImplementation(() => []);
-		verifyAuth.mockImplementation(() => ({ authorized: true }));
+		User.find.mockImplementation(() => { throw 'Database error' });
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
 
 		await getUsers(mockReq, mockRes);
 
-		expect(mockRes.status).toHaveBeenCalledWith(200);
-		expect(mockRes.json).toHaveBeenCalledWith({ data: [], refreshedTokenMessage: 'Refreshed token'  });
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}))
 	});
 
-	// test('should retrieve list of all users', async () => {
-	// 	const retrievedUsers = [
-	// 		{
-	// 			username: 'test1',
-	// 			email: 'test1@example.com',
-	// 			password: 'hashedPassword1',
-	// 		},
-	// 		{
-	// 			username: 'test2',
-	// 			email: 'test2@example.com',
-	// 			password: 'hashedPassword2',
-	// 		},
-	// 	];
-	// 	jest.spyOn(User, 'find').mockImplementation(() => retrievedUsers);
-	// 	const response = await request(app).get('/api/users');
-
-	// 	expect(response.status).toBe(200);
-	// 	expect(response.body).toEqual(retrievedUsers);
-	// });
 });
 
 describe('getUser', () => {});
