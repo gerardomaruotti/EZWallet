@@ -16,8 +16,8 @@ import jwt from 'jsonwebtoken';
  */
 export const createCategory = (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
+		let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		const { type, color } = req.body;
 		if (!type || !color) {
@@ -61,8 +61,8 @@ export const createCategory = (req, res) => {
  */
 export const updateCategory = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
+		let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		const { type, color } = req.body;
 		const { type: oldType } = req.params;
@@ -119,8 +119,8 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
+		let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		const { types } = req.body;
 		if (!types) {
@@ -246,12 +246,9 @@ export const createTransaction = async (req, res) => {
  */
 export const getAllTransactions = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized)
-			return res.status(401).json({ error: 'Not Authorized' });
-		/**
-		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
-		 */
+		let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+		if (!authorized) return res.status(401).json({ error: cause });
+
 		transactions
 			.aggregate([
 				{
@@ -299,21 +296,8 @@ export const getAllTransactions = async (req, res) => {
     - empty array is returned if there are no transactions made by the user
     - if there are query parameters and the function has been called by a Regular user then the returned transactions must be filtered according to the query parameters
  */
-/*
-- Request Parameters: A string equal to the `username` of the involved user
-  - Example: `/api/users/Mario/transactions` (user route)
-  - Example: `/api/transactions/users/Mario` (admin route)
-- Request Body Content: None
-- Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
-  - Example: `res.status(200).json({data: [{username: "Mario", amount: 100, type: "food", date: "2023-05-19T00:00:00", color: "red"}, {username: "Mario", amount: 70, type: "health", date: "2023-05-19T10:00:00", color: "green"} ] refreshedTokenMessage: res.locals.refreshedTokenMessage})`
-- Returns a 400 error if the username passed as a route parameter does not represent a user in the database
-- Returns a 401 error if called by an authenticated user who is not the same user as the one in the route (authType = User) if the route is `/api/users/:username/transactions`
-- Returns a 401 error if called by an authenticated user who is not an admin (authType = Admin) if the route is `/api/transactions/users/:username`
-- Can be filtered by date and amount if the necessary query parameters are present and if the route is `/api/users/:username/transactions
-*/
 export const getTransactionsByUser = async (req, res) => {
 	try {
-		const cookie = req.cookies;
 		const username = req.params.username;
 		if (username === undefined) {
 			return res.status(400).json({ error: 'Missing parameters' });
@@ -322,24 +306,12 @@ export const getTransactionsByUser = async (req, res) => {
 		if (!userLook) {
 			return res.status(400).json({ error: 'User does not exist' });
 		}
-		const decodedRefreshToken = jwt.verify(
-			cookie.refreshToken,
-			process.env.ACCESS_KEY
-		);
-		if (username !== decodedRefreshToken.username) {
-			return res.status(401).json({ error: 'Unauthorized' });
-		}
 		if (req.url.indexOf('/transactions/users/') >= 0) {
 			//Admin
-			let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
+			let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+			if (!authorized) return res.status(401).json({ error: cause });
 
 			try {
-				const cookie = req.cookies;
-				if (!cookie.accessToken) {
-					return res.status(401).json({ error: 'Unauthorized' }); // unauthorized
-				}
-
 				transactions
 					.aggregate([
 						{
@@ -482,7 +454,6 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
 	try {
-		const cookie = req.cookies;
 		const { authorized, cause } = verifyMultipleAuth(req, res, {
 			authType: ['User', 'Admin'],
 		});
@@ -492,21 +463,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		if (username === undefined) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
-		const decodedRefreshToken = jwt.verify(
-			cookie.refreshToken,
-			process.env.ACCESS_KEY
-		);
-		if (
-			username !== decodedRefreshToken.username &&
-			decodedRefreshToken.role !== 'Admin'
-		) {
-			return res.status(401).json({ error: 'Unauthorized' });
-		}
 		const type = req.params.category;
 		if (type === undefined) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
-
 		const typeLook = await categories.findOne({ type: type }).exec();
 		if (!typeLook) {
 			return res.status(400).json({ error: 'Category does not exist' });
@@ -516,9 +476,6 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 			return res.status(400).json({ error: 'User does not exist' });
 		}
 
-		/**
-		 * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type AND transactions.username = categories.username AND transactions.type = categoryVar AND transactions.username = usernameVar" still need to check if category exists
-		 */
 		const categoryVar = type;
 		const usernameVar = username;
 
@@ -578,28 +535,28 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
 	try {
-		const group = await Group.findOne({ name });
-		if (!group) {
-			return res.status(400).json({ error: 'Group not found.' });
-		}
-
-		const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
-		if (!authorized) return res.status(401).json({ error: cause });
-
-		if (req.url.indexOf('transactions/groups') >= 0) {
-			let { AdminAuth, cause } = verifyAuth(req, res, { authType: 'Admin' });
-			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
-		}
-
 		const name = req.params.name;
 		if (name === undefined) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
 
-
+		const group = await Group.findOne({ name });
+		if (!group) {
+			return res.status(400).json({ error: 'Group not found.' });
+		}
 
 		const memberEmails = group.members.map((member) => member.email);
-		console.log('emails:', memberEmails);
+
+		const { authorized, cause } = verifyAuth(req, res, {
+			authType: 'Group',
+			groupEmails: memberEmails,
+		});
+		if (!authorized) return res.status(401).json({ error: cause });
+
+		if (req.url.indexOf('transactions/groups') >= 0) {
+			let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+			if (!authorized) return res.status(401).json({ error: cause });
+		}
 
 		const usernames = await User.find({
 			email: { $in: memberEmails },
@@ -658,37 +615,38 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
 	try {
-		const group = await Group.findOne({ name });
-		if (!group) {
-			return res.status(400).json({ error: 'Group not found.' });
-		}
-		if (req.url.indexOf('transactions/groups') >= 0) {
-			let { AdminAuth, cause } = verifyAuth(req, res, { authType: 'Admin' });
-			if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
-		} else {
-			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
-			if (!authorized) return res.status(401).json({ error: cause });
-		}
 		const name = req.params.name;
 		if (name === undefined) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
-		const type2 = req.params.category;
-		if (type2 === undefined) {
+		const group = await Group.findOne({ name });
+		if (!group) {
+			return res.status(400).json({ error: 'Group not found.' });
+		}
+		const memberEmails = group.members.map((member) => member.email);
+		if (req.url.indexOf('transactions/groups') >= 0) {
+			let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+			if (!authorized) return res.status(401).json({ error: cause });
+		} else {
+			const { authorized, cause } = verifyAuth(req, res, {
+				authType: 'Group',
+				groupEmails: memberEmails,
+			});
+			if (!authorized) return res.status(401).json({ error: cause });
+		}
+		const type = req.params.category;
+		if (type === undefined) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
-		const typeLook = await categories.findOne({ type: type2 }).exec();
+		const typeLook = await categories.findOne({ type: type }).exec();
 		if (!typeLook) {
 			return res.status(400).json({ error: 'Category does not exist' });
 		}
-
-		const memberEmails = group.members.map((member) => member.email);
 
 		const usernames = await User.find({
 			email: { $in: memberEmails },
 		}).distinct('username');
 
-		const type = req.params.category;
 		const categoryVar = type;
 
 		transactions
@@ -768,8 +726,6 @@ export const deleteTransaction = async (req, res) => {
 		if (!idLook) {
 			return res.status(400).json({ error: 'Transaction not found.' });
 		}
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized) return res.status(400).json({ error: cause });
 
 		let data = await transactions.deleteOne({ _id: req.body._id });
 		return res.status(200).json({
@@ -790,8 +746,8 @@ export const deleteTransaction = async (req, res) => {
  */
 export const deleteTransactions = async (req, res) => {
 	try {
-		let AdminAuth = verifyAuth(req, res, { authType: 'Admin' });
-		if (!AdminAuth.authorized) return res.status(401).json({ error: cause });
+		let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+		if (!authorized) return res.status(401).json({ error: cause });
 
 		const idList = req.body._ids;
 
