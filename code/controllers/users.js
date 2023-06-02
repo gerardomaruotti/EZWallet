@@ -31,7 +31,7 @@ export const getUsers = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -62,7 +62,7 @@ export const getUser = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -81,15 +81,14 @@ export const createGroup = async (req, res) => {
 	try {
 		let { name, memberEmails } = req.body;
 		if (name === undefined || memberEmails === undefined)
-			return res.status(400).json({ error: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters: ' + name + memberEmails });
 
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Simple' });
-
 		if (!authorized) return res.status(401).json({ error: cause });
 
 		if (await Group.findOne({ name: name }))
 			return res
-				.status(401)
+				.status(400)
 				.json({ error: 'A group with the same name already exists' });
 
 		const { validEmails, alreadyInGroup, membersNotFound } =
@@ -124,7 +123,7 @@ export const createGroup = async (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -152,7 +151,7 @@ export const getGroups = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -183,7 +182,7 @@ export const getGroup = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -240,7 +239,7 @@ export const addToGroup = async (req, res) => {
 			{ $push: { members: { $each: membersToAdd } } }
 		)
 			.then(async (group) =>
-				res.json({
+				res.status(200).json({
 					data: {
 						group: {
 							name: name,
@@ -258,7 +257,7 @@ export const addToGroup = async (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -331,7 +330,7 @@ export const removeFromGroup = async (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -389,7 +388,7 @@ export const deleteUser = async (req, res) => {
 		};
 		res.json(response).status(200);
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -420,7 +419,7 @@ export const deleteGroup = async (req, res) => {
 
 		res.json({ message: 'Group deleted' }).status(200);
 	} catch (error) {
-		res.status(500).json({ error: error });
+		res.status(500).json({ error: error.message });
 	}
 };
 

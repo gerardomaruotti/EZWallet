@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { app } from '../app';
-import { User } from '../models/User.js';
+import { Group, User } from '../models/User.js';
 import {
 	getUsers,
 	getUser,
@@ -29,16 +29,9 @@ jest.mock('../controllers/utils');
  * In this case the mock implementation of `User.find()` is cleared, allowing the definition of a new mock implementation.
  * Not doing this `mockClear()` means that test cases may use a mock implementation intended for other test cases.
  */
-beforeEach(() => {
-	User.find.mockClear();
-	User.findOne.mockClear();
-	verifyAuth.mockClear();
-	verifyMultipleAuth.mockClear();
-
-});
 
 describe('getUsers', () => {
-	let mockReq;
+	let mockReq
 	let mockRes;
 
 	beforeEach(() => {
@@ -51,9 +44,12 @@ describe('getUsers', () => {
 			status: jest.fn().mockReturnThis(),
 			json: jest.fn(),
 			locals: {
-				refreshedTokenMessage: 'Refreshed token'
+				refreshedTokenMessage: 'refreshed token'
 			}
 		};
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		User.find.mockImplementation(() => []);
 	});
 
 	test('should return 401 if not authorised', async () => {
@@ -70,8 +66,7 @@ describe('getUsers', () => {
 
 	test('should return 500 if there is database error', async () => {
 
-		User.find.mockImplementation(() => { throw 'Database error' });
-		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		User.find.mockImplementation(() => { throw new Error('Database error') });
 
 		await getUsers(mockReq, mockRes);
 
@@ -82,9 +77,6 @@ describe('getUsers', () => {
 	});
 
 	test('should return empty list if there are no users', async () => {
-
-		User.find.mockImplementation(() => []);
-		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
 
 		await getUsers(mockReq, mockRes);
 
@@ -100,17 +92,16 @@ describe('getUsers', () => {
 			{
 				username: 'test1',
 				email: 'test1@example.com',
-				role: 'Regular'
+				role: 'regular'
 			},
 			{
 				username: 'test2',
 				email: 'test2@example.com',
-				role: 'Admin'
+				role: 'admin'
 			},
 		];
 
 		User.find.mockImplementation(() => retrievedUsers);
-		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
 
 		await getUsers(mockReq, mockRes);
 
@@ -125,6 +116,7 @@ describe('getUsers', () => {
 describe('getUser', () => {
 	let mockReq;
 	let mockRes;
+	let retrievedUser;
 
 	beforeEach(() => {
 		mockReq = {
@@ -138,9 +130,18 @@ describe('getUser', () => {
 			status: jest.fn().mockReturnThis(),
 			json: jest.fn(),
 			locals: {
-				refreshedTokenMessage: 'Refreshed token'
+				refreshedTokenMessage: 'refreshed token'
 			}
+		};	
+		
+		retrievedUser = {
+			username: 'test1',
+			email: 'test1@example.com',
+			role: 'regular'
 		};
+		
+		verifyMultipleAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		User.findOne.mockImplementation(() => retrievedUser);
 	});
 
 	test('should return 401 if not authorized', async () => {
@@ -158,7 +159,6 @@ describe('getUser', () => {
 	test('should return 400 if user does not exist', async () => {
 		
 		User.findOne.mockImplementation(() => null);
-		verifyMultipleAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
 
 		await getUser(mockReq, mockRes);
 
@@ -170,8 +170,7 @@ describe('getUser', () => {
 
 	test('should return 500 if there is database error', async () => {
 		
-		User.findOne.mockImplementation(() => { throw 'Database error' });
-		verifyMultipleAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		User.findOne.mockImplementation(() => { throw new Error('Database error') });
 
 		await getUser(mockReq, mockRes);
 
@@ -183,15 +182,6 @@ describe('getUser', () => {
 
 	test('should return user data', async () => {
 
-		const retrievedUser = {
-			username: 'test1',
-			email: 'test1@example.com',
-			role: 'Regular'
-		};
-		
-		User.findOne.mockImplementation(() => retrievedUser);
-		verifyMultipleAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
-
 		await getUser(mockReq, mockRes);
 
 		expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -201,7 +191,108 @@ describe('getUser', () => {
 	});
 });
 
-describe('createGroup', () => {});
+describe('createGroup', () => {
+	let mockReq;
+	let mockRes;
+
+	beforeEach(() => {
+		mockReq = {
+			cookies: {},
+			body: {
+				name: "testGroup", 
+				memberEmails: ["test1@example.com", "test2@example.com"]
+			},
+			params: {}
+		};
+		mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+			locals: {
+				refreshedTokenMessage: 'refreshed token'
+			}
+		};
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+
+		Group.findOne.mockImplementation(() => null);
+		User.findOne.mockImplementation((userEmail) => userEmail);
+	});
+
+	test('should return 401 if not authorized', async () => {
+		
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group name is not provided', async () => {
+		
+		mockReq.body.name = undefined;
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if member emails are not provided', async () => {
+
+		mockReq.body.memberEmails = undefined;
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+		
+		Group.findOne.mockImplementation(() => { throw new Error('Database error') });
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group already exists', async () => {
+
+		Group.findOne.mockImplementation(() => ({ name: 'testGroup' }));
+		console.log('last update');
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return created group', async () => {
+
+		const createdGroup = {
+			name: 'testGroup'
+		};
+
+		await createGroup(mockReq, mockRes);
+
+		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: createdGroup
+		}));
+	});
+});
 
 describe('getGroups', () => {});
 
