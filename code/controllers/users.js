@@ -23,6 +23,7 @@ export const getUsers = async (req, res) => {
 			return {
 				username: user.username,
 				email: user.email,
+				role: user.role,
 			};
 		});
 		res.status(200).json({
