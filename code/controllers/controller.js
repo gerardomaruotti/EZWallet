@@ -47,7 +47,7 @@ export const createCategory = (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -99,14 +99,14 @@ export const updateCategory = async (req, res) => {
 						});
 					})
 					.catch((err) => {
-						throw err;
+						res.status(500).json({ error: error.message });
 					});
 			})
 			.catch((err) => {
-				throw err;
+				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -157,7 +157,7 @@ export const deleteCategory = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -186,7 +186,7 @@ export const getCategories = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -233,7 +233,7 @@ export const createTransaction = async (req, res) => {
 				throw err;
 			});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -280,10 +280,10 @@ export const getAllTransactions = async (req, res) => {
 				});
 			})
 			.catch((error) => {
-				throw error;
+				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -353,10 +353,10 @@ export const getTransactionsByUser = async (req, res) => {
 						});
 					})
 					.catch((error) => {
-						throw error;
+						res.status(500).json({ error: error.message });
 					});
 			} catch (error) {
-				res.status(400).json({ error: error.message });
+				res.status(500).json({ error: error.message });
 			}
 		} else {
 			//User
@@ -436,11 +436,11 @@ export const getTransactionsByUser = async (req, res) => {
 						throw error;
 					});
 			} catch (error) {
-				res.status(400).json({ error: error.message });
+				res.status(500).json({ error: error.message });
 			}
 		}
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -518,10 +518,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 				});
 			})
 			.catch((error) => {
-				throw error;
+				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -598,10 +598,10 @@ export const getTransactionsByGroup = async (req, res) => {
 				});
 			})
 			.catch((error) => {
-				res.json({ error: error.message }).status(401);
+				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -689,10 +689,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 				});
 			})
 			.catch((error) => {
-				res.json({ error: error.message }).status(401);
+				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -733,7 +733,7 @@ export const deleteTransaction = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(400).json({ error: error.message });
+		res.status(500).json({ error: error.message });
 	}
 };
 
