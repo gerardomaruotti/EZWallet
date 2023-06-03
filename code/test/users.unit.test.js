@@ -294,7 +294,92 @@ describe('createGroup', () => {
 	});
 });
 
-describe('getGroups', () => {});
+describe('getGroups', () => {
+
+	let mockReq;
+	let mockRes;
+
+	beforeEach(() => {
+		mockReq = {
+			cookies: {},
+			body: {},
+			params: {}
+		};
+		mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+			locals: {
+				refreshedTokenMessage: 'refreshed token'
+			}
+		};
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+
+		Group.findOne.mockImplementation(() => null);
+	});
+
+	test('should return 401 if not authorized', async () => {
+		
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await getGroups(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+
+		Group.find.mockImplementation(() => { throw new Error('Database error') });
+
+		await getGroups(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+
+	test('should return empty list if there are no groups', async () => {
+
+		
+		const spy = jest.spyOn(Group,'find');
+		spy.mockImplementation( () => {});
+		jest.clearAllMocks();
+		await getGroups(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: []
+        }));
+	});
+
+
+	test('should return list of all groups', async () => {
+
+		const retrievedGroups = [
+			{
+				name: 'testGroup',
+				members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			},
+		];
+
+		Group.find.mockImplementation(() => retrievedGroups);
+
+		await getGroups(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+            data: retrievedGroups
+        }));
+	});
+
+
+
+});
 
 describe('getGroup', () => {});
 
