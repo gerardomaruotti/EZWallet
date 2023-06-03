@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { response } from 'express';
-import { categories, transactions } from '../models/model.js';
+import { Group } from '../models/User.js';
 
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.
@@ -11,75 +10,52 @@ import { categories, transactions } from '../models/model.js';
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
-	const username = req.params.username;
-	const date = req.body.date;
-	const usernameVar = username;
-	const dateVar = date;
+	const { date, from, upTo } = req.query;
+	let filter = {};
 
-	console.log('usernameVar:', usernameVar);
+	if (date && (from || upTo)) {
+		throw new Error(
+			'Cannot use `date` parameter together with `from` or `upTo`'
+		);
+	}
 
-	let dateQuery = {};
+	if (from) {
+		const fromDate = new Date(from);
+		if (isNaN(fromDate.getTime())) {
+			throw new Error('Invalid `from` parameter');
+		}
+		filter.date = { $gte: fromDate };
+	}
 
-	if (dateVar && Array.isArray(dateVar)) {
-		for (const filter of dateVar) {
-			const [operator, value] = filter.split(' ');
-			const parsedValue = new Date(value);
-
-			dateQuery[operator] = parsedValue;
+	if (upTo) {
+		const upToDate = new Date(upTo);
+		if (isNaN(upToDate.getTime())) {
+			throw new Error('Invalid `upTo` parameter');
+		}
+		if (filter.date) {
+			filter.date.$lte = upToDate;
+		} else {
+			filter.date = { $lte: upToDate };
 		}
 	}
 
-	let aggregationPipeline = [
-		{
-			$lookup: {
-				from: 'categories',
-				localField: 'type',
-				foreignField: 'type',
-				as: 'joinedData',
-			},
-		},
-		{
-			$unwind: '$joinedData',
-		},
-		{
-			$match: {
-				username: usernameVar,
-			},
-		},
-	];
-
-	if (Object.keys(dateQuery).length > 0) {
-		aggregationPipeline.push({
-			$match: {
-				date: dateQuery,
-			},
-		});
+	if (date) {
+		const dateObj = new Date(date);
+		if (isNaN(dateObj.getTime())) {
+			throw new Error('Invalid `date` parameter');
+		}
+		const startOfDay = new Date(
+			dateObj.getFullYear(),
+			dateObj.getMonth(),
+			dateObj.getDate()
+		);
+		const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+		filter.date = { $gte: startOfDay, $lte: endOfDay };
 	}
-
-	transactions
-		.aggregate(aggregationPipeline)
-		.then((result) => {
-			let data = result.map((v) =>
-				Object.assign(
-					{},
-					{
-						_id: v._id,
-						username: v.username,
-						amount: v.amount,
-						type: v.type,
-						color: v.joinedData.color,
-						date: v.date,
-					}
-				)
-			);
-			if (data.length === 0) {
-				return [];
-			}
-			return data;
-		})
-		.catch((error) => {
-			throw error;
-		});
+	if (Object.keys(filter).length === 0) {
+		filter = null;
+	}
+	return filter;
 };
 
 /**
@@ -107,26 +83,24 @@ export const handleDateFilterParams = (req) => {
  * @returns true if the user satisfies all the conditions of the specified `authType` and false if at least one condition is not satisfied
  *  Refreshes the accessToken if it has expired and the refreshToken is still valid
  */
+
 export const verifyAuth = (req, res, info) => {
 	const cookie = req.cookies;
-	console.log('cookie:', cookie);
+
 	if (!cookie.accessToken || !cookie.refreshToken) {
 		return { authorized: false, cause: 'Unauthorized' };
 	}
+
 	try {
-		console.log('sdfasdfasdfpr');
 		const decodedAccessToken = jwt.verify(
-			//to do error no mi fa i console log doppo questo
 			cookie.accessToken,
 			process.env.ACCESS_KEY
 		);
-		console.log('decodedAccessToken.username:', decodedAccessToken.username);
-		console.log('decodedAccessToken.email:', decodedAccessToken.email);
-		console.log('decodedAccessToken.role:', decodedAccessToken.role);
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
 		);
+
 		if (
 			!decodedAccessToken.username ||
 			!decodedAccessToken.email ||
@@ -148,23 +122,28 @@ export const verifyAuth = (req, res, info) => {
 		) {
 			return { authorized: false, cause: 'Mismatched users' };
 		}
+
 		if (info.authType === 'User') {
-			if (decodedAccessToken.username !== info.username) {
-				return { authorized: false, cause: 'Mismatched users1' };
-			} else if (decodedAccessToken.role !== 'Regular') {
-				return { authorized: false, cause: 'Mismatched users2' };
+			if (
+				req.params.username !== undefined &&
+				req.params.username !== decodedAccessToken.username
+			) {
+				return {
+					authorized: false,
+					cause: 'Requested user different from the logged one',
+				};
 			}
 		} else if (info.authType === 'Admin') {
 			if (decodedAccessToken.role !== 'Admin') {
-				return { authorized: false, cause: 'Mismatched users' };
+				return { authorized: false, cause: 'Not admin' };
 			}
 		} else if (info.authType === 'Group') {
-			if (!decodedAccessToken.groups.includes(info.group)) {
-				return { authorized: false, cause: 'Mismatched users' };
+			console.log('groupEmail', info.groupEmails);
+			if(!info.groupEmails || !info.groupEmails.includes(decodedAccessToken.email)) {
+				return { authorized: false, cause: 'User not in group' };
 			}
-		} else {
-			return { authorized: false, cause: 'Invalid authType' };
 		}
+
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
 		if (err.name === 'TokenExpiredError') {
@@ -212,74 +191,33 @@ export const verifyAuth = (req, res, info) => {
  * @returns an object that can be used for filtering MongoDB queries according to the `amount` parameter.
  *  The returned object must handle all possible combination of amount filtering parameters, including the case where none are present.
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
+ * @throws an error if the value of any of the two query parameters is not a numerical value
  */
 export const handleAmountFilterParams = (req) => {
-	const username = req.params.username;
-	const amount = req.body.amount;
-	const usernameVar = username;
-	const amountVar = amount;
+	const { min, max } = req.query;
+	let filter = {};
 
-	console.log('usernameVar:', usernameVar);
+	if (min && isNaN(min)) {
+		throw new Error('Invalid `min` parameter');
+	}
 
-	let amountQuery = {};
+	if (max && isNaN(max)) {
+		throw new Error('Invalid `max` parameter');
+	}
 
-	if (amountVar && Array.isArray(amountVar)) {
-		for (const filter of amountVar) {
-			const [operator, value] = filter.split(' ');
-			const parsedValue = parseFloat(value);
+	if (min) {
+		filter.amount = { $gte: parseInt(min) };
+	}
 
-			amountQuery[operator] = parsedValue;
+	if (max) {
+		if (filter.amount) {
+			filter.amount.$lte = parseInt(max);
+		} else {
+			filter.amount = { $lte: parseInt(max) };
 		}
 	}
 
-	let aggregationPipeline = [
-		{
-			$lookup: {
-				from: 'categories',
-				localField: 'type',
-				foreignField: 'type',
-				as: 'joinedData',
-			},
-		},
-		{
-			$unwind: '$joinedData',
-		},
-		{
-			$match: {
-				username: usernameVar,
-			},
-		},
-	];
-
-	if (Object.keys(amountQuery).length > 0) {
-		aggregationPipeline.push({
-			$match: {
-				amount: amountQuery,
-			},
-		});
-	}
-
-	transactions
-		.aggregate(aggregationPipeline)
-		.then((result) => {
-			let data = result.map((v) =>
-				Object.assign(
-					{},
-					{
-						_id: v._id,
-						username: v.username,
-						amount: v.amount,
-						type: v.type,
-						color: v.joinedData.color,
-						date: v.date,
-					}
-				)
-			);
-			return data;
-		})
-		.catch((error) => {
-			throw error;
-		});
+	return filter;
 };
 
 // This function takes an array and a predicate function as arguments and returns a new array containing
@@ -296,13 +234,19 @@ export const asyncFilter = async (arr, predicate) => {
 };
 
 export const verifyMultipleAuth = (req, res, info) => {
-	let message = '';
+	let message = null;
+
 	return {
-		authorized: info.authType.some((type, index) => {
-			const { authorized, cause } = verifyAuth(req, res, type);
+		authorized: info.authType.some((type) => {
+			const { authorized, cause } = verifyAuth(req, res, { ...info, authType: type });
+
 			if (authorized) return true;
-			message += cause;
-			if (index !== info.authType.length) message += ' or ';
+			if (message === null) {
+				message = cause;
+			} else {
+				if (!message.includes(cause)) message += ' or ' + cause;
+			}
+
 			return false;
 		}),
 		cause: message,
@@ -310,5 +254,8 @@ export const verifyMultipleAuth = (req, res, info) => {
 };
 
 export const isEmail = (email) => {
-	return true;
+	var validRegex =
+		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+	return email.match(validRegex) ? true : false;
 };
