@@ -381,7 +381,73 @@ describe('getGroups', () => {
 
 });
 
-describe('getGroup', () => {});
+describe('getGroup', () => {
+
+	let mockReq;
+	let mockRes;
+	let retrievedGroup;
+
+	beforeEach(() => {
+		mockReq = {
+			cookies: {},
+			body: {},
+			params: {
+				name: 'test1'
+			}
+		};
+		mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+			locals: {
+				refreshedTokenMessage: 'refreshed token'
+			}
+		};	
+		
+		retrievedGroup = {
+			name: 'test1',
+			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			
+		};
+		
+		verifyMultipleAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		Group.findOne.mockImplementation(() => retrievedGroup);
+	});
+
+	test('should return 400 if a group does not exist', async () => {
+		
+		Group.findOne.mockImplementation(() => null);
+
+		await getGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+		
+		Group.findOne.mockImplementation(() => { throw new Error('Database error') });
+
+		await getGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return group data', async () => {
+
+		await getGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: retrievedGroup
+		}));
+	});
+});
+
 
 describe('addToGroup', () => {});
 
