@@ -23,29 +23,21 @@ export const createCategory = (req, res) => {
 		if (!type || !color) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
-		if (type === '' || color === '') {
-			return res.status(400).json({ error: 'Invalid parameters' });
-		}
 		const new_categories = new categories({ type, color });
 		categories.findOne({ type }).then((data) => {
 			if (data) {
 				return res.status(400).json({ error: 'Category already exists' });
 			}
 		});
-		new_categories
-			.save()
-			.then((data) => {
-				res.status(200).json({
-					data: {
-						type: data.type,
-						color: data.color,
-					},
-					refreshedTokenMessage: res.locals.refreshedTokenMessage,
-				});
-			})
-			.catch((err) => {
-				throw err;
+		new_categories.save().then((data) => {
+			res.status(200).json({
+				data: {
+					type: data.type,
+					color: data.color,
+				},
+				refreshedTokenMessage: res.locals.refreshedTokenMessage,
 			});
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -68,9 +60,6 @@ export const updateCategory = async (req, res) => {
 		const { type: oldType } = req.params;
 		if (!type || !color) {
 			return res.status(400).json({ error: 'Missing parameters' });
-		}
-		if (type === '' || color === '') {
-			return res.status(400).json({ error: 'Invalid parameters' });
 		}
 		let checkParamCategory = await categories.findOne({ type: oldType });
 		if (!checkParamCategory) {
@@ -97,13 +86,7 @@ export const updateCategory = async (req, res) => {
 							},
 							refreshedTokenMessage: res.locals.refreshedTokenMessage,
 						});
-					})
-					.catch((err) => {
-						res.status(500).json({ error: error.message });
 					});
-			})
-			.catch((err) => {
-				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -125,9 +108,6 @@ export const deleteCategory = async (req, res) => {
 		const { types } = req.body;
 		if (!types) {
 			return res.status(400).json({ error: 'Missing parameters' });
-		}
-		if (types === '') {
-			return res.status(400).json({ error: 'Invalid parameters' });
 		}
 		let checkCategoriesNumber = await categories.find();
 		if (checkCategoriesNumber.length == 1) {
@@ -216,22 +196,17 @@ export const createTransaction = async (req, res) => {
 		}
 
 		const new_transactions = new transactions({ username, amount, type });
-		new_transactions
-			.save()
-			.then((data) =>
-				res.status(200).json({
-					data: {
-						username: data.username,
-						amount: data.amount,
-						type: data.type,
-						date: data.date,
-					},
-					refreshedTokenMessage: res.locals.refreshedTokenMessage,
-				})
-			)
-			.catch((err) => {
-				throw err;
-			});
+		new_transactions.save().then((data) =>
+			res.status(200).json({
+				data: {
+					username: data.username,
+					amount: data.amount,
+					type: data.type,
+					date: data.date,
+				},
+				refreshedTokenMessage: res.locals.refreshedTokenMessage,
+			})
+		);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -278,9 +253,6 @@ export const getAllTransactions = async (req, res) => {
 					data: data,
 					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 				});
-			})
-			.catch((error) => {
-				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -299,7 +271,7 @@ export const getAllTransactions = async (req, res) => {
 export const getTransactionsByUser = async (req, res) => {
 	try {
 		const username = req.params.username;
-		if (username === undefined) {
+		if (!username) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		const userLook = await User.findOne({ username: username }).exec();
@@ -311,53 +283,46 @@ export const getTransactionsByUser = async (req, res) => {
 			let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
 			if (!authorized) return res.status(401).json({ error: cause });
 
-			try {
-				transactions
-					.aggregate([
-						{
-							$lookup: {
-								from: 'categories',
-								localField: 'type',
-								foreignField: 'type',
-								as: 'joinedData',
-							},
+			transactions
+				.aggregate([
+					{
+						$lookup: {
+							from: 'categories',
+							localField: 'type',
+							foreignField: 'type',
+							as: 'joinedData',
 						},
-						{
-							$unwind: '$joinedData',
+					},
+					{
+						$unwind: '$joinedData',
+					},
+					{
+						$match: {
+							username: username,
 						},
-						{
-							$match: {
-								username: username,
-							},
-						},
-					])
-					.then((result) => {
-						let data = result.map((v) =>
-							Object.assign(
-								{},
-								{
-									username: v.username,
-									amount: v.amount,
-									type: v.type,
-									date: v.date,
-									color: v.joinedData.color,
-								}
-							)
-						);
-						if (data.length === 0) {
-							return res.status(200).json([]);
-						}
-						res.status(200).json({
-							data: data,
-							refreshedTokenMessage: res.locals.refreshedTokenMessage,
-						});
-					})
-					.catch((error) => {
-						res.status(500).json({ error: error.message });
+					},
+				])
+				.then((result) => {
+					let data = result.map((v) =>
+						Object.assign(
+							{},
+							{
+								username: v.username,
+								amount: v.amount,
+								type: v.type,
+								date: v.date,
+								color: v.joinedData.color,
+							}
+						)
+					);
+					if (data.length === 0) {
+						return res.status(200).json([]);
+					}
+					res.status(200).json({
+						data: data,
+						refreshedTokenMessage: res.locals.refreshedTokenMessage,
 					});
-			} catch (error) {
-				res.status(500).json({ error: error.message });
-			}
+				});
 		} else {
 			//User
 			let UserAuth = verifyAuth(req, res, { authType: 'User' });
@@ -431,9 +396,6 @@ export const getTransactionsByUser = async (req, res) => {
 							data: data,
 							refreshedTokenMessage: res.locals.refreshedTokenMessage,
 						});
-					})
-					.catch((error) => {
-						throw error;
 					});
 			} catch (error) {
 				res.status(500).json({ error: error.message });
@@ -460,11 +422,11 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		if (!authorized) return res.status(401).json({ error: cause });
 
 		const username = req.params.username;
-		if (username === undefined) {
+		if (!username) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
 		const type = req.params.category;
-		if (type === undefined) {
+		if (!type) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
 		const typeLook = await categories.findOne({ type: type }).exec();
@@ -479,47 +441,41 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		const categoryVar = type;
 		const usernameVar = username;
 
-		transactions
-			.aggregate([
-				{
-					$lookup: {
-						from: 'categories',
-						localField: 'type',
-						foreignField: 'type',
-						as: 'joinedData',
-					},
+		let result = transactions.aggregate([
+			{
+				$lookup: {
+					from: 'categories',
+					localField: 'type',
+					foreignField: 'type',
+					as: 'joinedData',
 				},
-				{
-					$unwind: '$joinedData',
+			},
+			{
+				$unwind: '$joinedData',
+			},
+			{
+				$match: {
+					'joinedData.type': categoryVar,
+					username: usernameVar,
 				},
+			},
+		]);
+		let data = result.map((v) =>
+			Object.assign(
+				{},
 				{
-					$match: {
-						'joinedData.type': categoryVar,
-						username: usernameVar,
-					},
-				},
-			])
-			.then((result) => {
-				let data = result.map((v) =>
-					Object.assign(
-						{},
-						{
-							username: v.username,
-							amount: v.amount,
-							type: v.type,
-							date: v.date,
-							color: v.joinedData.color,
-						}
-					)
-				);
-				res.status(200).json({
-					data: data,
-					refreshedTokenMessage: res.locals.refreshedTokenMessage,
-				});
-			})
-			.catch((error) => {
-				res.status(500).json({ error: error.message });
-			});
+					username: v.username,
+					amount: v.amount,
+					type: v.type,
+					date: v.date,
+					color: v.joinedData.color,
+				}
+			)
+		);
+		res.status(200).json({
+			data: data,
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -536,7 +492,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 export const getTransactionsByGroup = async (req, res) => {
 	try {
 		const name = req.params.name;
-		if (name === undefined) {
+		if (!name) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
 
@@ -596,9 +552,6 @@ export const getTransactionsByGroup = async (req, res) => {
 					data: data,
 					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 				});
-			})
-			.catch((error) => {
-				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -616,7 +569,7 @@ export const getTransactionsByGroup = async (req, res) => {
 export const getTransactionsByGroupByCategory = async (req, res) => {
 	try {
 		const name = req.params.name;
-		if (name === undefined) {
+		if (!name) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
 		const group = await Group.findOne({ name });
@@ -687,9 +640,6 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 					data: data,
 					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 				});
-			})
-			.catch((error) => {
-				res.status(500).json({ error: error.message });
 			});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -713,7 +663,7 @@ export const deleteTransaction = async (req, res) => {
 		const username = req.params.username;
 		const id = req.body._id;
 
-		if (id === undefined) {
+		if (!id) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
 
