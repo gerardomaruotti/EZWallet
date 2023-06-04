@@ -33,9 +33,10 @@ export const handleDateFilterParams = (req) => {
 			throw new Error('Invalid `upTo` parameter');
 		}
 		if (filter.date) {
-			filter.date.$lte = upToDate;
+			filter.date.$lte = new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1);
 		} else {
-			filter.date = { $lte: upToDate };
+			filter.date = { $lt: new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1) };
+
 		}
 	}
 
@@ -53,7 +54,7 @@ export const handleDateFilterParams = (req) => {
 		filter.date = { $gte: startOfDay, $lte: endOfDay };
 	}
 	if (Object.keys(filter).length === 0) {
-		filter = null;
+		filter = {};
 	}
 	return filter;
 };
