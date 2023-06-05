@@ -72,22 +72,18 @@ export const updateCategory = async (req, res) => {
 		}
 		//update transactions
 		const typeTransactions = await transactions.find({ type: oldType });
-		transactions
-			.updateMany({ type: oldType }, { $set: { type } })
-			.then((result) => {
-				//update category
-				categories
-					.updateOne({ type: oldType }, { $set: { type, color } })
-					.then((result) => {
-						res.status(200).json({
-							data: {
-								message: 'Category edited successfully',
-								count: typeTransactions.count,
-							},
-							refreshedTokenMessage: res.locals.refreshedTokenMessage,
-						});
-					});
-			});
+		transactions.updateMany({ type: oldType }, { $set: { type } });
+
+		//update category
+		categories.updateOne({ type: oldType }, { $set: { type, color } });
+
+		res.status(200).json({
+			data: {
+				message: 'Category edited successfully',
+				count: typeTransactions.count,
+			},
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -186,11 +182,11 @@ export const createTransaction = async (req, res) => {
 
 		const { username, amount, type } = req.body;
 
-		const typeLook = await categories.findOne({ type: type }).exec();
+		const typeLook = await categories.findOne({ type: type });
 		if (!typeLook) {
 			return res.status(400).json({ error: 'Category does not exist' });
 		}
-		const userLook = await User.findOne({ username: username }).exec();
+		const userLook = await User.findOne({ username: username });
 		if (!userLook) {
 			return res.status(400).json({ error: 'User does not exist' });
 		}
@@ -274,7 +270,7 @@ export const getTransactionsByUser = async (req, res) => {
 		if (!username) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
-		const userLook = await User.findOne({ username: username }).exec();
+		const userLook = await User.findOne({ username: username });
 		if (!userLook) {
 			return res.status(400).json({ error: 'User does not exist' });
 		}
@@ -667,12 +663,12 @@ export const deleteTransaction = async (req, res) => {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
 
-		const userLook = await User.findOne({ username: username }).exec();
+		const userLook = await User.findOne({ username: username });
 		if (!userLook) {
 			return res.status(400).json({ error: 'User does not exist' });
 		}
 
-		const idLook = await transactions.findOne({ _id: id }).exec();
+		const idLook = await transactions.findOne({ _id: id });
 		if (!idLook) {
 			return res.status(400).json({ error: 'Transaction not found.' });
 		}
@@ -721,7 +717,7 @@ export const deleteTransactions = async (req, res) => {
 
 			let data = await transactions.deleteMany({ _id: { $in: idList } });
 
-			res.json({
+			res.status(200).json({
 				data: { message: 'Transactions deleted successfully' },
 				refreshedTokenMessage: res.locals.refreshedTokenMessage,
 			});
