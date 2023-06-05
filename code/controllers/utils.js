@@ -260,3 +260,40 @@ export const isEmail = (email) => {
 
 	return email.match(validRegex) ? true : false;
 };
+
+// This function takes in an array of member emails and a group name. It first filters out any emails that are not in the database, then checks if they are in the group. If no group name is specified, it only checks if they are in any group. It returns an object with the valid emails, emails that are already in the group, emails that are not in the group, and emails that are not in the database.
+export const checkGroupEmails = async (memberEmails, groupName) => {
+	let alreadyInGroup = [];
+	let membersNotFound = [];
+	let notInGroup = [];
+
+	memberEmails = await asyncFilter(memberEmails, async (e) => {
+		const result = await User.findOne({ email: e });
+		if (!result) membersNotFound.push(e);
+		return result;
+	});
+
+	if (groupName === undefined) {
+		memberEmails = await asyncFilter(memberEmails, async (e) => {
+			const result = await Group.findOne({ 'members.email': e });
+			if (result) alreadyInGroup.push(e);
+			return !result;
+		});
+	} else {
+		memberEmails = await asyncFilter(memberEmails, async (e) => {
+			const result = await Group.findOne({
+				name: groupName,
+				'members.email': e,
+			});
+			if (!result) notInGroup.push(e);
+			return result;
+		});
+	}
+
+	return {
+		validEmails: memberEmails.map((email) => ({ email })),
+		alreadyInGroup: alreadyInGroup.map((email) => ({ email })),
+		membersNotFound: membersNotFound.map((email) => ({ email })),
+		notInGroup: notInGroup.map((email) => ({ email })),
+	};
+};
