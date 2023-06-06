@@ -126,7 +126,7 @@ describe("register", () => {
 		.then(() =>{
 			request(app)
 		  	.post("/api/register")
-		  	.send({ username: "enrico", email: "enrico.gmail.com", password: "enrico" })
+		  	.send({ username: "enrico", email: "enrico@gmail.com", password: "enrico" })
 		  	.then((response) => {
 			expect(response.status).toBe(400);
 			expect(response.body).toStrictEqual({error: 'User already registered'});
