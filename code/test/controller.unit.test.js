@@ -430,7 +430,7 @@ describe('updateCategory', () => {
 			.mockResolvedValueOnce(mockReq.params.type)
 			.mockResolvedValueOnce(null);
 
-		transactions.find.mockResolvedValue(mockTransactions);
+		transactions.find.mockImplementationOnce(() => mockTransactions);
 		const spy = jest.spyOn(transactions, 'updateMany');
 		const spyCat = jest.spyOn(categories, 'updateOne');
 		spy.mockResolvedValue(mockTransactions);
@@ -438,12 +438,15 @@ describe('updateCategory', () => {
 
 		await updateCategory(mockReq, mockRes);
 
+		expect(transactions.find).toHaveBeenCalledWith({
+			type: mockReq.params.type,
+		});
+
 		expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith({
 			data: {
 				message: 'Category edited successfully',
-				//TODO: fix this being undefined instead of 2
-				// count: expect.any(Number),
+				count: expect.any(Number),
 			},
 			refreshedTokenMessage: 'refreshed token',
 		});
@@ -903,6 +906,7 @@ describe('getAllTransactions', () => {
 	});
 });
 
+//OK
 describe('getTransactionsByUser', () => {
 	describe('Admin access', () => {
 		beforeEach(() => {

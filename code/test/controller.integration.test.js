@@ -1,8 +1,10 @@
 import request from 'supertest';
 import { app } from '../app';
 import { categories, transactions } from '../models/model';
+import { User } from '../models/User.js';
 import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
+import e from 'express';
 
 dotenv.config();
 
@@ -22,8 +24,27 @@ afterAll(async () => {
 });
 
 describe('createCategory', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	beforeEach(async () => {
+		await categories.deleteMany();
+	});
+	test('should retrieve list of all categories', (done) => {
+		categories
+			.create({
+				type: 'investment',
+				color: '#000000',
+			})
+			.then(() => {
+				request(app)
+					.get('/categories')
+					.then((res) => {
+						expect(res.status).toBe(200);
+						expect(res.body).toHaveLength(1);
+						expect(res.body[0].type).toBe('investment');
+						expect(res.body[0].color).toBe('#000000');
+						done();
+					})
+					.catch((err) => done(err));
+			});
 	});
 });
 

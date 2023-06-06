@@ -80,7 +80,7 @@ export const updateCategory = async (req, res) => {
 		res.status(200).json({
 			data: {
 				message: 'Category edited successfully',
-				count: typeTransactions.count,
+				count: typeTransactions.count ? typeTransactions.count : 0,
 			},
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});

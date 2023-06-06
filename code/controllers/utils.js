@@ -35,8 +35,9 @@ export const handleDateFilterParams = (req) => {
 		if (filter.date) {
 			filter.date.$lte = new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1);
 		} else {
-			filter.date = { $lt: new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1) };
-
+			filter.date = {
+				$lt: new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1),
+			};
 		}
 	}
 
@@ -139,8 +140,10 @@ export const verifyAuth = (req, res, info) => {
 				return { authorized: false, cause: 'Not admin' };
 			}
 		} else if (info.authType === 'Group') {
-			console.log('groupEmail', info.groupEmails);
-			if(!info.groupEmails || !info.groupEmails.includes(decodedAccessToken.email)) {
+			if (
+				!info.groupEmails ||
+				!info.groupEmails.includes(decodedAccessToken.email)
+			) {
 				return { authorized: false, cause: 'User not in group' };
 			}
 		}
@@ -239,7 +242,10 @@ export const verifyMultipleAuth = (req, res, info) => {
 
 	return {
 		authorized: info.authType.some((type) => {
-			const { authorized, cause } = verifyAuth(req, res, { ...info, authType: type });
+			const { authorized, cause } = verifyAuth(req, res, {
+				...info,
+				authType: type,
+			});
 
 			if (authorized) return true;
 			if (message === null) {
