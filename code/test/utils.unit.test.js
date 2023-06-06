@@ -84,7 +84,13 @@ describe('verifyAuth', () => {
 		body: {},
 		params: {},
 	};
-	let mockRes = {};
+	let mockRes = {
+		cookie: jest.fn(),
+		locals: {
+			refreshTokenMessage:
+				'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls',
+		},
+	};
 	const info = {
 		authType: '',
 	};
@@ -381,30 +387,97 @@ describe('verifyAuth', () => {
 		expect(response).toHaveProperty('cause', 'Authorized');
 	});
 
-	// test('should return authorized true if token expired', () => {
-	// 	mockReq.cookies.accessToken = 'access-token';
-	// 	mockReq.cookies.refreshToken = 'refresh-token';
-	// 	mockReq.params.username = 'username';
+	test('should return authorized true if token expired', () => {
+		mockReq.cookies.accessToken = 'access-token';
+		mockReq.cookies.refreshToken = 'refresh-token';
+		mockReq.params.username = 'username';
 
-	// 	info.authType = 'Admin';
+		info.authType = 'Admin';
 
-	// 	jwt.verify
-	// 		.mockImplementationOnce(() => {
-	// 			throw new Error('TokenExpiredError');
-	// 		})
-	// 		.mockImplementationOnce(() => {
-	// 			return {
-	// 				username: 'username',
-	// 				email: 'email@example.com',
-	// 				role: 'Admin',
-	// 			};
-	// 		});
+		jwt.verify
+			.mockImplementationOnce(() => {
+				throw new Error('TokenExpiredError');
+			})
+			.mockImplementationOnce(() => {
+				return {
+					username: 'username',
+					email: 'email@example.com',
+					role: 'Admin',
+				};
+			});
 
-	// 	const response = verifyAuth(mockReq, mockRes, info);
+		jwt.sign.mockImplementationOnce(() => {
+			return {
+				username: 'username',
+				email: 'email@example.com',
+				id: 'id',
+				role: 'Admin',
+			};
+		});
 
-	// 	expect(response).toHaveProperty('authorized', true);
-	// 	expect(response).toHaveProperty('cause', 'Authorized');
-	// });
+		const response = verifyAuth(mockReq, mockRes, info);
+
+		expect(response).toHaveProperty('authorized', true);
+		expect(response).toHaveProperty('cause', 'Authorized');
+	});
+
+	test('should return authorized false if token expired and jwt throws error TokenExpiredError', () => {
+		mockReq.cookies.accessToken = 'access-token';
+		mockReq.cookies.refreshToken = 'refresh-token';
+		mockReq.params.username = 'username';
+
+		info.authType = 'Admin';
+
+		jwt.verify
+			.mockImplementationOnce(() => {
+				throw new Error('TokenExpiredError');
+			})
+			.mockImplementationOnce(() => {
+				return {
+					username: 'username',
+					email: 'email@example.com',
+					role: 'Admin',
+				};
+			});
+
+		jwt.sign.mockImplementationOnce(() => {
+			throw new Error('TokenExpiredError');
+		});
+
+		const response = verifyAuth(mockReq, mockRes, info);
+
+		expect(response).toHaveProperty('authorized', false);
+		expect(response).toHaveProperty('cause', 'Perform login again');
+	});
+
+	test('should return authorized false if token expired and jwt throws error', () => {
+		mockReq.cookies.accessToken = 'access-token';
+		mockReq.cookies.refreshToken = 'refresh-token';
+		mockReq.params.username = 'username';
+
+		info.authType = 'Admin';
+
+		jwt.verify
+			.mockImplementationOnce(() => {
+				throw new Error('Error');
+			})
+			.mockImplementationOnce(() => {
+				return {
+					username: 'username',
+					email: 'email@example.com',
+					role: 'Admin',
+				};
+			});
+
+		jwt.sign.mockImplementationOnce(() => {
+			throw new Error('TokenExpiredError');
+		});
+
+		const response = verifyAuth(mockReq, mockRes, info);
+
+		expect(response).toHaveProperty('authorized', false);
+		expect(response).toHaveProperty('cause', 'Error');
+	});
 });
 
 describe('handleAmountFilterParams', () => {

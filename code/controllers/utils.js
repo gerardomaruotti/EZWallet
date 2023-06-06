@@ -150,7 +150,7 @@ export const verifyAuth = (req, res, info) => {
 
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
-		if (err.name === 'TokenExpiredError') {
+		if (err.message === 'TokenExpiredError') {
 			try {
 				const refreshToken = jwt.verify(
 					cookie.refreshToken,
@@ -173,14 +173,13 @@ export const verifyAuth = (req, res, info) => {
 					sameSite: 'none',
 					secure: true,
 				});
+
 				res.locals.refreshedTokenMessage =
 					'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls';
 				return { authorized: true, cause: 'Authorized' };
 			} catch (err) {
-				if (err.name === 'TokenExpiredError') {
+				if (err.message === 'TokenExpiredError') {
 					return { authorized: false, cause: 'Perform login again' };
-				} else {
-					return { authorized: false, cause: err.name };
 				}
 			}
 		} else {
