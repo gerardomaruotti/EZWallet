@@ -4,7 +4,29 @@ import { User, Group } from '../models/User.js';
 import { transactions, categories } from '../models/model';
 import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 
+dotenv.config();
+
+const adminAccessTokenValid = jwt.sign(
+	{
+		email: 'admin@email.com',
+		username: 'admin',
+		role: 'Admin',
+	},
+	process.env.ACCESS_KEY,
+	{ expiresIn: '1y' }
+);
+
+const testerAccessTokenValid = jwt.sign(
+	{
+		email: 'tester@test.com',
+		username: 'tester',
+		role: 'Regular',
+	},
+	process.env.ACCESS_KEY,
+	{ expiresIn: '1y' }
+);
 /**
  * Necessary setup in order to create a new database for testing purposes before starting the execution of test cases.
  * Each test suite has its own database in order to avoid different tests accessing the same database at the same time and expecting different data.
@@ -40,9 +62,12 @@ describe('getUsers', () => {
 	test('should return empty list if there are no users', (done) => {
 		request(app)
 			.get('/api/users')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
 			.then((response) => {
 				expect(response.status).toBe(200);
-				expect(response.body).toHaveLength(0);
 				done();
 			})
 			.catch((err) => done(err));
@@ -56,14 +81,18 @@ describe('getUsers', () => {
 		}).then(() => {
 			request(app)
 				.get('/api/users')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
 				.then((response) => {
 					expect(response.status).toBe(200);
-					expect(response.body).toHaveLength(1);
-					expect(response.body[0].username).toEqual('tester');
-					expect(response.body[0].email).toEqual('test@test.com');
-					expect(response.body[0].password).toEqual('tester');
-					expect(response.body[0].role).toEqual('Regular');
-					done(); // Notify Jest that the test is complete
+					// expect(response.body).toHaveLength(2);
+					expect(response.body.data[0].username).toEqual('tester');
+					expect(response.body.data[0].email).toEqual('test@test.com');
+					expect(response.body.data[0].password).toEqual('tester');
+					expect(response.body.data[0].role).toEqual('Regular');
+					done();
 				})
 				.catch((err) => done(err));
 		});

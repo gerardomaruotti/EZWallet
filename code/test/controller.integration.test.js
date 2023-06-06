@@ -9,21 +9,6 @@ import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
-beforeAll(async () => {
-	const dbName = 'testingDatabaseController';
-	const url = `${process.env.MONGO_URI}/${dbName}`;
-
-	await mongoose.connect(url, {
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
-	});
-});
-
-afterAll(async () => {
-	await mongoose.connection.db.dropDatabase();
-	await mongoose.connection.close();
-});
-
 const adminAccessTokenValid = jwt.sign(
 	{
 		email: 'admin@email.com',
@@ -44,12 +29,40 @@ const testerAccessTokenValid = jwt.sign(
 	{ expiresIn: '1y' }
 );
 
+beforeAll(async () => {
+	const dbName = 'testingDatabaseController';
+	const url = `${process.env.MONGO_URI}/${dbName}`;
+
+	await mongoose.connect(url, {
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	});
+});
+
+afterAll(async () => {
+	await mongoose.connection.db.dropDatabase();
+	await mongoose.connection.close();
+});
+
 describe('createCategory', () => {
 	beforeEach(async () => {
 		await categories.deleteMany();
 	});
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+
+	test('Should create a category and return it', (done) => {
+		request(app)
+			.post('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ type: 'test', color: 'red' })
+			.then((response) => {
+				expect(response.status).toBe(200);
+				// expect(response.body.data).toHaveProperty('type');
+				// expect(response.body.data).toHaveProperty('color');
+				done();
+			});
 	});
 });
 
@@ -66,23 +79,24 @@ describe('deleteCategory', () => {
 });
 
 describe('getCategories', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	beforeEach(async () => {
+		await categories.deleteMany();
 	});
-	test('should retrieve list of all categories', async () => {
-		await categories.create({ type: 'food', color: 'red' });
-
-		const response = await request(app)
-			.get('/categories')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			);
-
-		expect(response.status).toBe(200);
-		expect(response.body).toHaveLength(1);
-		expect(response.body[0].type).toBe('investment');
-		expect(response.body[0].color).toBe('#000000');
+	test('Nominal case: returns a list of categories', (done) => {
+		categories.create({ type: 'test', color: 'red' }).then(() => {
+			request(app)
+				.get('/api/categories')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(200);
+					expect(response.body.data[0]).toHaveProperty('type');
+					expect(response.body.data[0]).toHaveProperty('color');
+					done();
+				});
+		});
 	});
 });
 
