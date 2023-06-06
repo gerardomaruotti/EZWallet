@@ -10,7 +10,8 @@ jest.mock('bcryptjs');
 jest.mock('../models/User.js');
 
 const accessToken = "accesstokentest";
-const refreshToken= "refreshtokentest"
+const refreshToken= "refreshtokentest";
+
   describe("register", () => {
 
 	test("Nominal case", async () => {
@@ -385,8 +386,8 @@ const refreshToken= "refreshtokentest"
 		  cookies: {},
 		  body: {
 			username: "",
-			email: "a@d.m",
-			password: "password",
+			email: "admin@gmail.com",
+			password: "admin",
 		  },
 		};
 	
@@ -407,7 +408,7 @@ const refreshToken= "refreshtokentest"
 		  body: {
 			username: "admin",
 			email: "",
-			password: "password",
+			password: "admin",
 		  },
 		};
 	
@@ -493,7 +494,7 @@ const refreshToken= "refreshtokentest"
 		  body: {
 			username: "admin",
 			email: "admin@gmail.com",
-			password: "password",
+			password: "admin",
 		  },
 		};
 	
@@ -514,9 +515,9 @@ const refreshToken= "refreshtokentest"
 			params: {},
 			cookies: {},
 			body: {
-			  username: "enrico",
-			  email: "enrico@gmail.com",
-			  password: "enrico",
+			  username: "admin",
+			  email: "admin@gmail.com",
+			  password: "admin",
 			},
 		  };
 	  
@@ -525,7 +526,7 @@ const refreshToken= "refreshtokentest"
 			json: jest.fn(),
 		  };
 		
-		  User.findOne.mockImplementation(() => { throw new Error('error') });
+		User.findOne.mockImplementation(() => { throw new Error('error') });
 
 		await registerAdmin(mockReq, mockRes);
 
@@ -534,11 +535,9 @@ const refreshToken= "refreshtokentest"
 	});	
 		
 	});	
-	
-	 
-
 
   describe("Login", () => {
+
 	test("nominal case", async () => {
 	  const mockReq = {
 		params: {},
@@ -569,7 +568,6 @@ const refreshToken= "refreshtokentest"
 	  ).mockImplementationOnce(() => {
 		return refreshToken;
 	  });
-
 
 	  await login(mockReq, mockRes);
 	  expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -719,7 +717,6 @@ const refreshToken= "refreshtokentest"
 	  });
 
 	  test('Database error', async () => {
-
 		const mockReq = {
 			params: {},
 			cookies: {},
@@ -736,10 +733,8 @@ const refreshToken= "refreshtokentest"
 		  };
 		
 		User.findOne.mockImplementationOnce(() => { throw new Error('error') });
-
-  
+		
 		await login(mockReq, mockRes);
-
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		
 	});	
@@ -819,7 +814,6 @@ describe('logout', () => {
 
 	 
 	  test('Database error', async () => {
-
 		const mockReq = {
 			params: {},
 			cookies: {
@@ -835,9 +829,7 @@ describe('logout', () => {
 		  };
 		
 		User.findOne.mockImplementation(() => { throw new Error('error') });
-
 		await logout(mockReq, mockRes);
-
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 
 	});	
