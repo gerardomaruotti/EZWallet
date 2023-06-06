@@ -105,8 +105,6 @@ describe("register", () => {
 		  });
 	  }); 
 
-
-
 	  test("Valid or invalid email: a 400 error message must be returned in case of invalid email", (done) => {
 		request(app)
 		  .post("/api/register")
@@ -117,6 +115,28 @@ describe("register", () => {
 			done();
 		  });
 	  });
+
+	  test("User already register : a 400 error message must be returned in case of invalid email", (done) => {
+		User
+		.create({
+			username: 'enrico',
+			email: 'enrico@gmail.com',
+			password: 'enrico'
+		})
+		.then(() =>{
+			request(app)
+		  	.post("/api/register")
+		  	.send({ username: "enrico", email: "enrico.gmail.com", password: "enrico" })
+		  	.then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({error: 'User already registered'});
+			done();
+		  });
+		})
+		
+	  });
+
+	  
 
 	
 
