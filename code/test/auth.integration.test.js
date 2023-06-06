@@ -23,8 +23,39 @@ afterAll(async () => {
 	await mongoose.connection.close();
 });
 
-describe('register', () => {});
+describe("register", () => {
 
+	test("Nominal case: a confirmation message must be returned", (done) => {
+	  request(app)
+		.post("/api/register")
+		.send({ username: "enrico", email: "enrico@gmail.com", password: "enrico" })
+		.then((response) => {
+		  expect(response.status).toBe(200);
+		  expect(response.body).toStrictEqual({
+			data: { message: 'User added succesfully' },
+		  });
+		  done();
+		});
+	}); 
+
+	test("Username undefined ", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ email: "enrico@gmail.com", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({
+			  error: 'Missing parameters'
+			});
+			done();
+		  });
+	  });
+
+	afterEach(async () => {
+		await User.deleteMany();
+	  });
+});
+  
 describe('registerAdmin', () => {
 	test('Dummy test, change it', () => {
 		expect(true).toBe(true);
