@@ -5,6 +5,7 @@ import { User } from '../models/User.js';
 import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
 import e from 'express';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -23,28 +24,32 @@ afterAll(async () => {
 	await mongoose.connection.close();
 });
 
+const adminAccessTokenValid = jwt.sign(
+	{
+		email: 'admin@email.com',
+		username: 'admin',
+		role: 'Admin',
+	},
+	process.env.ACCESS_KEY,
+	{ expiresIn: '1y' }
+);
+
+const testerAccessTokenValid = jwt.sign(
+	{
+		email: 'tester@test.com',
+		username: 'tester',
+		role: 'Regular',
+	},
+	process.env.ACCESS_KEY,
+	{ expiresIn: '1y' }
+);
+
 describe('createCategory', () => {
 	beforeEach(async () => {
 		await categories.deleteMany();
 	});
-	test('should retrieve list of all categories', (done) => {
-		categories
-			.create({
-				type: 'investment',
-				color: '#000000',
-			})
-			.then(() => {
-				request(app)
-					.get('/categories')
-					.then((res) => {
-						expect(res.status).toBe(200);
-						expect(res.body).toHaveLength(1);
-						expect(res.body[0].type).toBe('investment');
-						expect(res.body[0].color).toBe('#000000');
-						done();
-					})
-					.catch((err) => done(err));
-			});
+	test('Dummy test, change it', () => {
+		expect(true).toBe(true);
 	});
 });
 
@@ -63,6 +68,21 @@ describe('deleteCategory', () => {
 describe('getCategories', () => {
 	test('Dummy test, change it', () => {
 		expect(true).toBe(true);
+	});
+	test('should retrieve list of all categories', async () => {
+		await categories.create({ type: 'food', color: 'red' });
+
+		const response = await request(app)
+			.get('/categories')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			);
+
+		expect(response.status).toBe(200);
+		expect(response.body).toHaveLength(1);
+		expect(response.body[0].type).toBe('investment');
+		expect(response.body[0].color).toBe('#000000');
 	});
 });
 
