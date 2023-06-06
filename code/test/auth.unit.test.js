@@ -525,16 +525,18 @@ const refreshToken= "refreshtokentest"
 			json: jest.fn(),
 		  };
 		
-		User.findOne.mockImplementation(() => { throw new Error('error') });
+		  User.findOne.mockImplementation(() => { throw new Error('error') });
 
-		await register(mockReq, mockRes);
+		await registerAdmin(mockReq, mockRes);
 
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		
 	});	
+		
+	});	
 	
 	 
-  })
+
 
   describe("Login", () => {
 	test("nominal case", async () => {
@@ -554,7 +556,7 @@ const refreshToken= "refreshtokentest"
 	  };
 
 	  jest.spyOn(User, "findOne").mockImplementation(() => ({
-		password: "test",
+		password: "adminhash",
 		save: jest.fn(),
 	  }));
 
@@ -562,22 +564,13 @@ const refreshToken= "refreshtokentest"
 		return Promise.resolve(true);
 	  });
   
-	  //jest.spyOn(jwt, "sign").mockImplementation(() => {
-	//	return accessToken;
-	 // });
-
-	// jest.spyOn(jwt, "sign").mockImplementation(() => {
-	//	return refreshToken;
-	 // });
-
 	  jest.spyOn(jwt, "sign").mockImplementationOnce( () =>
 			accessToken
 	  ).mockImplementationOnce(() => {
 		return refreshToken;
 	  });
 
-	   //jwt.sign.mockResolvedValueOnce(accessToken).mockResolvedValueOnce(refreshToken)
-	   //jest.spyOn(jwt, "sign").mockResolvedValueOnce(accessToken).mockResolvedValueOnce(refreshToken)
+
 	  await login(mockReq, mockRes);
 	  expect(mockRes.status).toHaveBeenCalledWith(200);
 	  expect(mockRes.json).toHaveBeenCalledWith({ data: { accessToken: "accesstokentest", refreshToken: "refreshtokentest" } });
@@ -670,7 +663,7 @@ const refreshToken= "refreshtokentest"
 
 	  });
 
-	  test("User wrong", async () => {
+	  test("Existing user", async () => {
 		const mockReq = {
 		  params: {},
 		  cookies: {},
@@ -724,26 +717,128 @@ const refreshToken= "refreshtokentest"
 		expect(mockRes.json).toHaveBeenCalledWith('Wrong credentials');
 
 	  });
-	});
 
+	  test('Database error', async () => {
 
+		const mockReq = {
+			params: {},
+			cookies: {},
+			body: {
+			  username: "enrico",
+			  email: "enrico@gmail.com",
+			  password: "enrico",
+			},
+		  };
+	  
+		  const mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+		  };
+		
+		User.findOne.mockImplementationOnce(() => { throw new Error('error') });
 
+  
+		await login(mockReq, mockRes);
 
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		
+	});	
 
-
-
-
-
-
-
-
-
-
-
-
+});
 
 describe('logout', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
-	});
+
+	test("Nominal case", async () => {
+		const mockReq = {
+		  params: {},
+		  cookies: {
+			refreshToken: "refreshtokentest"
+		  },
+		  body: {},
+		};
+	
+		const mockRes = {
+		  status: jest.fn().mockReturnThis(),
+		  json: jest.fn(),
+		  cookie: jest.fn(), 
+		};
+    
+		//User.findOne.mockResolvedValue(refreshToken);
+		jest.spyOn(User, "findOne").mockImplementation(() => ({
+			refreshToken: "refreshtokentest",
+			save: jest.fn(),
+		  }));
+			  
+		await logout(mockReq, mockRes);
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith({ data: { message: 'User logged out' } });
+	  });
+
+
+	test("Missing refreshtoken", async () => {
+		const mockReq = {
+		  params: {},
+		  cookies: {
+			refreshToken: ""
+		  },
+		  body: {},
+		};
+	
+		const mockRes = {
+		  status: jest.fn().mockReturnThis(),
+		  json: jest.fn(),
+		  cookie: jest.fn(), 
+		};
+    	  
+		await logout(mockReq, mockRes);
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith('User not logged in');
+	  });
+	
+	test(" User not found", async () => {
+		const mockReq = {
+		  params: {},
+		  cookies: {
+			refreshToken: "refreshtokentest"
+		  },
+		  body: {},
+		};
+	
+		const mockRes = {
+		  status: jest.fn().mockReturnThis(),
+		  json: jest.fn(),
+		  cookie: jest.fn(), 
+		};
+    
+		User.findOne.mockResolvedValue(null);
+
+		await logout(mockReq, mockRes);
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith('User not found');
+	  });
+
+	 
+	  test('Database error', async () => {
+
+		const mockReq = {
+			params: {},
+			cookies: {
+				refreshToken: "refreshtokentest"
+			},
+			body: {},
+		  };
+	  
+		  const mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+			cookie: jest.fn(), 
+		  };
+		
+		User.findOne.mockImplementation(() => { throw new Error('error') });
+
+		await logout(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+
+	});	
 });
