@@ -11,7 +11,7 @@ import {
 	addToGroup,
 	removeFromGroup,
 } from '../controllers/users.js';
-import { verifyAuth, verifyMultipleAuth, checkGroupEmails } from '../controllers/utils';
+import { isEmail, verifyAuth, verifyMultipleAuth, checkGroupEmails } from '../controllers/utils';
 
 /**
  * In order to correctly mock the calls to external modules it is necessary to mock them using the following line.
@@ -542,7 +542,6 @@ describe('getGroup', () => {
 
 
 describe('addToGroup', () => {
-
 	let mockReq;
 	let mockRes;
 
@@ -555,12 +554,12 @@ describe('addToGroup', () => {
 		mockReq = {
 			cookies: {},
 			body: {
-				memberEmails: ['test3@example.com', 'test4@example.com']
+				emails: ['test3@example.com', 'test4@example.com']
 			},
 			params: {
 				name: 'test1'
 			},
-			path: 'groups/Family/add'
+			path: '/groups/test1/add'
 		};
 		mockRes = {
 			status: jest.fn().mockReturnThis(),
@@ -576,14 +575,18 @@ describe('addToGroup', () => {
 		groupEmail = ["test1@example.com", "test2@example.com"]
 
 		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		isEmail.mockImplementation(() => true);
 
-		Group.findOne.mockImplementation(() => ({ name: 'test1', members: [...groupEmail, ...validEmails].map(email => ({ email }))}));
-		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
-
+		Group.findOne.mockImplementation(() => new Promise(resolve => resolve({
+			name: 'test1', 
+			members: [...groupEmail, ...validEmails].map(email => ({ email }))
 		})));
-
+		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
+			name: 'test1', 
+			members: [...groupEmail, ...validEmails].map(email => ({ email }))
+		})));
+		
 		checkGroupEmails.mockImplementation(() => ({ validEmails, alreadyInGroup, membersNotFound }));
-
 	});
 
 	test('should return 401 if not authorized', async () => {
@@ -612,7 +615,7 @@ describe('addToGroup', () => {
 
 	test('should return 400 if member emails are not provided', async () => {
 
-		mockReq.body.memberEmails = undefined;
+		mockReq.body.emails = undefined;
 
 		await addToGroup(mockReq, mockRes);
 
@@ -628,6 +631,42 @@ describe('addToGroup', () => {
 		
 		await addToGroup(mockReq, mockRes);
 		
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if the path is wrong', async () => {
+
+		mockReq.path = '/groups/test1';
+
+		await addToGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if emails are not valid', async () => {
+
+		isEmail.mockImplementation(() => false);
+
+		await addToGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if there aren\'t valid emails', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({ validEmails: [], alreadyInGroup: validEmails, membersNotFound }));
+
+		await addToGroup(mockReq, mockRes);
+
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
 			error: expect.any(String)
@@ -650,17 +689,89 @@ describe('addToGroup', () => {
 
 		await addToGroup(mockReq, mockRes);
 
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				group: expect.objectContaining({
+					name: 'test1',
+					members: [...groupEmail, ...validEmails].map(email => ({ email }))
+				}),
+				alreadyInGroup: [],
+				membersNotFound: []
+			})
+		}))
+	});
+
+	test('should return the group with the new members if admin', async () => {
+
+		mockReq.path = '/groups/test1/insert';
+
+		await addToGroup(mockReq, mockRes);
+
 		//expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
 			data: expect.objectContaining({
-				name: 'test1',
-				members: [...groupEmail, ...validEmails].map(email => ({ email }))
+				group: expect.objectContaining({
+					name: 'test1',
+					members: [...groupEmail, ...validEmails].map(email => ({ email }))
+				}),
+				alreadyInGroup: [],
+				membersNotFound: []
 			})
-		}))});
+		}))
+	});
+
 
 });
 
-describe('removeFromGroup', () => {});
+describe('removeFromGroup', () => {
+	let mockReq;
+	let mockRes;
+
+	let validEmails;
+	let alreadyInGroup;
+	let membersNotFound;
+	let groupEmail;
+
+	beforeEach(() => {
+		mockReq = {
+			cookies: {},
+			body: {
+				emails: ['test1@example.com']
+			},
+			params: {
+				name: 'test1'
+			},
+			path: '/groups/test1/remove'
+		};
+		mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+			locals: {
+				refreshedTokenMessage: 'refreshed token'
+			}
+		};
+
+		validEmails = ['test1@example.com'];
+		alreadyInGroup = [];
+		membersNotFound = [];
+		groupEmail = ["test1@example.com", "test2@example.com"]
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		isEmail.mockImplementation(() => true);
+
+		Group.findOne.mockImplementation(() => new Promise(resolve => resolve({
+			name: 'test1', 
+			members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+		})));
+		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
+			name: 'test1', 
+			members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+		})));
+
+		checkGroupEmails.mockImplementation(() => ({ validEmails, alreadyInGroup, membersNotFound }));
+	});
+});
 
 describe('deleteUser', () => {});
 

@@ -217,8 +217,8 @@ export const getGroup = async (req, res) => {
 export const addToGroup = async (req, res) => {
 	try {
 		let { name } = req.params;
-		let { memberEmails } = req.body;
-		if (name === undefined || memberEmails === undefined)
+		let { emails } = req.body;
+		if (name === undefined || emails === undefined)
 			return res.status(400).json({
 				error: 'The request body does not contain all the necessary attributes',
 			});
@@ -237,10 +237,10 @@ export const addToGroup = async (req, res) => {
 			return res.status(400).json({ error: 'Path not correct' });
 		}
 		
-		if (memberEmails.some((email) => !isEmail(email)))
+		if (emails.some((email) => !isEmail(email)))
 			return res.status(400).json({ error: 'Mail not correct formatted' });
 
-		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
+		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(emails);
 
 		if (validEmails.length == 0)
 			return res.status(400).json({ error: 'All the emails are invalid' });
@@ -251,28 +251,24 @@ export const addToGroup = async (req, res) => {
 			})
 		);
 
-		Group.updateOne(
-			{ name: req.params.name },
-			{ $push: { members: { $each: membersToAdd } } }
-		)
-			.then(async (group) =>
-				res.status(200).json({
-					data: {
-						group: {
-							name: name,
-							members: (await Group.findOne({ name: name })).members.map(
-								(m) => ({ email: m.email })
-							),
-						},
-						alreadyInGroup,
-						membersNotFound,
-					},
-					refreshedTokenMessage: res.locals.refreshedTokenMessage,
-				})
-			)
-			.catch((err) => {
-				throw err;
-			});
+		await Group.updateOne({ name: req.params.name },
+			{ $push: { members: { $each: membersToAdd } } })
+				
+			
+		const new_group = await Group.findOne({ name: name })
+		 res.status(200).json({
+			data: {
+				group: {
+					name: name,
+					members: new_group.members.map(
+						(m) => ({ email: m.email })
+					),
+				},
+				alreadyInGroup,
+				membersNotFound,
+			},
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -291,8 +287,8 @@ export const addToGroup = async (req, res) => {
 export const removeFromGroup = async (req, res) => {
 	try {
 		let { name } = req.params;
-		let { memberEmails } = req.body;
-		if (memberEmails === undefined)
+		let { emails } = req.body;
+		if (emails === undefined)
 			return res.status(401).json({ error: 'Missing parameters' });
 
 		const group = await Group.findOne({ name: name });
@@ -309,13 +305,10 @@ export const removeFromGroup = async (req, res) => {
 			return res.status(400).json({ error: 'Path not correct' });
 		}
 
-		if (memberEmails.some((email) => !isEmail(email)))
+		if (emails.some((email) => !isEmail(email)))
 			return res.status(400).json({ error: 'Mail not correct formatted' });
 
-		const { validEmails, membersNotFound, notInGroup } = await checkGroupEmails(
-			memberEmails,
-			name
-		);
+		const { validEmails, membersNotFound, notInGroup } = await checkGroupEmails(emails,	name);
 
 		if (validEmails.length == 0)
 			return res.status(401).json({ error: 'All the emails are invalid' });
@@ -323,29 +316,25 @@ export const removeFromGroup = async (req, res) => {
 		if (group.members.length <= validEmails.length)
 			return res.status(401).json({ error: 'Group will be empty after removing members' });
 
-		Group.updateOne(
-				{ name: name },
+		await Group.updateOne({ name: name },
 				{ $pull: { members: { email: { $in: validEmails.map((e) => e.email)} } } })
-			.then(async (group) =>
-				res.json({
-					data: {
-						group: {
-							name: name,
-							members: (await Group.findOne({ name: name })).members.map(
-								(m) => ({
-									email: m.email,
-								})
-							),
-						},
-						notInGroup,
-						membersNotFound,
-					},
-					refreshedTokenMessage: res.locals.refreshedTokenMessage,
-				})
-			)
-			.catch((err) => {
-				throw err;
-			});
+
+		const new_group = await Group.findOne({ name: name });
+		res.status(200).json({
+			data: {
+				group: {
+					name: name,
+					members: new_group.members.map(
+						(m) => ({
+							email: m.email,
+						})
+					),
+				},
+				notInGroup,
+				membersNotFound,
+			},
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
