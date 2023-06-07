@@ -384,6 +384,54 @@ describe('login', () => {
 				done();
 			});
 	});
+
+	afterAll(async () => {
+		await User.deleteMany();
+	});
 });
 
-describe('logout', () => {});
+describe('logout', () => {
+	beforeAll(async () => {
+		let adminpassword = await bcrypt.hash('12345hello', 12);
+		await User.create({
+			username: 'admin',
+			email: 'admin@gmail.com',
+			password: adminpassword,
+			refreshToken: 'refreshtokentest',
+		});
+	});
+
+	test('Nominal case', (done) => {
+		request(app)
+			.get('/api/logout')
+			.set('Cookie', `refreshToken=${'refreshtokentest'}`)
+			.then((response) => {
+				expect(response.status).toBe(200);
+				expect(response.body).toStrictEqual({
+					data: { message: 'User logged out' },
+				});
+				done();
+			});
+	});
+
+	test('Missing cookie: a 400 error message must be returned', (done) => {
+		request(app)
+			.get('/api/logout')
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toStrictEqual('User not logged in');
+				done();
+			});
+	});
+
+	test('Invalid cookie: a 400 error message must be returned', (done) => {
+		request(app)
+			.get('/api/logout')
+			.set('Cookie', `refreshToken=${'refreshtokentests'}`)
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toStrictEqual('User not found');
+				done();
+			});
+	});
+});
