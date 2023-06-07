@@ -102,7 +102,7 @@ export const deleteCategory = async (req, res) => {
 		if (!authorized) return res.status(401).json({ error: cause });
 
 		const { types } = req.body;
-		if (!types) {
+		if (!types || types.length == 0) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		let checkCategoriesNumber = await categories.find();

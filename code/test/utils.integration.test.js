@@ -71,14 +71,14 @@ const testerAccessTokenEmpty = jwt.sign({}, process.env.ACCESS_KEY, {
 	expiresIn: '1y',
 });
 
-describe('utils.js', () => {
+describe.skip('utils.js', () => {
 	describe('verifyAuth', () => {
 		/**
 		 * When calling verifyAuth directly, we do not have access to the req and res objects created by express, so we must define them manually
 		 * An object with a "cookies" field that in turn contains "accessToken" and "refreshToken" is sufficient for the request
 		 * The response object is untouched in most cases, so it can be a simple empty object
 		 */
-		test.skip('Tokens are both valid and belong to the requested user', () => {
+		test('Tokens are both valid and belong to the requested user', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
 			//Meaning that the same object can be used for both
 			const req = {
@@ -98,7 +98,7 @@ describe('utils.js', () => {
 			expect(Object.values(response).includes(true)).toBe(true);
 		});
 
-		test.skip('Undefined tokens', () => {
+		test('Undefined tokens', () => {
 			const req = { cookies: {} };
 			const res = {};
 			const response = verifyAuth(req, res, { authType: 'Simple' });
@@ -109,7 +109,7 @@ describe('utils.js', () => {
 		/**
 		 * The only situation where the response object is actually interacted with is the case where the access token must be refreshed
 		 */
-		test.skip('Access token expired and refresh token belonging to the requested user', () => {
+		test('Access token expired and refresh token belonging to the requested user', () => {
 			const req = {
 				cookies: {
 					accessToken: testerAccessTokenExpired,
@@ -163,8 +163,8 @@ describe('utils.js', () => {
  * Ensure that all asynchronous functions are always waited for in order to avoid situations where data is fetched before it's actually ready
  * Duplicate test cases that have the same exact behavior (i.e. success scenario with valid tokens or with expired access token and valid refresh token, unauthorized access) are not required, just the base case is sufficient
  */
-describe('controller.js / user.js / auth.js', () => {
-	test.skip('updateCategory: Returns a message for confirmation and the number of updated transactions', (done) => {
+describe.skip('controller.js / user.js / auth.js', () => {
+	test('updateCategory: Returns a message for confirmation and the number of updated transactions', (done) => {
 		//We create a category in our empty database (we know it's empty thanks to the beforeEach above)
 		categories
 			.create({
@@ -235,7 +235,7 @@ describe('controller.js / user.js / auth.js', () => {
 	 *      - awaiting each call, eventually assigning the result to a variable
 	 *      - calling "then" right after each call
 	 */
-	test.skip('updateCategory: Returns a message for confirmation and the number of updated transactions', async () => {
+	test('updateCategory: Returns a message for confirmation and the number of updated transactions', async () => {
 		await categories.create({ type: 'food', color: 'red' });
 		await User.insertMany([
 			{
@@ -279,7 +279,7 @@ describe('controller.js / user.js / auth.js', () => {
 		//there is no "done" in this case to signal that the test has ended, as it ends automatically since it's not inside a "then" block
 	});
 
-	test.skip('updateCategory: Returns a 400 error if the type of the new category is the same as one that exists already and that category is not the requested one', (done) => {
+	test('updateCategory: Returns a 400 error if the type of the new category is the same as one that exists already and that category is not the requested one', (done) => {
 		categories
 			.insertMany([
 				{
@@ -323,7 +323,7 @@ describe('controller.js / user.js / auth.js', () => {
 			});
 	});
 
-	test.skip('updateCategory: Returns a 400 error if the request body does not contain all the necessary parameters', (done) => {
+	test('updateCategory: Returns a 400 error if the request body does not contain all the necessary parameters', (done) => {
 		categories
 			.create({
 				type: 'food',
@@ -359,7 +359,7 @@ describe('controller.js / user.js / auth.js', () => {
 			});
 	});
 
-	test.skip('updateCategory: Returns a 401 error if called by a user who is not an Admin', (done) => {
+	test('updateCategory: Returns a 401 error if called by a user who is not an Admin', (done) => {
 		categories
 			.create({
 				type: 'food',
