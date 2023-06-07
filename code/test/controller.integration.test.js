@@ -55,6 +55,7 @@ beforeEach(async () => {
 	await Group.deleteMany();
 });
 
+//TODO: fix duplicate key inside database
 describe('createCategory', () => {
 	test('Should create a category and return it', (done) => {
 		request(app)
@@ -129,6 +130,7 @@ describe('createCategory', () => {
 	});
 });
 
+//OK
 describe('updateCategory', () => {
 	test('Returns a message for confirmation and the number of updated transactions', (done) => {
 		//We create a category in our empty database (we know it's empty thanks to the beforeEach above)
@@ -184,7 +186,7 @@ describe('updateCategory', () => {
 									//The actual value of the field could be any string, so it's not checked
 									expect(response.body.data).toHaveProperty('message');
 									//We expect the count of edited transactions returned to be equal to 2 (the two transactions we placed in the database)
-									expect(response.body.data).toHaveProperty('count');
+									expect(response.body.data).toHaveProperty('count', 2);
 
 									//Must be called at the end of every test or the test will fail while waiting for it to be called
 									done();
@@ -234,7 +236,7 @@ describe('updateCategory', () => {
 
 		expect(response.status).toBe(200);
 		expect(response.body.data).toHaveProperty('message');
-		expect(response.body.data).toHaveProperty('count');
+		expect(response.body.data).toHaveProperty('count', 2);
 		//there is no "done" in this case to signal that the test has ended, as it ends automatically since it's not inside a "then" block
 	});
 
@@ -260,6 +262,50 @@ describe('updateCategory', () => {
 				}).then(() => {
 					request(app)
 						.patch('/api/categories/food')
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({ type: 'health', color: 'green' }) //The passed type is one that already exists and is not the same one in the route (we are not updating the color of a category but we are trying to change its type to be a duplicate => error scenario)
+						.then((response) => {
+							//The response status must signal a wrong request
+							expect(response.status).toBe(400);
+							//The response body must contain a field named either "error" or "message" (both names are accepted but at least one must be present)
+							const errorMessage = response.body.error
+								? true
+								: response.body.message
+								? true
+								: false;
+							//The test passes if the response body contains at least one of the two fields
+							expect(errorMessage).toBe(true);
+							done();
+						});
+				});
+			});
+	});
+
+	test('Returns a 400 error if the type of the old category does not exist', (done) => {
+		categories
+			.create([
+				{
+					type: 'food',
+					color: 'red',
+				},
+				{
+					type: 'health',
+					color: 'blue',
+				},
+			])
+			.then(() => {
+				User.create({
+					username: 'admin',
+					email: 'admin@email.com',
+					password: 'admin',
+					refreshToken: adminAccessTokenValid,
+					role: 'Admin',
+				}).then(() => {
+					request(app)
+						.patch('/api/categories/inexistent')
 						.set(
 							'Cookie',
 							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
