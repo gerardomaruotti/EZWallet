@@ -29,6 +29,10 @@ const testerAccessTokenValid = jwt.sign(
 	{ expiresIn: '1y' }
 );
 
+const testerAccessTokenEmpty = jwt.sign({}, process.env.ACCESS_KEY, {
+	expiresIn: '1y',
+});
+
 beforeAll(async () => {
 	const dbName = 'testingDatabaseController';
 	const url = `${process.env.MONGO_URI}/${dbName}`;
@@ -44,11 +48,13 @@ afterAll(async () => {
 	await mongoose.connection.close();
 });
 
-describe('createCategory', () => {
-	beforeEach(async () => {
-		await categories.deleteMany();
-	});
+beforeEach(async () => {
+	await categories.deleteMany();
+	await transactions.deleteMany();
+	await User.deleteMany();
+});
 
+describe('createCategory', () => {
 	test('Should create a category and return it', (done) => {
 		request(app)
 			.post('/api/categories')
@@ -59,11 +65,69 @@ describe('createCategory', () => {
 			.send({ type: 'test', color: 'red' })
 			.then((response) => {
 				expect(response.status).toBe(200);
-				// expect(response.body.data).toHaveProperty('type');
-				// expect(response.body.data).toHaveProperty('color');
 				done();
 			});
 	});
+
+	test('Should return 401 if not authorized', (done) => {
+		request(app)
+			.post('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.send({ type: 'test', color: 'red' })
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			});
+	});
+
+	test('Should return 400 if missing color', (done) => {
+		request(app)
+			.post('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ type: 'test' })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				done();
+			});
+	});
+
+	test('Should return 400 if missing type', (done) => {
+		request(app)
+			.post('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ color: 'red' })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				done();
+			});
+	});
+
+	// test('should return 400 if category already exists', (done) => {
+	// 	categories.deleteMany({ type: 'test' }).then(() => {
+	// 		categories.create({ type: 'test', color: 'red' }).then(() => {
+	// 			request(app)
+	// 				.post('/api/categories')
+	// 				.set(
+	// 					'Cookie',
+	// 					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+	// 				)
+	// 				.send({ type: 'test', color: 'red' })
+	// 				.then((response) => {
+	// 					expect(response.status).toBe(400);
+	// 					done();
+	// 				});
+	// 		});
+	// 	});
+	// });
 });
 
 describe('updateCategory', () => {
@@ -73,8 +137,134 @@ describe('updateCategory', () => {
 });
 
 describe('deleteCategory', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	test('should return 401 if not authorized', (done) => {
+		request(app)
+			.delete('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.send({ types: ['test'] })
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			});
+	});
+
+	test('should return 400 if missing types', (done) => {
+		request(app)
+			.delete('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({})
+			.then((response) => {
+				expect(response.status).toBe(400);
+				done();
+			});
+	});
+
+	test('should return 400 if types is empty', (done) => {
+		request(app)
+			.delete('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ types: [] })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				done();
+			});
+	});
+
+	test('should return 400 id there is only one category remaining', (done) => {
+		categories.create({ type: 'test', color: 'red' }).then(() => {
+			request(app)
+				.delete('/api/categories')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.send({ types: ['test'] })
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				});
+		});
+	});
+
+	test('should return 400 if one of the categories does not exist', (done) => {
+		categories
+			.create({ type: 'test', color: 'red' }, { type: 'second', color: 'blue' })
+			.then(() => {
+				request(app)
+					.delete('/api/categories')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.send({ types: ['ok', 'test2'] })
+					.then((response) => {
+						expect(response.status).toBe(400);
+						done();
+					});
+			});
+	});
+
+	test('should return 200 if all categories are deleted', (done) => {
+		categories
+			.create({ type: 'test', color: 'red' }, { type: 'second', color: 'blue' })
+			.then(() => {
+				request(app)
+					.delete('/api/categories')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.send({ types: ['test', 'second'] })
+					.then((response) => {
+						expect(response.status).toBe(200);
+						done();
+					});
+			});
+	});
+
+	test('should return 200 if all categories are deleted and transactions are updated', (done) => {
+		categories
+			.create({ type: 'test', color: 'red' }, { type: 'second', color: 'blue' })
+			.then(() => {
+				transactions
+					.create(
+						{
+							amount: 100,
+							type: 'income',
+							category: 'test',
+							date: new Date(),
+							userId: 'tester',
+						},
+						{
+							amount: 100,
+							type: 'income',
+							category: 'second',
+							date: new Date(),
+							userId: 'tester',
+						}
+					)
+					.then(() => {
+						request(app)
+							.delete('/api/categories')
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.send({ types: ['test', 'second'] })
+							.then((response) => {
+								expect(response.status).toBe(200);
+							});
+					});
+			});
 	});
 });
 
@@ -98,12 +288,59 @@ describe('getCategories', () => {
 				});
 		});
 	});
+
+	test('Should return 401 if not authorized', (done) => {
+		request(app)
+			.get('/api/categories')
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.then((response) => {
+				expect(response.status).toBe(401);
+				expect(response.body).toHaveProperty('error');
+				done();
+			});
+	});
 });
 
 describe('createTransaction', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	test.skip('Should return 401 if not authorized', (done) => {
+		request(app)
+			.post('api/users/tester/transactions')
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.then((response) => {
+				expect(response.status).toBe(401);
+				expect(response.body).toHaveProperty('error');
+				done();
+			});
 	});
+	// test('Should create a category and return it', (done) => {
+	// 	User.create({
+	// 		username: 'admin',
+	// 		email: 'admin@email.com',
+	// 		password: 'admin',
+	// 		refreshToken: adminAccessTokenValid,
+	// 		role: 'Admin',
+	// 	}).then(() => {
+	// 		categories.create({ type: 'test', color: 'red' }).then(() => {
+	// 			request(app)
+	// 				.post('api/users/admin/transactions')
+	// 				.set(
+	// 					'Cookie',
+	// 					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+	// 				)
+	// 				.send({ username: 'admin', amount: '30', type: 'test' })
+	// 				.then((response) => {
+	// 					expect(response.status).toBe(200);
+	// 					done();
+	// 				});
+	// 		});
+	// 	});
+	// });
 });
 
 describe('getAllTransactions', () => {
