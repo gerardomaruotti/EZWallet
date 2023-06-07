@@ -1208,7 +1208,10 @@ describe('getTransactionsByUserByCategory', () => {
 
 		test('should return 400 if username is missing', async () => {
 			mockReq.params = { category: 'income' };
-
+            verifyMultipleAuth.mockImplementation(() => ({
+				authorized: true,
+				cause: 'Authorized',
+			}));
 			await getTransactionsByUserByCategory(mockReq, mockRes);
 
 			expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -1246,7 +1249,8 @@ describe('getTransactionsByUserByCategory', () => {
 		test('should return 400 if type does not exist', async () => {
 			mockReq.params = { username: 'test', category: 'income' };
 			User.findOne.mockResolvedValue({ username: 'test' });
-			
+			categories.findOne.mockResolvedValue(null);
+
 
 			await getTransactionsByUserByCategory(mockReq, mockRes);
 
@@ -1257,14 +1261,13 @@ describe('getTransactionsByUserByCategory', () => {
 		});
 
 		test('should return transactions for user', async () => {
-			verifyAuth.mockImplementation(() => ({
+			verifyMultipleAuth.mockImplementation(() => ({
 				authorized: true,
 				cause: 'Authorized',
 			}));
-			mockReq.params.username = 'test';
-			mockReq.params.category = 'income';
+			mockReq.params = { username: 'test', category: 'income' };
 			User.findOne.mockResolvedValue({ username: 'test' });
-			categories.findOne.mockResolvedValue({ type: 'income' });
+			categories.findOne.mockResolvedValue({type: 'income', color: 'green' });
 			transactions.aggregate.mockResolvedValue([
 				{
 					username: 'test',
@@ -1308,6 +1311,47 @@ describe('getTransactionsByUserByCategory', () => {
 						color: 'green',
 					},
 				],
+				refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
+			});
+
+		});	
+		
+		test('should return 500 if an error occurs', async () => {
+			verifyMultipleAuth.mockImplementation(() => ({
+				authorized: true,
+				cause: 'Authorized',
+			}));
+			mockReq.params = { username: 'test', category: 'income' };
+			User.findOne.mockImplementation(() => {
+				throw new Error('Database error');
+			});			
+			categories.findOne.mockResolvedValue({type: 'income', color: 'green' });
+
+			
+
+			
+
+			await getTransactionsByUserByCategory(mockReq, mockRes);
+
+			expect(mockRes.status).toHaveBeenCalledWith(500);
+			expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
+		});
+
+		test('should return empty list if user has no transactions', async () => {
+			verifyMultipleAuth.mockImplementation(() => ({
+				authorized: true,
+				cause: 'Authorized',
+			}));
+			mockReq.params = { username: 'test', category: 'income' };
+			User.findOne.mockResolvedValue({ username: 'test' });			
+			categories.findOne.mockResolvedValue({type: 'income', color: 'green' });
+			transactions.aggregate.mockResolvedValue([]);
+
+			await getTransactionsByUserByCategory(mockReq, mockRes);
+
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+			expect(mockRes.json).toHaveBeenCalledWith({
+				data: [],
 				refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
 			});
 		});
