@@ -941,7 +941,7 @@ describe('removeFromGroup', () => {
 
 		await removeFromGroup(mockReq, mockRes);
 
-		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
 			data: expect.objectContaining({
 				group: expect.objectContaining({
@@ -957,4 +957,95 @@ describe('removeFromGroup', () => {
 
 describe('deleteUser', () => {});
 
-describe('deleteGroup', () => {});
+describe('deleteGroup', () => {
+	let mockReq;
+	let mockRes;
+
+	beforeEach(() => {
+		mockReq = {
+			path: '/groups/test1',
+			body: {
+				name: 'test1'
+			}
+		};
+
+		mockRes = {
+			status: jest.fn(() => mockRes),
+			json: jest.fn()
+		};
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized' }));
+
+		Group.deleteMany.mockImplementation(() => new Promise(resolve => resolve({ deletedCount: 1 })));
+	});		
+
+	test('should return 401 if not authorized', async () => {
+		
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group name is not provided', async () => {
+		
+		mockReq.body.name = undefined;
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group name is an empty string', async () => {
+
+		mockReq.body.name = '';
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group does not exist', async () => {
+
+		Group.deleteMany.mockImplementation(() => new Promise(resolve => resolve({ deletedCount: 0 })));
+		
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+
+		Group.deleteMany.mockImplementation(() => { throw new Error('Database error') });
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return a message if group is deleted', async () => {
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			message: expect.any(String)
+		}));
+	});
+});

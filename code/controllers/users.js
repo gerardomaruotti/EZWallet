@@ -410,16 +410,17 @@ export const deleteGroup = async (req, res) => {
 		if (name === undefined)
 			return res.status(400).json({ error: 'Missing parameters' });
 
-		if (name === '') return res.status(400).json({ error: 'Empty name' });
+		if (name === '') 
+			return res.status(400).json({ error: 'Empty name' });
 
 		const deletedGroup = await Group.deleteMany({
 			name: req.body.name,
 		});
 
 		if (deletedGroup.deletedCount === 0)
-			return res.status(400).json({ message: 'Group not found' });
+			return res.status(400).json({ error: 'Group not found' });
 
-		res.json({ message: 'Group deleted' }).status(200);
+		res.status(200).json({ message: 'Group deleted' });
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
