@@ -141,7 +141,7 @@ describe('updateCategory', () => {
 			})
 			.then(() => {
 				//We insert two users in the datbase: an Admin and a user that made two transactions
-				User.create([
+				User.create(
 					{
 						username: 'tester',
 						email: 'tester@test.com',
@@ -154,8 +154,8 @@ describe('updateCategory', () => {
 						password: 'admin',
 						refreshToken: adminAccessTokenValid,
 						role: 'Admin',
-					},
-				]).then(() => {
+					}
+				).then(() => {
 					//We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
 					transactions
 						.create([
@@ -371,7 +371,7 @@ describe('updateCategory', () => {
 				color: 'red',
 			})
 			.then(() => {
-				User.create([
+				User.create(
 					{
 						username: 'tester',
 						email: 'tester@test.com',
@@ -384,8 +384,8 @@ describe('updateCategory', () => {
 						password: 'admin',
 						refreshToken: adminAccessTokenValid,
 						role: 'Admin',
-					},
-				]).then(() => {
+					}
+				).then(() => {
 					request(app)
 						.patch('/api/categories/food')
 						//The cookies we set are those of a regular user, which will cause the verifyAuth check to fail
@@ -622,9 +622,39 @@ describe('createTransaction', () => {
 	// });
 });
 
+//OK
 describe('getAllTransactions', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	test('should return 401 if not authorized', (done) => {
+		request(app)
+			.get('/api/transactions')
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			});
+	});
+
+	test('should return 200 if authorized', (done) => {
+		transactions
+			.create(
+				{ username: 'admin', amount: 100, type: 'income' },
+				{ username: 'tester', amount: 100, type: 'income' }
+			)
+			.then(() => {
+				request(app)
+					.get('/api/transactions')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.then((response) => {
+						expect(response.status).toBe(200);
+						done();
+					});
+			});
 	});
 });
 
@@ -653,13 +683,119 @@ describe('getTransactionsByGroupByCategory', () => {
 });
 
 describe('deleteTransaction', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	test.skip('should return 401 if not authorized', (done) => {
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			request(app)
+				.delete('api/users/admin/transactions')
+				.set(
+					'Cookie',
+					`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(401);
+					done();
+				});
+		});
 	});
 });
 
+//OK
 describe('deleteTransactions', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	test('should return 401 if not authorized', (done) => {
+		request(app)
+			.delete('/api/transactions')
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			});
+	});
+
+	test('should return 400 if ids are not provided', (done) => {
+		request(app)
+			.delete('/api/transactions')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toHaveProperty('error', 'Missing parameters');
+				done();
+			});
+	});
+
+	test('should return 400 if ids ais an ampty array', (done) => {
+		request(app)
+			.delete('/api/transactions')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ _ids: [] })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toHaveProperty('error', 'Missing parameters');
+				done();
+			});
+	});
+
+	test('should return 400 if one ef ids element is empty', (done) => {
+		request(app)
+			.delete('/api/transactions')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ _ids: [''] })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toHaveProperty('error', 'Empty parameter');
+				done();
+			});
+	});
+
+	test('should return 400 if one or more ids are not found', (done) => {
+		request(app)
+			.delete('/api/transactions')
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ _ids: ['123456789012'] })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toHaveProperty('error', 'Transaction not found');
+				done();
+			});
+	});
+
+	test('should return 200 if all ids are found', (done) => {
+		transactions
+			.create(
+				{ username: 'admin', amount: 100, type: 'income' },
+				{ username: 'tester', amount: 100, type: 'income' }
+			)
+			.then((transactions) => {
+				request(app)
+					.delete('/api/transactions')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.send({ _ids: [transactions[0]._id, transactions[1]._id] })
+					.then((response) => {
+						expect(response.status).toBe(200);
+						done();
+					});
+			});
 	});
 });
