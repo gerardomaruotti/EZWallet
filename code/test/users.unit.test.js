@@ -243,9 +243,9 @@ describe('createGroup', () => {
 		Group.findOne.mockImplementation(() => null);
 
 		checkGroupEmails.mockImplementation(() => ({ 
-			validEmails,
-			alreadyInGroup,
-		 	membersNotFound
+			validEmails: validEmails.map(email => ({ email })),
+			alreadyInGroup: alreadyInGroup.map(email => ({ email })),
+		 	membersNotFound: membersNotFound.map(email => ({ email }))
 		}));
 	});
 
@@ -585,8 +585,12 @@ describe('addToGroup', () => {
 			name: 'test1', 
 			members: [...groupEmail, ...validEmails].map(email => ({ email }))
 		})));
-		
-		checkGroupEmails.mockImplementation(() => ({ validEmails, alreadyInGroup, membersNotFound }));
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: validEmails.map(email => ({ email })),
+			alreadyInGroup: alreadyInGroup.map(email => ({ email })), 
+			membersNotFound: membersNotFound.map((email) => ({ email }))
+		}));
 	});
 
 	test('should return 401 if not authorized', async () => {
@@ -663,7 +667,11 @@ describe('addToGroup', () => {
 
 	test('should return 400 if there aren\'t valid emails', async () => {
 
-		checkGroupEmails.mockImplementation(() => ({ validEmails: [], alreadyInGroup: validEmails, membersNotFound }));
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: [], 
+			alreadyInGroup: validEmails.map((email) => ({ email })),
+			membersNotFound: membersNotFound.map((email) => ({ email }))
+		}));
 
 		await addToGroup(mockReq, mockRes);
 
@@ -696,8 +704,8 @@ describe('addToGroup', () => {
 					name: 'test1',
 					members: [...groupEmail, ...validEmails].map(email => ({ email }))
 				}),
-				alreadyInGroup: [],
-				membersNotFound: []
+				alreadyInGroup: alreadyInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
 			})
 		}))
 	});
@@ -715,8 +723,8 @@ describe('addToGroup', () => {
 					name: 'test1',
 					members: [...groupEmail, ...validEmails].map(email => ({ email }))
 				}),
-				alreadyInGroup: [],
-				membersNotFound: []
+				alreadyInGroup: alreadyInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
 			})
 		}))
 	});
@@ -729,7 +737,7 @@ describe('removeFromGroup', () => {
 	let mockRes;
 
 	let validEmails;
-	let alreadyInGroup;
+	let notInGroup;
 	let membersNotFound;
 	let groupEmail;
 
@@ -737,7 +745,7 @@ describe('removeFromGroup', () => {
 		mockReq = {
 			cookies: {},
 			body: {
-				emails: ['test1@example.com']
+				emails: ['test1@example.com', 'test3@example.com']
 			},
 			params: {
 				name: 'test1'
@@ -753,23 +761,150 @@ describe('removeFromGroup', () => {
 		};
 
 		validEmails = ['test1@example.com'];
-		alreadyInGroup = [];
-		membersNotFound = [];
+		notInGroup = [];
+		membersNotFound = ['test3@example.com'];
 		groupEmail = ["test1@example.com", "test2@example.com"]
 
 		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
 		isEmail.mockImplementation(() => true);
 
 		Group.findOne.mockImplementation(() => new Promise(resolve => resolve({
-			name: 'test1', 
-			members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
-		})));
-		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
-			name: 'test1', 
-			members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
-		})));
+				name: 'test1', 
+				members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+			})))
+			.mockImplementationOnce(() => new Promise(resolve => resolve({
+				name: 'test1',
+				members: groupEmail.map(email => ({ email }))
+			})));
 
-		checkGroupEmails.mockImplementation(() => ({ validEmails, alreadyInGroup, membersNotFound }));
+		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
+				name: 'test1', 
+				members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+			})));
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: validEmails.map((email) => ({ email })), 
+			notInGroup: notInGroup.map((email) => ({ email })),
+			membersNotFound: membersNotFound.map((email) => ({ email })) 
+		}));
+	});
+
+	test('should return 401 if not authorized', async () => {
+		
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group does not exist', async () => {
+
+		Group.findOne.mockReset();
+		Group.findOne.mockImplementation(() => null);
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if emails are not valid', async () => {
+
+		isEmail.mockImplementation(() => false);
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if there aren\'t valid emails', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: [ ...validEmails, ...membersNotFound].map((email) => { email }), 
+			notInGroup: [], 
+			membersNotFound: [] }));
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if the group will be empty', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: [], 
+			notInGroup: validEmails.map((email) => ({ email })), 
+			membersNotFound: membersNotFound.map((email) => ({ email }))
+		}));
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+
+		Group.findOne.mockReset();
+		Group.findOne.mockImplementation(() => { throw new Error('Database error') });
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return the group with the removed members', async () => {
+
+		await removeFromGroup(mockReq, mockRes);
+
+		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				group: expect.objectContaining({
+					name: 'test1',
+					members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+				}),
+				notInGroup: notInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
+			})
+		}))
+	});
+
+	test('should return the group with the removed members if admin', async () => {
+
+		mockReq.path = '/groups/test1/pull';
+
+		await removeFromGroup(mockReq, mockRes);
+
+		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				group: expect.objectContaining({
+					name: 'test1',
+					members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+				}),
+				notInGroup: notInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
+			})
+		}))
 	});
 });
 

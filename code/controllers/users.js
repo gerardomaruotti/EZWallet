@@ -289,11 +289,11 @@ export const removeFromGroup = async (req, res) => {
 		let { name } = req.params;
 		let { emails } = req.body;
 		if (emails === undefined)
-			return res.status(401).json({ error: 'Missing parameters' });
+			return res.status(400).json({ error: 'Missing parameters' });
 
 		const group = await Group.findOne({ name: name });
 		if (!group)
-			return res.status(401).json({ error: 'Group not found' });
+			return res.status(400).json({ error: 'Group not found' });
 
 		if (req.path.split('/').slice(-1)[0] === 'remove') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
@@ -309,12 +309,12 @@ export const removeFromGroup = async (req, res) => {
 			return res.status(400).json({ error: 'Mail not correct formatted' });
 
 		const { validEmails, membersNotFound, notInGroup } = await checkGroupEmails(emails,	name);
-
+		
 		if (validEmails.length == 0)
-			return res.status(401).json({ error: 'All the emails are invalid' });
+			return res.status(400).json({ error: 'All the emails are invalid' });
 
 		if (group.members.length <= validEmails.length)
-			return res.status(401).json({ error: 'Group will be empty after removing members' });
+			return res.status(400).json({ error: 'Group will be empty after removing members' });
 
 		await Group.updateOne({ name: name },
 				{ $pull: { members: { email: { $in: validEmails.map((e) => e.email)} } } })
