@@ -1,11 +1,13 @@
+import jwt from 'jsonwebtoken';
 import { Group, User } from '../models/User.js';
 import { transactions } from '../models/model.js';
 import {
 	verifyAuth,
-	asyncFilter,
 	verifyMultipleAuth,
 	isEmail,
+	checkGroupEmails,
 } from './utils.js';
+
 
 /** OK
  * Return all the users
@@ -86,14 +88,27 @@ export const createGroup = async (req, res) => {
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Simple' });
 		if (!authorized) return res.status(401).json({ error: cause });
 
+		if(name === '')
+			return res.status(400).json({ error: 'Group name cannot be empty' });
+
 		if (await Group.findOne({ name: name }))
 			return res
 				.status(400)
 				.json({ error: 'A group with the same name already exists' });
 
-		const { validEmails, alreadyInGroup, membersNotFound } =
-			await checkGroupEmails(memberEmails);
+		const userEmail = jwt.verify(req.cookie.refreshToken, process.env.ACCESS_KEY).email;
 
+		if (!memberEmails.includes(userEmail))
+			memberEmails = [...memberEmails, userEmail];
+
+		if (memberEmails.some((email) => !isEmail(email)))
+			return res.status(400).json({ error: 'Mail not correct formatted' });
+
+		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
+
+		if (alreadyInGroup.includes(userEmail))
+			return res.status(400).json({ error: 'User already in a group' });
+			
 		if (validEmails.length == 0)
 			return res.status(400).json({ error: 'All the emails are invalid' });
 
@@ -104,10 +119,11 @@ export const createGroup = async (req, res) => {
 		);
 
 		const new_group = new Group({ name, members });
+
 		new_group
 			.save()
 			.then((group) =>
-				res.json({
+				res.status(200).json({
 					data: {
 						group: {
 							name: group.name,
@@ -126,6 +142,7 @@ export const createGroup = async (req, res) => {
 		res.status(500).json({ error: error.message });
 	}
 };
+
 
 /** OKOK
  * Return all the groups
@@ -423,40 +440,5 @@ export const deleteGroup = async (req, res) => {
 	}
 };
 
-// This function takes in an array of member emails and a group name. It first filters out any emails that are not in the database, then checks if they are in the group. If no group name is specified, it only checks if they are in any group. It returns an object with the valid emails, emails that are already in the group, emails that are not in the group, and emails that are not in the database.
-const checkGroupEmails = async (memberEmails, groupName) => {
-	let alreadyInGroup = [];
-	let membersNotFound = [];
-	let notInGroup = [];
 
-	memberEmails = await asyncFilter(memberEmails, async (e) => {
-		const result = await User.findOne({ email: e });
-		if (!result) membersNotFound.push(e);
-		return result;
-	});
-
-	if (groupName === undefined) {
-		memberEmails = await asyncFilter(memberEmails, async (e) => {
-			const result = await Group.findOne({ 'members.email': e });
-			if (result) alreadyInGroup.push(e);
-			return !result;
-		});
-	} else {
-		memberEmails = await asyncFilter(memberEmails, async (e) => {
-			const result = await Group.findOne({
-				name: groupName,
-				'members.email': e,
-			});
-			if (!result) notInGroup.push(e);
-			return result;
-		});
-	}
-
-	return {
-		validEmails: memberEmails.map((email) => ({ email })),
-		alreadyInGroup: alreadyInGroup.map((email) => ({ email })),
-		membersNotFound: membersNotFound.map((email) => ({ email })),
-		notInGroup: notInGroup.map((email) => ({ email })),
-	};
-};
 

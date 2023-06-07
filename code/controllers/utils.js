@@ -35,8 +35,9 @@ export const handleDateFilterParams = (req) => {
 		if (filter.date) {
 			filter.date.$lte = new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1);
 		} else {
-			filter.date = { $lt: new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1) };
-
+			filter.date = {
+				$lt: new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1),
+			};
 		}
 	}
 
@@ -139,15 +140,17 @@ export const verifyAuth = (req, res, info) => {
 				return { authorized: false, cause: 'Not admin' };
 			}
 		} else if (info.authType === 'Group') {
-			console.log('groupEmail', info.groupEmails);
-			if(!info.groupEmails || !info.groupEmails.includes(decodedAccessToken.email)) {
+			if (
+				!info.groupEmails ||
+				!info.groupEmails.includes(decodedAccessToken.email)
+			) {
 				return { authorized: false, cause: 'User not in group' };
 			}
 		}
 
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
-		if (err.name === 'TokenExpiredError') {
+		if (err.message === 'TokenExpiredError') {
 			try {
 				const refreshToken = jwt.verify(
 					cookie.refreshToken,
@@ -170,14 +173,13 @@ export const verifyAuth = (req, res, info) => {
 					sameSite: 'none',
 					secure: true,
 				});
+
 				res.locals.refreshedTokenMessage =
 					'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls';
 				return { authorized: true, cause: 'Authorized' };
 			} catch (err) {
-				if (err.name === 'TokenExpiredError') {
+				if (err.message === 'TokenExpiredError') {
 					return { authorized: false, cause: 'Perform login again' };
-				} else {
-					return { authorized: false, cause: err.name };
 				}
 			}
 		} else {
@@ -239,7 +241,10 @@ export const verifyMultipleAuth = (req, res, info) => {
 
 	return {
 		authorized: info.authType.some((type) => {
-			const { authorized, cause } = verifyAuth(req, res, { ...info, authType: type });
+			const { authorized, cause } = verifyAuth(req, res, {
+				...info,
+				authType: type,
+			});
 
 			if (authorized) return true;
 			if (message === null) {
@@ -259,4 +264,41 @@ export const isEmail = (email) => {
 		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
 	return email.match(validRegex) ? true : false;
+};
+
+// This function takes in an array of member emails and a group name. It first filters out any emails that are not in the database, then checks if they are in the group. If no group name is specified, it only checks if they are in any group. It returns an object with the valid emails, emails that are already in the group, emails that are not in the group, and emails that are not in the database.
+export const checkGroupEmails = async (memberEmails, groupName) => {
+	let alreadyInGroup = [];
+	let membersNotFound = [];
+	let notInGroup = [];
+
+	memberEmails = await asyncFilter(memberEmails, async (e) => {
+		const result = await User.findOne({ email: e });
+		if (!result) membersNotFound.push(e);
+		return result;
+	});
+
+	if (groupName === undefined) {
+		memberEmails = await asyncFilter(memberEmails, async (e) => {
+			const result = await Group.findOne({ 'members.email': e });
+			if (result) alreadyInGroup.push(e);
+			return !result;
+		});
+	} else {
+		memberEmails = await asyncFilter(memberEmails, async (e) => {
+			const result = await Group.findOne({
+				name: groupName,
+				'members.email': e,
+			});
+			if (!result) notInGroup.push(e);
+			return result;
+		});
+	}
+
+	return {
+		validEmails: memberEmails.map((email) => ({ email })),
+		alreadyInGroup: alreadyInGroup.map((email) => ({ email })),
+		membersNotFound: membersNotFound.map((email) => ({ email })),
+		notInGroup: notInGroup.map((email) => ({ email })),
+	};
 };

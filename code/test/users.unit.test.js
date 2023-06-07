@@ -1,5 +1,4 @@
-import request from 'supertest';
-import { app } from '../app';
+import jwt from 'jsonwebtoken';
 import { Group, User } from '../models/User.js';
 import {
 	getUsers,
@@ -12,7 +11,7 @@ import {
 	addToGroup,
 	removeFromGroup,
 } from '../controllers/users.js';
-import { isEmail, verifyAuth, verifyMultipleAuth } from '../controllers/utils';
+import { verifyAuth, verifyMultipleAuth, checkGroupEmails } from '../controllers/utils';
 
 /**
  * In order to correctly mock the calls to external modules it is necessary to mock them using the following line.
@@ -22,6 +21,7 @@ import { isEmail, verifyAuth, verifyMultipleAuth } from '../controllers/utils';
  */
 jest.mock('../models/User.js');
 jest.mock('../controllers/utils');
+jest.mock('jsonwebtoken');
 
 
 /**
@@ -194,8 +194,14 @@ describe('getUser', () => {
 describe('createGroup', () => {
 	let mockReq;
 	let mockRes;
+
+	let validEmails;
+	let alreadyInGroup;
+	let membersNotFound;
+
+	let data;
+
 	beforeEach(() => {
-	
 		mockReq = {
 			cookies: {},
 			body: {
@@ -212,10 +218,35 @@ describe('createGroup', () => {
 			}
 		};
 
-		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		validEmails = ["test1@example.com", "test2@example.com"];
+		alreadyInGroup = [];
+		membersNotFound = [];
 
+		data = {
+			group: {
+				name: "testGroup",
+				members: validEmails.map(email => ({ email }))
+			},
+			alreadyInGroup,
+			membersNotFound
+		};
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		const verify = jest.spyOn(jwt, 'verify');
+		verify.mockImplementation(() => () => ({ email: "test1@example.com" }));
+		jwt.verify.mockImplementation(() => ({ email: "test1@example.com" }));
+
+		Group.prototype.save.mockImplementation(() => (new Promise((res, rej) => res({ 
+			name: "testGroup",
+			members: validEmails.map(email => ({ email }))
+		}))));
 		Group.findOne.mockImplementation(() => null);
-		User.findOne.mockImplementation((userEmail) => userEmail);
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails,
+			alreadyInGroup,
+		 	membersNotFound
+		}));
 	});
 
 	test('should return 401 if not authorized', async () => {
@@ -242,10 +273,78 @@ describe('createGroup', () => {
 		}));
 	});
 
+	test('should return 400 if group name is a empty string', async () => {
+
+		mockReq.body.name = '';
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
 	test('should return 400 if member emails are not provided', async () => {
 
 		mockReq.body.memberEmails = undefined;
 
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group already exists', async () => {
+
+		Group.findOne.mockImplementation(() => ({ name: 'testGroup' }));
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if there aren\'t valid member emails', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({
+			validEmails: [],
+			alreadyInGroup: [],
+			membersNotFound: [],
+		}));
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if user is already in a group', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({
+			validEmails: ["test2@example.com"],
+			alreadyInGroup: ["test1@example.com"],
+			membersNotFound: [],
+		}));
+
+		await createGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if there are almost one email invalid or empty', async () => {
+
+		mockReq.body.memberEmails.push('');
+		
 		await createGroup(mockReq, mockRes);
 
 		expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -266,31 +365,12 @@ describe('createGroup', () => {
 		}));
 	});
 
-	test('should return 400 if group already exists', async () => {
-
-		Group.findOne.mockImplementation(() => ({ name: 'testGroup' }));
-		console.log('last update');
-
-		await createGroup(mockReq, mockRes);
-
-		expect(mockRes.status).toHaveBeenCalledWith(400);
-		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-			error: expect.any(String)
-		}));
-	});
-
 	test('should return created group', async () => {
 
-		const createdGroup = {
-			name: 'testGroup'
-		};
-
 		await createGroup(mockReq, mockRes);
 
-		//expect(mockRes.status).toHaveBeenCalledWith(200);
-		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-			data: createdGroup
-		}));
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ data }));
 	});
 });
 
@@ -425,6 +505,18 @@ describe('getGroup', () => {
 		}));
 	});
 
+	test('should return 401 if not authorized', async () => {
+
+		verifyMultipleAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await getGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
 	test('should return 500 if there is database error', async () => {
 		
 		Group.findOne.mockImplementation(() => { throw new Error('Database error') });
@@ -454,15 +546,21 @@ describe('addToGroup', () => {
 	let mockReq;
 	let mockRes;
 
+	let validEmails;
+	let alreadyInGroup;
+	let membersNotFound;
+	let groupEmail;
+
 	beforeEach(() => {
 		mockReq = {
 			cookies: {},
 			body: {
-				memberEmails: ['test3@example.com']
+				memberEmails: ['test3@example.com', 'test4@example.com']
 			},
 			params: {
 				name: 'test1'
-			}
+			},
+			path: 'groups/Family/add'
 		};
 		mockRes = {
 			status: jest.fn().mockReturnThis(),
@@ -472,10 +570,20 @@ describe('addToGroup', () => {
 			}
 		};
 
+		validEmails = ['test3@example.com', 'test4@example.com'];
+		alreadyInGroup = [];
+		membersNotFound = [];
+		groupEmail = ["test1@example.com", "test2@example.com"]
+
 		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
 
-		Group.findOne.mockImplementation(() => null);
-		User.findOne.mockImplementation((userEmail) => userEmail);
+		Group.findOne.mockImplementation(() => ({ name: 'test1', members: [...groupEmail, ...validEmails].map(email => ({ email }))}));
+		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
+
+		})));
+
+		checkGroupEmails.mockImplementation(() => ({ validEmails, alreadyInGroup, membersNotFound }));
+
 	});
 
 	test('should return 401 if not authorized', async () => {
@@ -514,6 +622,18 @@ describe('addToGroup', () => {
 		}));
 	});
 
+	test('should return 400 if group does not exist', async () => {
+
+		Group.findOne.mockImplementation(() => null);
+		
+		await addToGroup(mockReq, mockRes);
+		
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
 	test('should return 500 if there is database error', async () => {
 		
 		Group.findOne.mockImplementation(() => { throw new Error('Database error') });
@@ -526,7 +646,17 @@ describe('addToGroup', () => {
 		}));
 	});
 
+	test('should return the group with the new members', async () => {
 
+		await addToGroup(mockReq, mockRes);
+
+		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				name: 'test1',
+				members: [...groupEmail, ...validEmails].map(email => ({ email }))
+			})
+		}))});
 
 });
 

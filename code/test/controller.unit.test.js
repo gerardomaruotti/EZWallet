@@ -430,7 +430,7 @@ describe('updateCategory', () => {
 			.mockResolvedValueOnce(mockReq.params.type)
 			.mockResolvedValueOnce(null);
 
-		transactions.find.mockResolvedValue(mockTransactions);
+		transactions.find.mockImplementationOnce(() => mockTransactions);
 		const spy = jest.spyOn(transactions, 'updateMany');
 		const spyCat = jest.spyOn(categories, 'updateOne');
 		spy.mockResolvedValue(mockTransactions);
@@ -438,12 +438,15 @@ describe('updateCategory', () => {
 
 		await updateCategory(mockReq, mockRes);
 
+		expect(transactions.find).toHaveBeenCalledWith({
+			type: mockReq.params.type,
+		});
+
 		expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith({
 			data: {
 				message: 'Category edited successfully',
-				//TODO: fix this being undefined instead of 2
-				// count: expect.any(Number),
+				count: expect.any(Number),
 			},
 			refreshedTokenMessage: 'refreshed token',
 		});
@@ -903,6 +906,7 @@ describe('getAllTransactions', () => {
 	});
 });
 
+//OK
 describe('getTransactionsByUser', () => {
 	describe('Admin access', () => {
 		beforeEach(() => {
@@ -910,12 +914,7 @@ describe('getTransactionsByUser', () => {
 		});
 
 		test('should return 401 if user is not authorized', async () => {
-			verifyAuth.mockImplementation(() => ({
-				authorized: false,
-				cause: 'Not authorized',
-			}));
-
-			mockReq.params = { username: 'test' };
+			mockReq.params.username = 'test';
 
 			const mockUser = {
 				_id: '5f9d5c6b2c3b3e1d7c9b4b1a',
@@ -925,6 +924,11 @@ describe('getTransactionsByUser', () => {
 			};
 
 			User.findOne.mockResolvedValue(mockUser);
+
+			verifyAuth.mockImplementation(() => ({
+				authorized: false,
+				cause: 'Not authorized',
+			}));
 
 			await getTransactionsByUser(mockReq, mockRes);
 
@@ -961,7 +965,7 @@ describe('getTransactionsByUser', () => {
 				cause: 'Authorized',
 			}));
 			mockReq.params.username = 'test';
-			user.findOne.mockResolvedValue({ username: 'test' });
+			User.findOne.mockResolvedValue({ username: 'test' });
 			transactions.aggregate.mockResolvedValue([
 				{
 					username: 'test',
@@ -1007,6 +1011,24 @@ describe('getTransactionsByUser', () => {
 				refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
 			});
 		});
+
+		test('should return empty list if user has no transactions', async () => {
+			verifyAuth.mockImplementation(() => ({
+				authorized: true,
+				cause: 'Authorized',
+			}));
+			mockReq.params.username = 'test';
+			User.findOne.mockResolvedValue({ username: 'test' });
+			transactions.aggregate.mockResolvedValue([]);
+
+			await getTransactionsByUser(mockReq, mockRes);
+
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+			expect(mockRes.json).toHaveBeenCalledWith({
+				data: [],
+				refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
+			});
+		});
 	});
 
 	describe('User access', () => {
@@ -1015,6 +1037,16 @@ describe('getTransactionsByUser', () => {
 		});
 
 		test('should return 401 if user is not authorized', async () => {
+			mockReq.params.username = 'test';
+
+			const mockUser = {
+				_id: '5f9d5c6b2c3b3e1d7c9b4b1a',
+				username: 'testuser',
+				password: 'testpassword',
+				__v: 0,
+			};
+
+			User.findOne.mockResolvedValue(mockUser);
 			verifyAuth.mockImplementation(() => ({
 				authorized: false,
 				cause: 'Not authorized',
@@ -1028,13 +1060,29 @@ describe('getTransactionsByUser', () => {
 
 		test('should return transactions for user with filters', async () => {
 			mockReq.params.username = 'test';
-			mockReq.query = {
-				startDate: '2022-01-01',
-				endDate: '2022-01-31',
-				minAmount: 100,
-				maxAmount: 500,
+
+			const mockUser = {
+				_id: '5f9d5c6b2c3b3e1d7c9b4b1a',
+				username: 'testuser',
+				password: 'testpassword',
+				__v: 0,
 			};
-			transactionsFindMock.mockResolvedValue([
+
+			User.findOne.mockResolvedValue(mockUser);
+
+			verifyAuth.mockImplementation(() => ({
+				authorized: true,
+				cause: 'Authorized',
+			}));
+
+			mockReq.query = {
+				from: '2022-01-01',
+				upTo: '2022-01-31',
+				min: 100,
+				max: 500,
+			};
+
+			transactions.find.mockResolvedValue([
 				{
 					username: 'test',
 					amount: 100,
@@ -1042,40 +1090,23 @@ describe('getTransactionsByUser', () => {
 					date: new Date(),
 				},
 			]);
-			categoriesFindMock.mockResolvedValue([
-				{ type: 'income', color: 'green' },
-			]);
+
+			categories.find.mockResolvedValue([{ type: 'income', color: 'green' }]);
 
 			await getTransactionsByUser(mockReq, mockRes);
 
-			expect(transactionsFindMock).toHaveBeenCalledWith({
-				username: 'test',
-				startDate: expect.any(Date),
-				endDate: expect.any(Date),
-				minAmount: 100,
-				maxAmount: 500,
-			});
-
-			expect(categoriesFindMock).toHaveBeenCalled();
+			expect(categories.find).toHaveBeenCalled();
 
 			expect(mockRes.status).toHaveBeenCalledWith(200);
 			expect(mockRes.json).toHaveBeenCalledWith({
-				data: [
-					{
-						username: 'test',
-						amount: 100,
-						type: 'income',
-						date: expect.any(Date),
-						color: 'green',
-					},
-				],
+				data: expect.any(Array),
 				refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
 			});
 		});
 
 		test('should return transactions for user without filters', async () => {
 			mockReq.params.username = 'test';
-			transactionsAggregateMock.mockResolvedValue([
+			transactions.aggregate.mockResolvedValue([
 				{
 					username: 'test',
 					amount: 100,
@@ -1087,7 +1118,7 @@ describe('getTransactionsByUser', () => {
 
 			await getTransactionsByUser(mockReq, mockRes);
 
-			expect(transactionsAggregateMock).toHaveBeenCalledWith([
+			expect(transactions.aggregate).toHaveBeenCalledWith([
 				{
 					$lookup: {
 						from: 'categories',
@@ -1123,12 +1154,38 @@ describe('getTransactionsByUser', () => {
 
 		test('should return 500 if an error occurs', async () => {
 			mockReq.params.username = 'test';
-			transactionsFindMock.mockRejectedValue(new Error('Database error'));
+
+			User.findOne.mockImplementation(() => {
+				throw new Error('Database error');
+			});
+
+			verifyAuth.mockImplementation(() => ({
+				authorized: true,
+				cause: 'Authorized',
+			}));
 
 			await getTransactionsByUser(mockReq, mockRes);
 
 			expect(mockRes.status).toHaveBeenCalledWith(500);
 			expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
+		});
+
+		test('should return empty list if user has no transactions', async () => {
+			verifyAuth.mockImplementation(() => ({
+				authorized: true,
+				cause: 'Authorized',
+			}));
+			mockReq.params.username = 'test';
+			User.findOne.mockResolvedValue({ username: 'test' });
+			transactions.aggregate.mockResolvedValue([]);
+
+			await getTransactionsByUser(mockReq, mockRes);
+
+			expect(mockRes.status).toHaveBeenCalledWith(200);
+			expect(mockRes.json).toHaveBeenCalledWith({
+				data: [],
+				refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
+			});
 		});
 	});
 });

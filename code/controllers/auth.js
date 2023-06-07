@@ -22,7 +22,7 @@ export const register = async (req, res) => {
 		if(!isEmail(email))
 			return res.status(400).json({ error: 'Email not correct formatted' });
 		
-		if ((await User.findOne({ email: email })) || (await User.findOne({ email: email })))
+		if (await User.findOne({ email: email }))
 			return res.status(400).json({ message: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
 		await User.create({
@@ -86,10 +86,12 @@ export const login = async (req, res) => {
 	if (email === '' || password === '')
 		return res.status(400).json({ error: 'Empty string in parameters' });
 
-	const existingUser = await User.findOne({ email: email });
-	if (!existingUser) return res.status(400).json('User need to register');
+	
 
 	try {
+		const existingUser = await User.findOne({ email: email });
+		if (!existingUser) return res.status(400).json('User need to register');
+
 		const match = await bcrypt.compare(password, existingUser.password);
 		if (!match) return res.status(400).json('Wrong credentials');
 		//CREATE ACCESSTOKEN
@@ -153,10 +155,11 @@ export const logout = async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;
 	if (!refreshToken) return res.status(400).json('User not logged in');
 
-	const user = await User.findOne({ refreshToken: refreshToken });
-	if (!user) return res.status(400).json('User not found');
-
 	try {
+
+		const user = await User.findOne({ refreshToken: refreshToken });
+		if (!user) return res.status(400).json('User not found');
+
 		user.refreshToken = null;
 		res.cookie('accessToken', '', {
 			httpOnly: true,

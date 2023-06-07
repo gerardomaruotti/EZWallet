@@ -23,18 +23,265 @@ afterAll(async () => {
 	await mongoose.connection.close();
 });
 
-describe('register', () => {});
+describe("register", () => {
 
+	test("Nominal case: a confirmation message must be returned", (done) => {
+	  request(app)
+		.post("/api/register")
+		.send({ username: "enrico", email: "enrico@gmail.com", password: "enrico" })
+		.then((response) => {
+		  expect(response.status).toBe(200);
+		  expect(response.body).toStrictEqual({
+			data: { message: 'User added succesfully' },
+		  });
+		  done();
+		});
+	}); 
+
+	test("Username undefined: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ email: "enrico@gmail.com", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Missing parameters' });
+			done();
+		  });
+	  });
+
+	  test("Email undefined: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ username: "enrico", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Missing parameters' });
+			done();
+		  });
+	  });
+	  
+
+	  test("Password undefined: a 400 error message must be returned  ", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ username: "enrico", email: "enrico@gmail.com" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Missing parameters' });
+			done();
+		  });
+	  });
+
+	  test("Empty username: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ username: "", email: "enrico@gmail.com", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Empty string in parameters' });
+			done();
+		  });
+	  }); 
+
+	  test("Empty email: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ username: "enrico", email: "", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Empty string in parameters' });
+			done();
+		  });
+	  }); 
+
+	  test("Empty password: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ username: "enrico", email: "enrico@gmail.com", password: "" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Empty string in parameters' });
+			done();
+		  });
+	  }); 
+
+	  test("Valid or invalid email: a 400 error message must be returned in case of invalid email", (done) => {
+		request(app)
+		  .post("/api/register")
+		  .send({ username: "enrico", email: "enrico.gmail.com", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({error: 'Email not correct formatted'});
+			done();
+		  });
+	  });
+
+	  test("User already register : a 400 error message must be returned in case of invalid email", (done) => {
+		User
+		.create({
+			username: 'enrico',
+			email: 'enrico@gmail.com',
+			password: 'enrico'
+		})
+		.then(() =>{
+			request(app)
+			.post("/api/register")
+			.send({ username: "enrico", email: "enrico@gmail.com", password: "enrico" })
+			.then((response) => {
+			  expect(response.status).toBe(400);
+			  expect(response.body).toStrictEqual({message: 'User already registered'});
+			  done();
+			})
+		});
+	  });
+
+	afterEach(async () => {
+		await User.deleteMany();
+	  });
+});
+  
 describe('registerAdmin', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
-	});
+
+	afterEach(async () => {
+		await User.deleteMany();
+	  });
+
+	test("Nominal case: a confirmation message must be returned", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ username: "admin", email: "admin@gmail.com", password: "admin" })
+		  .then((response) => {
+			expect(response.status).toBe(200);
+			expect(response.body).toStrictEqual({
+			  data: { message: 'Admin added succesfully' },
+			});
+			done();
+		  });
+	  }); 
+
+	  test("Username undefined: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ email: "admin@gmail.com", password: "admin" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Missing parameters' });
+			done();
+		  });
+	  });
+
+	  test("Email undefined: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ username: "admin", password: "admin" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Missing parameters' });
+			done();
+		  });
+	  });
+	  
+
+	  test("Password undefined: a 400 error message must be returned  ", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ username: "admin", email: "admin@gmail.com" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Missing parameters' });
+			done();
+		  });
+	  });
+
+	  test("Empty username: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ username: "", email: "admin@gmail.com", password: "admin" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Empty string in parameters' });
+			done();
+		  });
+	  }); 
+
+	  test("Empty email: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ username: "admin", email: "", password: "admin" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Empty string in parameters' });
+			done();
+		  });
+	  }); 
+
+	  test("Empty password: a 400 error message must be returned ", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ username: "admin", email: "admin@gmail.com", password: "" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({ error: 'Empty string in parameters' });
+			done();
+		  });
+	  }); 
+
+	  test("Valid or invalid email: a 400 error message must be returned in case of invalid email", (done) => {
+		request(app)
+		  .post("/api/admin")
+		  .send({ username: "admin", email: "admin.gmail.com", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(400);
+			expect(response.body).toStrictEqual({error: 'Email not correct formatted'});
+			done();
+		  });
+	  });
+
+	  test("User already register : a 400 error message must be returned in case of invalid email", (done) => {
+		User
+		.create({
+			username: 'admin',
+			email: 'admin@gmail.com',
+			password: 'admin'
+		})
+		.then(() =>{
+			request(app)
+			.post("/api/admin")
+			.send({ username: "admin", email: "admin@gmail.com", password: "enrico" })
+			.then((response) => {
+			  expect(response.status).toBe(400);
+			  expect(response.body).toStrictEqual({message: 'User already registered'});
+			  done();
+			})
+		});
+	  });
+
 });
 
 describe('login', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
-	});
+
+	const accessToken = "accesstokentest";
+	const refreshToken= "refreshtokentest";
+
+	test("Nominal case: a confirmation message must be returned", (done) => {
+		request(app)
+		  .post("/api/login")
+		  .send({ email: "enrico@gmail.com", password: "enrico" })
+		  .then((response) => {
+			expect(response.status).toBe(200);
+			expect(response.body).toStrictEqual({
+				data: { accessToken: "accesstokentest", refreshToken: "refreshtokentest" },
+			});
+			done();
+		  });
+	  }); 	
+
+
+
+
+
+
+
 });
 
 describe('logout', () => {
