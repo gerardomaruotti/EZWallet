@@ -98,7 +98,7 @@ export const createGroup = async (req, res) => {
 
 		const userEmail = jwt.verify(req.cookie.refreshToken, process.env.ACCESS_KEY).email;
 
-		if (!memberEmails.includes(userEmail))
+		if (memberEmails.every((email) => email !== userEmail))
 			memberEmails = [...memberEmails, userEmail];
 
 		if (memberEmails.some((email) => !isEmail(email)))
@@ -106,7 +106,7 @@ export const createGroup = async (req, res) => {
 
 		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
 
-		if (alreadyInGroup.includes(userEmail))
+		if (alreadyInGroup.some((email) => email.email === userEmail))
 			return res.status(400).json({ error: 'User already in a group' });
 			
 		if (validEmails.length == 0)
@@ -133,11 +133,7 @@ export const createGroup = async (req, res) => {
 						membersNotFound,
 					},
 					refreshedTokenMessage: res.locals.refreshedTokenMessage,
-				})
-			)
-			.catch((err) => {
-				throw err;
-			});
+			}))
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -309,7 +305,7 @@ export const removeFromGroup = async (req, res) => {
 			return res.status(400).json({ error: 'Mail not correct formatted' });
 
 		const { validEmails, membersNotFound, notInGroup } = await checkGroupEmails(emails,	name);
-		
+
 		if (validEmails.length == 0)
 			return res.status(400).json({ error: 'All the emails are invalid' });
 

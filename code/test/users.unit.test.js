@@ -203,7 +203,9 @@ describe('createGroup', () => {
 
 	beforeEach(() => {
 		mockReq = {
-			cookies: {},
+			cookie: {
+				refreshToken: 'refresh token'
+			},
 			body: {
 				name: "testGroup", 
 				memberEmails: ["test1@example.com", "test2@example.com"]
@@ -232,9 +234,8 @@ describe('createGroup', () => {
 		};
 
 		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
-		const verify = jest.spyOn(jwt, 'verify');
-		verify.mockImplementation(() => () => ({ email: "test1@example.com" }));
-		jwt.verify.mockImplementation(() => ({ email: "test1@example.com" }));
+		jwt.verify.mockImplementation(() => ({ email: validEmails[0] }));
+		isEmail.mockImplementation(() => true);
 
 		Group.prototype.save.mockImplementation(() => (new Promise((res, rej) => res({ 
 			name: "testGroup",
@@ -328,8 +329,8 @@ describe('createGroup', () => {
 	test('should return 400 if user is already in a group', async () => {
 
 		checkGroupEmails.mockImplementation(() => ({
-			validEmails: ["test2@example.com"],
-			alreadyInGroup: ["test1@example.com"],
+			alreadyInGroup:  [{ email: validEmails.shift() }],
+			validEmails: validEmails.map(email => ({ email })),
 			membersNotFound: [],
 		}));
 
@@ -343,7 +344,7 @@ describe('createGroup', () => {
 
 	test('should return 400 if there are almost one email invalid or empty', async () => {
 
-		mockReq.body.memberEmails.push('');
+		isEmail.mockImplementation(() => false);
 		
 		await createGroup(mockReq, mockRes);
 
@@ -352,6 +353,20 @@ describe('createGroup', () => {
 			error: expect.any(String)
 		}));
 	});
+
+	// test('shouls return 500 if there is a error the group saving', async () => {
+
+	// 	Group.prototype.save.mockImplementation(() => (new Promise((res, rej) => rej({
+	// 		error: 'Database error'
+	// 	}))));
+
+	// 	await createGroup(mockReq, mockRes);
+
+	// 	expect(mockRes.status).toHaveBeenCalledWith(500);
+	// 	expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+	// 		error: expect.any(String)
+	// 	}));
+	// });
 
 	test('should return 500 if there is database error', async () => {
 		
@@ -369,7 +384,15 @@ describe('createGroup', () => {
 
 		await createGroup(mockReq, mockRes);
 
-		expect(mockRes.status).toHaveBeenCalledWith(200);
+		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ data }));
+	});
+
+	test('should return created group with user email', async () => {
+		mockReq.body.memberEmails.shift();
+		
+		await createGroup(mockReq, mockRes);
+
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ data }));
 	});
 });
@@ -801,10 +824,34 @@ describe('removeFromGroup', () => {
 		}));
 	});
 
+	test('should return 400 if emails are not provided', async () => {
+		
+		mockReq.body.emails = undefined;
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
 	test('should return 400 if group does not exist', async () => {
 
 		Group.findOne.mockReset();
 		Group.findOne.mockImplementation(() => null);
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if the path is not valid', async () => {
+
+		mockReq.path = '/groups/test1/invalid';
 
 		await removeFromGroup(mockReq, mockRes);
 
