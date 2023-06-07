@@ -362,6 +362,28 @@ describe('login', () => {
 				done();
 			});
 	});
+
+	test('Invalid password: a 400 error message must be returned', (done) => {
+		request(app)
+			.post('/api/login')
+			.send({ email: 'admin@gmail.com', password: '123456hello' })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toStrictEqual('Wrong credentials');
+				done();
+			});
+	});
+
+	test('Invalid email: a 400 error message must be returned', (done) => {
+		request(app)
+			.post('/api/login')
+			.send({ email: 'enrico@gmail.com', password: '12345hello' })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toStrictEqual('User need to register');
+				done();
+			});
+	});
 });
 
 describe('logout', () => {});
