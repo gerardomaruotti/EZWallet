@@ -1509,7 +1509,7 @@ describe('deleteTransactions', () => {
 		await deleteTransactions(mockReq, mockRes);
 
 		expect(mockRes.status).toHaveBeenCalledWith(400);
-		expect(mockRes.json).toHaveBeenCalledWith({ error: 'Id list is empty!' });
+		expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing parameters' });
 	});
 
 	test('should return 400 if any id is empty', async () => {
@@ -1540,7 +1540,7 @@ describe('deleteTransactions', () => {
 
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			error: 'One or more id not found',
+			error: 'Transaction not found',
 		});
 	});
 

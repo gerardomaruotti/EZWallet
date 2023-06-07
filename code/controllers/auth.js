@@ -16,12 +16,12 @@ export const register = async (req, res) => {
 		if (username === undefined || email === undefined || password === undefined)
 			return res.status(400).json({ error: 'Missing parameters' });
 
-		if (username === '' || email === '' || password === '') 
+		if (username === '' || email === '' || password === '')
 			return res.status(400).json({ error: 'Empty string in parameters' });
-		
-		if(!isEmail(email))
+
+		if (!isEmail(email))
 			return res.status(400).json({ error: 'Email not correct formatted' });
-		
+
 		if (await User.findOne({ email: email }))
 			return res.status(400).json({ message: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
@@ -32,7 +32,7 @@ export const register = async (req, res) => {
 		});
 		res.status(200).json({ data: { message: 'User added succesfully' } });
 	} catch (error) {
-		res.status(400).json({ error: error });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -49,13 +49,16 @@ export const registerAdmin = async (req, res) => {
 		if (username === undefined || email === undefined || password === undefined)
 			return res.status(400).json({ error: 'Missing parameters' });
 
-		if (username === '' || email === '' || password === '') 
+		if (username === '' || email === '' || password === '')
 			return res.status(400).json({ error: 'Empty string in parameters' });
-		
-		if(!isEmail(email))
+
+		if (!isEmail(email))
 			return res.status(400).json({ error: 'Email not correct formatted' });
-		
-		if ((await User.findOne({ email: email })) || (await User.findOne({ email: email })))
+
+		if (
+			(await User.findOne({ email: email })) ||
+			(await User.findOne({ email: email }))
+		)
 			return res.status(400).json({ message: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
 		await User.create({
@@ -66,7 +69,7 @@ export const registerAdmin = async (req, res) => {
 		});
 		res.status(200).json({ data: { message: 'Admin added succesfully' } });
 	} catch (error) {
-		res.status(400).json({ error: error });
+		res.status(500).json({ error: error });
 	}
 };
 
@@ -85,8 +88,6 @@ export const login = async (req, res) => {
 
 	if (email === '' || password === '')
 		return res.status(400).json({ error: 'Empty string in parameters' });
-
-	
 
 	try {
 		const existingUser = await User.findOne({ email: email });
@@ -138,9 +139,9 @@ export const login = async (req, res) => {
 		res
 			.status(200)
 			.json({ data: { accessToken: accessToken, refreshToken: refreshToken } });
-		} catch (error) {
-			res.status(400).json({ error: error });
-		}
+	} catch (error) {
+		res.status(500).json({ error: error });
+	}
 };
 
 /**
@@ -156,7 +157,6 @@ export const logout = async (req, res) => {
 	if (!refreshToken) return res.status(400).json('User not logged in');
 
 	try {
-
 		const user = await User.findOne({ refreshToken: refreshToken });
 		if (!user) return res.status(400).json('User not found');
 
@@ -178,6 +178,6 @@ export const logout = async (req, res) => {
 		await user.save();
 		res.status(200).json({ data: { message: 'User logged out' } });
 	} catch (error) {
-		res.status(400).json({ error: error });
+		res.status(500).json({ error: error });
 	}
 };

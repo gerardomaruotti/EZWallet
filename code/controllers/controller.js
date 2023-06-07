@@ -80,7 +80,7 @@ export const updateCategory = async (req, res) => {
 		res.status(200).json({
 			data: {
 				message: 'Category edited successfully',
-				count: typeTransactions.count ? typeTransactions.count : 0,
+				count: typeTransactions.length ? typeTransactions.length : 0,
 			},
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
@@ -439,50 +439,51 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		const categoryVar = type;
 		const usernameVar = username;
 
-		 transactions.aggregate([
-			{
-				$lookup: {
-					from: 'categories',
-					localField: 'type',
-					foreignField: 'type',
-					as: 'joinedData',
+		transactions
+			.aggregate([
+				{
+					$lookup: {
+						from: 'categories',
+						localField: 'type',
+						foreignField: 'type',
+						as: 'joinedData',
+					},
 				},
-			},
-			{
-				$unwind: '$joinedData',
-			},
-			{
-				$match: {
-					'joinedData.type': categoryVar,
-					username: usernameVar,
+				{
+					$unwind: '$joinedData',
 				},
-			},
-		]).then((result) => {
-			let data = result.map((v) =>
-				Object.assign(
-					{},
-					{
-						username: v.username,
-						amount: v.amount,
-						type: v.type,
-						date: v.date,
-						color: v.joinedData.color,
-					}
-				)
-			);
-			if (data.length === 0) {
-				return res.status(200).json({
-					data: [],
+				{
+					$match: {
+						'joinedData.type': categoryVar,
+						username: usernameVar,
+					},
+				},
+			])
+			.then((result) => {
+				let data = result.map((v) =>
+					Object.assign(
+						{},
+						{
+							username: v.username,
+							amount: v.amount,
+							type: v.type,
+							date: v.date,
+							color: v.joinedData.color,
+						}
+					)
+				);
+				if (data.length === 0) {
+					return res.status(200).json({
+						data: [],
+						refreshedTokenMessage: res.locals.refreshedTokenMessage,
+					});
+				}
+				res.status(200).json({
+					data: data,
 					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 				});
-			}
-			res.status(200).json({
-				data: data,
-				refreshedTokenMessage: res.locals.refreshedTokenMessage,
 			});
-		});
 	} catch (error) {
-		console.log(error);
 		res.status(500).json({ error: error.message });
 	}
 };
@@ -523,7 +524,6 @@ export const getTransactionsByGroup = async (req, res) => {
 		const usernames = await User.find({
 			email: { $in: memberEmails },
 		}).distinct('username');
-		console.log('usernames:', usernames);
 
 		transactions
 			.aggregate([
@@ -707,7 +707,7 @@ export const deleteTransactions = async (req, res) => {
 
 		const idList = req.body._ids;
 
-		if (!idList) {
+		if (!idList || idList.length == 0) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
 		for (let i = 0; i < idList.length; i++) {
@@ -716,24 +716,20 @@ export const deleteTransactions = async (req, res) => {
 			}
 		}
 
-		if (idList.length > 0) {
-			const existingTransactions = await transactions.find({
-				_id: { $in: idList },
-			});
+		const existingTransactions = await transactions.find({
+			_id: { $in: idList },
+		});
 
-			if (existingTransactions.length < idList.length) {
-				return res.status(400).json({ error: 'One or more id not found' });
-			}
-
-			let data = await transactions.deleteMany({ _id: { $in: idList } });
-
-			res.status(200).json({
-				data: { message: 'Transactions deleted successfully' },
-				refreshedTokenMessage: res.locals.refreshedTokenMessage,
-			});
-		} else {
-			return res.status(400).json({ error: 'Id list is empty!' });
+		if (existingTransactions.length < idList.length) {
+			return res.status(400).json({ error: 'Transaction not found' });
 		}
+
+		let data = await transactions.deleteMany({ _id: { $in: idList } });
+
+		res.status(200).json({
+			data: { message: 'Transactions deleted successfully' },
+			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		});
 	} catch (error) {
 		res.status(400).json({ error: 'Transactions not found' });
 	}
