@@ -439,7 +439,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		const categoryVar = type;
 		const usernameVar = username;
 
-		let result = transactions.aggregate([
+		 transactions.aggregate([
 			{
 				$lookup: {
 					from: 'categories',
@@ -457,24 +457,32 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 					username: usernameVar,
 				},
 			},
-		]);
-		let data = result.map((v) =>
-			Object.assign(
-				{},
-				{
-					username: v.username,
-					amount: v.amount,
-					type: v.type,
-					date: v.date,
-					color: v.joinedData.color,
-				}
-			)
-		);
-		res.status(200).json({
-			data: data,
-			refreshedTokenMessage: res.locals.refreshedTokenMessage,
+		]).then((result) => {
+			let data = result.map((v) =>
+				Object.assign(
+					{},
+					{
+						username: v.username,
+						amount: v.amount,
+						type: v.type,
+						date: v.date,
+						color: v.joinedData.color,
+					}
+				)
+			);
+			if (data.length === 0) {
+				return res.status(200).json({
+					data: [],
+					refreshedTokenMessage: res.locals.refreshedTokenMessage,
+				});
+			}
+			res.status(200).json({
+				data: data,
+				refreshedTokenMessage: res.locals.refreshedTokenMessage,
+			});
 		});
 	} catch (error) {
+		console.log(error);
 		res.status(500).json({ error: error.message });
 	}
 };
