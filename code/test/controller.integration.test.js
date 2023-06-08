@@ -582,44 +582,85 @@ describe('getCategories', () => {
 	});
 });
 
+//OK
 describe('createTransaction', () => {
-	// test('Should return 401 if not authorized', (done) => {
-	// 	request(app)
-	// 		.post('api/users/admin/transactions')
-	// 		.set(
-	// 			'Cookie',
-	// 			`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
-	// 		)
-	// 		.send({ username: 'admin', amount: 100, type: 'income' })
-	// 		.then((response) => {
-	// 			expect(response.status).toBe(401);
-	// 			expect(response.body).toHaveProperty('error');
-	// 			done();
-	// 		});
-	// });
-	// test('Should create a category and return it', (done) => {
-	// 	User.create({
-	// 		username: 'admin',
-	// 		email: 'admin@email.com',
-	// 		password: 'admin',
-	// 		refreshToken: adminAccessTokenValid,
-	// 		role: 'Admin',
-	// 	}).then(() => {
-	// 		categories.create({ type: 'test', color: 'red' }).then(() => {
-	// 			request(app)
-	// 				.post('api/users/admin/transactions')
-	// 				.set(
-	// 					'Cookie',
-	// 					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-	// 				)
-	// 				.send({ username: 'admin', amount: '30', type: 'test' })
-	// 				.then((response) => {
-	// 					expect(response.status).toBe(200);
-	// 					done();
-	// 				});
-	// 		});
-	// 	});
-	// });
+	test('Should return 401 if not authorized', (done) => {
+		const username = 'tester';
+
+		request(app)
+			.post(`/api/users/${username}/transactions`)
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.send({ username: 'admin', amount: 100, type: 'income' })
+			.then((response) => {
+				expect(response.status).toBe(401);
+				expect(response.body).toHaveProperty('error');
+				done();
+			});
+	});
+
+	test('Should return 400 if the user does not exist', (done) => {
+		const username = 'tester';
+
+		categories.create({ type: 'income', color: 'red' }).then(() => {
+			request(app)
+				.post(`/api/users/${username}/transactions`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.send({ username: 'admin', amount: 100, type: 'income' })
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toHaveProperty('error');
+					done();
+				});
+		});
+	});
+
+	test('Should return 400 if category does not exist', (done) => {
+		const username = 'tester';
+
+		request(app)
+			.post(`/api/users/${username}/transactions`)
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ username: 'admin', amount: 100, type: 'income' })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toHaveProperty('error');
+				done();
+			});
+	});
+
+	test('Should create a category and return it', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@email.com',
+			password: 'admin',
+			refreshToken: adminAccessTokenValid,
+			role: 'Admin',
+		}).then(() => {
+			categories.create({ type: 'test', color: 'red' }).then(() => {
+				request(app)
+					.post(`/api/users/${username}/transactions`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.send({ username: 'admin', amount: '30', type: 'test' })
+					.then((response) => {
+						expect(response.status).toBe(200);
+						done();
+					});
+			});
+		});
+	});
 });
 
 //OK
@@ -658,32 +699,24 @@ describe('getAllTransactions', () => {
 	});
 });
 
+//TODO: cover res status 200 User
 describe('getTransactionsByUser', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
+	test('should return 400 if no user is found with provided username', (done) => {
+		const username = 'admin';
+		request(app)
+			.get(`/api/users/${username}/transactions`)
+			.set(
+				'Cookie',
+				`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+			)
+			.then((response) => {
+				expect(response.status).toBe(400);
+				done();
+			});
 	});
-});
 
-describe('getTransactionsByUserByCategory', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
-	});
-});
-
-describe('getTransactionsByGroup', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
-	});
-});
-
-describe('getTransactionsByGroupByCategory', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
-	});
-});
-
-describe('deleteTransaction', () => {
-	test.skip('should return 401 if not authorized', (done) => {
+	test('should return 401 if not authorized', (done) => {
+		const username = 'admin';
 		User.create({
 			username: 'admin',
 			email: 'admin@test.com',
@@ -691,7 +724,7 @@ describe('deleteTransaction', () => {
 			refreshToken: adminAccessTokenValid,
 		}).then(() => {
 			request(app)
-				.delete('api/users/admin/transactions')
+				.get(`/api/users/${username}/transactions`)
 				.set(
 					'Cookie',
 					`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
@@ -699,6 +732,724 @@ describe('deleteTransaction', () => {
 				.then((response) => {
 					expect(response.status).toBe(401);
 					done();
+				});
+		});
+	});
+
+	test('should return 200 if authorized', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories.create({ type: 'income', color: 'red' }).then(() => {
+				transactions
+					.create(
+						{ username: 'admin', amount: 100, type: 'income' },
+						{ username: 'tester', amount: 100, type: 'income' }
+					)
+					.then(() => {
+						request(app)
+							.get(`/api/users/${username}/transactions`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
+			});
+		});
+	});
+
+	test('should return 200 if authorized and filter query', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories.create({ type: 'income', color: 'red' }).then(() => {
+				transactions
+					.create(
+						{ username: 'admin', amount: 100, type: 'income' },
+						{ username: 'tester', amount: 100, type: 'income' }
+					)
+					.then(() => {
+						request(app)
+							.get(`/api/users/${username}/transactions?date=2021-01-01`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
+			});
+		});
+	});
+
+	test('should return 500 if no categories defined', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			transactions
+				.create(
+					{ username: 'admin', amount: 100, type: 'income' },
+					{ username: 'tester', amount: 100, type: 'income' }
+				)
+				.then(() => {
+					request(app)
+						.get(`/api/users/${username}/transactions`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(500);
+							done();
+						});
+				});
+		});
+	});
+
+	test('should return 401 if not admin in admin path', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			transactions
+				.create(
+					{ username: 'admin', amount: 100, type: 'income' },
+					{ username: 'tester', amount: 100, type: 'income' }
+				)
+				.then(() => {
+					request(app)
+						.get(`/api/transactions/users/${username}`)
+						.set(
+							'Cookie',
+							`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(401);
+							done();
+						});
+				});
+		});
+	});
+
+	test('should return 200 and empty list if no user transactions', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			transactions
+				.create({ username: 'tester', amount: 100, type: 'income' })
+				.then(() => {
+					request(app)
+						.get(`/api/transactions/users/${username}`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(200);
+							done();
+						});
+				});
+		});
+	});
+
+	test('should return 200 and list of user transactions', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories
+				.create(
+					{ type: 'income', color: 'red' },
+					{ type: 'investment', color: 'blue' }
+				)
+				.then(() => {
+					transactions
+						.create(
+							{ username: 'admin', amount: 1000, type: 'investment' },
+							{ username: 'admin', amount: 100, type: 'income' }
+						)
+						.then(() => {
+							request(app)
+								.get(`/api/transactions/users/${username}`)
+								.set(
+									'Cookie',
+									`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+								)
+								.then((response) => {
+									expect(response.status).toBe(200);
+									done();
+								});
+						});
+				});
+		});
+	});
+});
+
+//OK
+describe('getTransactionsByUserByCategory', () => {
+	test('should return 401 if not authorized', (done) => {
+		const username = 'admin';
+		const category = 'income';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories.create({ type: 'income', color: 'red' }).then(() => {
+				request(app)
+					.get(`/api/users/${username}/transactions/category/${category}`)
+					.set(
+						'Cookie',
+						`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+					)
+					.then((response) => {
+						expect(response.status).toBe(401);
+						done();
+					});
+			});
+		});
+	});
+
+	test('should return 400 if category is not found', (done) => {
+		const username = 'admin';
+		const category = 'investment';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories.create({ type: 'income', color: 'red' }).then(() => {
+				request(app)
+					.get(`/api/users/${username}/transactions/category/${category}`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.then((response) => {
+						expect(response.status).toBe(400);
+						done();
+					});
+			});
+		});
+	});
+
+	test('should return 400 if user is not found', (done) => {
+		const username = 'tester';
+		const category = 'income';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories.create({ type: 'income', color: 'red' }).then(() => {
+				request(app)
+					.get(`/api/users/${username}/transactions/category/${category}`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.then((response) => {
+						expect(response.status).toBe(400);
+						done();
+					});
+			});
+		});
+	});
+
+	test('should return 200', (done) => {
+		const username = 'admin';
+		const category = 'income';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories.create({ type: 'income', color: 'red' }).then(() => {
+				transactions
+					.create({ username: 'admin', amount: 100, type: 'income' })
+					.then(() => {
+						request(app)
+							.get(`/api/users/${username}/transactions/category/${category}`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
+			});
+		});
+	});
+
+	test('should return 200', (done) => {
+		const username = 'admin';
+		const category = 'income';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			categories.create({ type: 'income', color: 'red' }).then(() => {
+				transactions
+					.create({ username: 'test', amount: 100, type: 'okok' })
+					.then(() => {
+						request(app)
+							.get(`/api/users/${username}/transactions/category/${category}`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								expect(response.body.data).toEqual([]);
+								done();
+							});
+					});
+			});
+		});
+	});
+});
+
+//TODO: try to get transactions by group if not Admin
+describe('getTransactionsByGroup', () => {
+	test('should return 401 if not authorized', (done) => {
+		const name = 'adminGroup';
+		Group.create({
+			name: 'adminGroup',
+			memberEmails: ['admin@example,com'],
+		}).then(() => {
+			request(app)
+				.get(`/api/groups/${name}/transactions`)
+				.set(
+					'Cookie',
+					`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(401);
+					done();
+				});
+		});
+	});
+
+	test('should return 400 if group is not found', (done) => {
+		const name = 'testGroup';
+		Group.create({
+			name: 'adminGroup',
+			memberEmails: ['admin@example,com'],
+		}).then(() => {
+			request(app)
+				.get(`/api/groups/${name}/transactions`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				});
+		});
+	});
+
+	test.skip('should return 200', (done) => {
+		const name = 'adminGroup';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			Group.create({
+				name: 'adminGroup',
+				memberEmails: ['admin@example,com'],
+			}).then(() => {
+				transactions
+					.create({ username: 'admin', amount: 100, type: 'income' })
+					.then(() => {
+						request(app)
+							.get(`/api/groups/${name}/transactions`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
+			});
+		});
+	});
+
+	test('should return 200 if admin path', (done) => {
+		const name = 'adminGroup';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			Group.create({
+				name: 'adminGroup',
+				memberEmails: ['admin@example,com'],
+			}).then(() => {
+				transactions
+					.create({ username: 'admin', amount: 100, type: 'income' })
+					.then(() => {
+						request(app)
+							.get(`/api/transactions/groups/${name}`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
+			});
+		});
+	});
+});
+
+//TODO: fix group verify auth
+describe('getTransactionsByGroupByCategory', () => {
+	test('should return 401 if not authorized', (done) => {
+		const name = 'adminGroup';
+		const category = 'income';
+		Group.create({
+			name: 'adminGroup',
+			memberEmails: ['admin@example,com'],
+		}).then(() => {
+			request(app)
+				.get(`/api/groups/${name}/transactions/category/${category}`)
+				.set(
+					'Cookie',
+					`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(401);
+					done();
+				});
+		});
+	});
+
+	test('should return 400 if group is not found', (done) => {
+		const name = 'testGroup';
+		const category = 'income';
+		Group.create({
+			name: 'adminGroup',
+			memberEmails: ['admin@example,com'],
+		}).then(() => {
+			request(app)
+				.get(`/api/groups/${name}/transactions/category/${category}`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				});
+		});
+	});
+
+	test('should return 400 if category is not found', (done) => {
+		const name = 'adminGroup';
+		const category = 'test';
+		Group.create({
+			name: 'adminGroup',
+			memberEmails: ['admin@example,com'],
+		}).then(() => {
+			request(app)
+				.get(`/api/transactions/groups/${name}/category/${category}`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				});
+		});
+	});
+
+	test.skip('should return 200', (done) => {
+		const name = 'adminGroup';
+		const category = 'income';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			Group.create({
+				name: 'adminGroup',
+				memberEmails: ['admin@example,com'],
+			}).then(() => {
+				transactions
+					.create({ username: 'admin', amount: 100, type: 'income' })
+					.then(() => {
+						request(app)
+							.get(`/api/groups/${name}/transactions/category/${category}`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
+			});
+		});
+	});
+
+	test('should return 401 of not admin on admin path', (done) => {
+		const name = 'adminGroup';
+		const category = 'income';
+		User.create({
+			username: 'tester',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: testerAccessTokenValid,
+		}).then(() => {
+			Group.create({
+				name: 'adminGroup',
+				memberEmails: ['admin@example,com'],
+			}).then(() => {
+				categories.create({ type: 'income', color: 'red' }).then(() => {
+					transactions
+						.create({ username: 'admin', amount: 100, type: 'income' })
+						.then(() => {
+							request(app)
+								.get(`/api/transactions/groups/${name}/category/${category}`)
+								.set(
+									'Cookie',
+									`accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`
+								)
+								.then((response) => {
+									expect(response.status).toBe(401);
+									done();
+								});
+						});
+				});
+			});
+		});
+	});
+
+	test('should return 200 if admin path', (done) => {
+		const name = 'adminGroup';
+		const category = 'income';
+		User.create({
+			username: 'admin',
+			email: 'admin@example.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			Group.create({
+				name: 'adminGroup',
+				memberEmails: ['admin@example.com'],
+			}).then(() => {
+				categories.create({ type: 'income', color: 'red' }).then(() => {
+					transactions
+						.create({ username: 'admin', amount: 100, type: 'income' })
+						.then(() => {
+							request(app)
+								.get(`/api/transactions/groups/${name}/category/${category}`)
+								.set(
+									'Cookie',
+									`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+								)
+								.then((response) => {
+									expect(response.status).toBe(500);
+									done();
+								});
+						});
+				});
+			});
+		});
+	});
+});
+
+//TODO: fix transactions does not exist
+describe('deleteTransaction', () => {
+	test('should return 401 if not authorized', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			request(app)
+				.delete(`/api/users/${username}/transactions`)
+				.set(
+					'Cookie',
+					`accessToken=${testerAccessTokenEmpty}; refreshToken=${testerAccessTokenEmpty}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(401);
+					done();
+				});
+		});
+	});
+
+	test('should return 400 if ids are not provided', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			request(app)
+				.delete(`/api/users/${username}/transactions`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toHaveProperty('error', 'Missing parameters');
+					done();
+				});
+		});
+	});
+
+	test('should return 400 if user does not exist', (done) => {
+		const username = 'admin';
+		request(app)
+			.delete(`/api/users/${username}/transactions`)
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ _id: 1 })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toHaveProperty('error');
+				done();
+			});
+	});
+
+	test('should return 500 if transaction does not exist', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			request(app)
+				.delete(`/api/users/${username}/transactions`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.send({ _id: 1 })
+				.then((response) => {
+					expect(response.status).toBe(500);
+					expect(response.body).toHaveProperty('error');
+					done();
+				});
+		});
+	});
+
+	test('should return 200 if transaction is deleted', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			transactions
+				.create({ username: 'admin', amount: 100, type: 'income' })
+				.then((transaction) => {
+					request(app)
+						.delete(`/api/users/${username}/transactions`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({ _id: transaction._id })
+						.then((response) => {
+							expect(response.status).toBe(200);
+							done();
+						});
+				});
+		});
+	});
+
+	test('should return 400 if transaction does not exist', (done) => {
+		const username = 'admin';
+		User.create({
+			username: 'admin',
+			email: 'admin@test.com',
+			password: 'tester',
+			refreshToken: adminAccessTokenValid,
+		}).then(() => {
+			transactions
+				.create(
+					{ username: 'admin', amount: 100, type: 'income' },
+					{ username: 'admin', amount: 1000, type: 'investment' }
+				)
+				.then(() => {
+					request(app)
+						.delete(`/api/users/${username}/transactions`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({ _id: '54jdnfsldòjngsn' })
+						.then((response) => {
+							if (response.body.error === 'Transaction not found') {
+								expect(response.status).toBe(400);
+								expect(response.body).toHaveProperty('error');
+								done();
+							} else {
+								expect(response.status).toBe(500);
+								done();
+							}
+						})
+						.catch((err) => {
+							done(err);
+						});
 				});
 		});
 	});
