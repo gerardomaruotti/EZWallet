@@ -1478,8 +1478,22 @@ describe('getTransactionsByGroupByCategory', () =>  {
 
 
 	test('should return 400 if group name is missing', async () => {
-		mockReq.params = {};
+		mockReq.params.category = 'income';
+		mockReq.url = '/api/testGroup/income';
+		Group.findOne.mockResolvedValue( {
+			name: 'test1',
+			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			
+		});
 
+		categories.findOne.mockResolvedValue({ type: 'income', color: 'green' });
+		User.find.mockResolvedValue({ username: 'test', email: 'email2', password: 'password', role: 'user' });
+
+		
+		verifyAuth.mockImplementation(() => ({
+			authorized: false,
+			cause: 'Not authorized',
+		}));
 	
 
 		await getTransactionsByGroupByCategory(mockReq, mockRes);
@@ -1510,7 +1524,7 @@ describe('getTransactionsByGroupByCategory', () =>  {
 			cause: 'Authorized',
 		}));
 
-		mockReq.params = { name: 'test1' };
+		mockReq.params = { name: 'test1', category: 'income' };
 		mockReq.url = '/api/group/test1';
 		User.find.mockResolvedValue([{ username: 'test', email: 'test1@example.com', password: 'test' }]);
 		Group.findOne.mockResolvedValue( {
