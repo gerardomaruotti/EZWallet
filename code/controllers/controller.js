@@ -507,13 +507,9 @@ export const getTransactionsByGroup = async (req, res) => {
 			if (!authorized) return res.status(401).json({ error: cause });
 		}
 
-		const users = await User.find({
+		const usernames = await User.find({
 			email: { $in: memberEmails },
-		});
-
-		const usernames = users.map((user) => user.username);
-
-		console.log(usernames);
+		}).distinct('username');
 
 		transactions
 			.aggregate([
