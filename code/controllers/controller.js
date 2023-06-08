@@ -427,6 +427,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		if (!type) {
 			return res.status(400).json({ error: 'missing parameters' });
 		}
+
 		const typeLook = await categories.findOne({ type: type });
 		if (!typeLook) {
 			return res.status(400).json({ error: 'Category does not exist' });
@@ -472,14 +473,8 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 						}
 					)
 				);
-				if (data.length === 0) {
-					return res.status(200).json({
-						data: [],
-						refreshedTokenMessage: res.locals.refreshedTokenMessage,
-					});
-				}
 				res.status(200).json({
-					data: data,
+					data: data.length === 0 ? [] : data,
 					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 				});
 			});
@@ -510,20 +505,22 @@ export const getTransactionsByGroup = async (req, res) => {
 
 		const memberEmails = group.members.map((member) => member.email);
 
-		const { authorized, cause } = verifyAuth(req, res, {
-			authType: 'Group',
-			groupEmails: memberEmails,
-		});
-		if (!authorized) return res.status(401).json({ error: cause });
-
 		if (req.url.indexOf('transactions/groups') >= 0) {
 			let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
 			if (!authorized) return res.status(401).json({ error: cause });
+		} else {
+			const { authorized, cause } = verifyAuth(req, res, {
+				authType: 'Group',
+				groupEmails: memberEmails,
+			});
+			if (!authorized) return res.status(401).json({ error: cause });
 		}
 
-		const usernames = await User.find({
+		const users = await User.find({
 			email: { $in: memberEmails },
-		}).distinct('username');
+		});
+
+		const usernames = users.map((user) => user.username);
 
 		transactions
 			.aggregate([
@@ -602,11 +599,11 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 			return res.status(400).json({ error: 'Category does not exist' });
 		}
 
-		const usernames = await User.find({
+		const users = await User.find({
 			email: { $in: memberEmails },
-		}).distinct('username');
+		});
 
-		const categoryVar = type;
+		const usernames = users.map((user) => user.username);
 
 		transactions
 			.aggregate([
@@ -623,7 +620,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 				},
 				{
 					$match: {
-						'joinedData.type': categoryVar,
+						'joinedData.type': type,
 					},
 				},
 			])
@@ -648,6 +645,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 				});
 			});
 	} catch (error) {
+		console.log(error);
 		res.status(500).json({ error: error.message });
 	}
 };
