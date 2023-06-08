@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Group, User } from '../models/User.js';
+import { transactions } from '../models/model.js';
 import {
 	getUsers,
 	getUser,
@@ -20,6 +21,7 @@ import { isEmail, verifyAuth, verifyMultipleAuth, checkGroupEmails } from '../co
  * `jest.mock()` must be called for every external module that is called in the functions under test.
  */
 jest.mock('../models/User.js');
+jest.mock('../models/model.js');
 jest.mock('../controllers/utils');
 jest.mock('jsonwebtoken');
 
@@ -628,6 +630,19 @@ describe('addToGroup', () => {
 		}));
 	});
 
+	test('should return 401 if not authorized ad admin', async () => {
+
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+		mockReq.path = '/groups/test1/insert';
+
+		await addToGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
 	test('should return 400 if group name is not provided', async () => {
 		
 		mockReq.params.name = undefined;
@@ -824,6 +839,19 @@ describe('removeFromGroup', () => {
 		}));
 	});
 
+	test('should return 401 if not authorized as admin', async () => {
+
+		mockReq.path = '/groups/test1/pull';
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+	
 	test('should return 400 if emails are not provided', async () => {
 		
 		mockReq.body.emails = undefined;
@@ -955,7 +983,137 @@ describe('removeFromGroup', () => {
 	});
 });
 
-describe('deleteUser', () => {});
+describe('deleteUser', () => {
+	let mockReq;
+	let mockRes;
+
+	beforeEach(() => {
+		mockReq = {
+			path: '/groups/test1',
+			body: {
+				email: 'test1@example.com'
+			}
+		};
+
+		mockRes = {
+			status: jest.fn(() => mockRes),
+			json: jest.fn(),
+			locals: {
+				refreshedTokenMessage: 'refreshed token'
+			}
+		};
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized' }));
+		isEmail.mockImplementation(() => true);
+
+		transactions.deleteMany.mockImplementation(() => new Promise(resolve => resolve({ deletedCount: 10 })));
+		Group.findOne.mockImplementation(() => new Promise(resolve => resolve({ 
+			name: 'test1',
+			members: ['test1@example.com'] 
+		})));
+		Group.deleteMany.mockImplementation(() => new Promise(resolve => resolve({ deletedCount: 1 })));
+	});
+	
+	test('should return 401 if not authorized', async () => {
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Not authorized' }));
+
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if email is undefined', async () => {
+		mockReq.body.email = undefined;
+
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if email is not valid', async () => {
+		isEmail.mockImplementation(() => false);
+
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if user does not exist', async () => {
+		User.findOne.mockImplementation(() => new Promise(resolve => resolve(null)));
+
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if user is admin', async () => {
+		User.findOne.mockImplementation(() => new Promise(resolve => resolve({
+			email: 'test1@exaple.com',
+			role: 'Admin'
+		})));
+
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+		User.findOne.mockImplementation(() => { throw new Error('Database error') });
+
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 200 if user is deleted', async () => {
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				deletedTransaction: 10,
+				deleteFromGroup: true
+			}),
+			refreshedTokenMessage: expect.any(String)
+		}));
+	});
+
+	test('should return 200 if user is deleted and there isn\'t the last in group', async () => {
+		Group.findOne.mockImplementation(() => new Promise(resolve => resolve({ 
+			name: 'test1',
+			members: ['test1@example.com', 'test2@example.com']
+		})));
+
+		await deleteUser(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				deletedTransaction: 10,
+				deleteFromGroup: false
+			}),
+			refreshedTokenMessage: expect.any(String)
+		}));
+	});
+});
 
 describe('deleteGroup', () => {
 	let mockReq;
@@ -971,7 +1129,10 @@ describe('deleteGroup', () => {
 
 		mockRes = {
 			status: jest.fn(() => mockRes),
-			json: jest.fn()
+			json: jest.fn(),
+			locals: {
+				refreshedTokenMessage: 'refreshed token'
+			}
 		};
 
 		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized' }));
@@ -1045,7 +1206,10 @@ describe('deleteGroup', () => {
 
 		expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-			message: expect.any(String)
+			data: expect.objectContaining({
+				message: expect.any(String)
+			}),
+			refreshedTokenMessage: expect.any(String)
 		}));
 	});
 });

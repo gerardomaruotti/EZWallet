@@ -361,6 +361,9 @@ export const deleteUser = async (req, res) => {
 		const user = await User.findOne({ email: email });
 		if (!user) return res.status(400).json({ error: 'User not found' });
 
+		if(user.role === 'Admin') 
+			return res.status(400).json({ error: 'Cannot delete an admin' });
+
 		const deletedTransactions = await transactions.deleteMany({
 			email: email,
 		});
@@ -384,11 +387,11 @@ export const deleteUser = async (req, res) => {
 		const response = {
 			data: {
 				deletedTransaction: deletedTransactions.deletedCount,
-				deleteFromGroup: deletedGroup.modifiedCount > 0 || deletedGroup.deletedCount > 0,
-				refreshedTokenMessage: res.locals.refreshedTokenMessage,
+				deleteFromGroup: deletedGroup.modifiedCount > 0 || deletedGroup.deletedCount > 0			
 			},
+			refreshedTokenMessage: res.locals.refreshedTokenMessage
 		};
-		res.json(response).status(200);
+		res.status(200).json(response);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -420,7 +423,11 @@ export const deleteGroup = async (req, res) => {
 		if (deletedGroup.deletedCount === 0)
 			return res.status(400).json({ error: 'Group not found' });
 
-		res.status(200).json({ message: 'Group deleted' });
+		res.status(200).json({ data: {
+				message: 'Group deleted'
+			},	
+			refreshedTokenMessage: res.locals.refreshedTokenMessage 
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
