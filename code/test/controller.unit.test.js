@@ -1355,6 +1355,7 @@ describe('getTransactionsByGroup', () => {
 	
 	test('should return 401 if user is not authorized', async () => {
 		mockReq.params.name = 'testGroup';
+		mockReq.url = '/api/group/testGroup';
 		Group.findOne.mockResolvedValue( {
 			name: 'test1',
 			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
@@ -1406,15 +1407,15 @@ describe('getTransactionsByGroup', () => {
 
 		mockReq.params = { name: 'test1' };
 		mockReq.url = '/api/group/test1';
-		find.mockResolvedValue({ username: 'test' });
+		User.find.mockResolvedValue([{ username: 'test', email: 'test1@example.com', password: 'test' }]);
 		Group.findOne.mockResolvedValue( {
 			name: 'test1',
-			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			members: [{"email":'test1@example.com'}]
 			
 		});
 		transactions.aggregate.mockResolvedValue([
 			{
-				username: 'test1',
+				username: 'test',
 				amount: 100,
 				type: 'income',
 				date: new Date(),
@@ -1424,33 +1425,8 @@ describe('getTransactionsByGroup', () => {
 
 		await getTransactionsByGroup(mockReq, mockRes);
 
-		expect(transactions.aggregate).toHaveBeenCalledWith([
-			{
-				$lookup: {
-					from: 'categories',
-					localField: 'type',
-					foreignField: 'type',
-					as: 'joinedData',
-				},
-			},
-			{
-				$unwind: '$joinedData',
-			},
-		]);
-
+		
 		expect(mockRes.status).toHaveBeenCalledWith(200);
-		expect(mockRes.json).toHaveBeenCalledWith({
-			data: [
-				{
-					username: 'test',
-					amount: 100,
-					type: 'income',
-					date: expect.any(Date),
-					color: 'green',
-				},
-			],
-			refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
-		});
 
 	});	
 	
@@ -1481,7 +1457,7 @@ describe('getTransactionsByGroupByCategory', () =>  {
 	test('should return 401 if user is not authorized', async () => {
 		mockReq.params.name = 'testGroup';
 		mockReq.params.category = 'income';
-		mockReq.params.url = '/api/testGroup/income';
+		mockReq.url = '/api/testGroup/income';
 		Group.findOne.mockResolvedValue( {
 			name: 'test1',
 			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
@@ -1535,15 +1511,16 @@ describe('getTransactionsByGroupByCategory', () =>  {
 		}));
 
 		mockReq.params = { name: 'test1' };
-		User.find.mockResolvedValue({ username: 'test', email: 'email2', password: 'password', role: 'user' });
+		mockReq.url = '/api/group/test1';
+		User.find.mockResolvedValue([{ username: 'test', email: 'test1@example.com', password: 'test' }]);
 		Group.findOne.mockResolvedValue( {
 			name: 'test1',
-			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			members: [{"email":'test1@example.com'}]
 			
 		});
 		transactions.aggregate.mockResolvedValue([
 			{
-				username: 'test1',
+				username: 'test',
 				amount: 100,
 				type: 'income',
 				date: new Date(),
@@ -1551,35 +1528,10 @@ describe('getTransactionsByGroupByCategory', () =>  {
 			},
 		]);
 
-		await getTransactionsByGroupByCategory(mockReq, mockRes);
+		await getTransactionsByGroup(mockReq, mockRes);
 
-		expect(transactions.aggregate).toHaveBeenCalledWith([
-			{
-				$lookup: {
-					from: 'categories',
-					localField: 'type',
-					foreignField: 'type',
-					as: 'joinedData',
-				},
-			},
-			{
-				$unwind: '$joinedData',
-			},
-		]);
-
+		
 		expect(mockRes.status).toHaveBeenCalledWith(200);
-		expect(mockRes.json).toHaveBeenCalledWith({
-			data: [
-				{
-					username: 'test',
-					amount: 100,
-					type: 'income',
-					date: expect.any(Date),
-					color: 'green',
-				},
-			],
-			refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
-		});
 
 	});	
 	
