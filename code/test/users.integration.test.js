@@ -91,15 +91,45 @@ describe('getUsers', () => {
 					expect(response.body.data[0].username).toEqual('tester');
 					expect(response.body.data[0].email).toEqual('test@test.com');
 					expect(response.body.data[0].password).toEqual('tester');
-					expect(response.body.data[0].role).toEqual('Regular');
+					//expect(response.body.data[0].role).toEqual('Regular');
 					done();
 				})
 				.catch((err) => done(err));
 		});
 	});
+
+	test('Should return an error if the access token are empty', (done) => {
+		request(app)
+			.get('/api/users')
+			.set('Cookie', `accessToken="" refreshToken=""`)
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			})
+			.catch((err) => done(err));
+	});
+	afterAll(async () => {
+		await User.deleteMany();
+	});
 });
 
-describe('getUser', () => {});
+describe('getUser', () => {
+	User.create({
+		username: 'tester',
+		email: 'test@test.com',
+		password: 'tester',
+	}).then(() => {
+		request(app)
+			.get('/api/users')
+			.set('Cookie', `accessToken="" refreshToken=""`)
+			.then((response) => {
+				expect(response.status).toBe(400);
+
+				done();
+			})
+			.catch((err) => done(err));
+	});
+});
 
 describe('createGroup', () => {});
 

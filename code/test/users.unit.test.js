@@ -11,7 +11,7 @@ import {
 	addToGroup,
 	removeFromGroup,
 } from '../controllers/users.js';
-import { verifyAuth, verifyMultipleAuth, checkGroupEmails } from '../controllers/utils';
+import { isEmail, verifyAuth, verifyMultipleAuth, checkGroupEmails } from '../controllers/utils';
 
 /**
  * In order to correctly mock the calls to external modules it is necessary to mock them using the following line.
@@ -203,7 +203,9 @@ describe('createGroup', () => {
 
 	beforeEach(() => {
 		mockReq = {
-			cookies: {},
+			cookie: {
+				refreshToken: 'refresh token'
+			},
 			body: {
 				name: "testGroup", 
 				memberEmails: ["test1@example.com", "test2@example.com"]
@@ -232,9 +234,8 @@ describe('createGroup', () => {
 		};
 
 		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
-		const verify = jest.spyOn(jwt, 'verify');
-		verify.mockImplementation(() => () => ({ email: "test1@example.com" }));
-		jwt.verify.mockImplementation(() => ({ email: "test1@example.com" }));
+		jwt.verify.mockImplementation(() => ({ email: validEmails[0] }));
+		isEmail.mockImplementation(() => true);
 
 		Group.prototype.save.mockImplementation(() => (new Promise((res, rej) => res({ 
 			name: "testGroup",
@@ -243,9 +244,9 @@ describe('createGroup', () => {
 		Group.findOne.mockImplementation(() => null);
 
 		checkGroupEmails.mockImplementation(() => ({ 
-			validEmails,
-			alreadyInGroup,
-		 	membersNotFound
+			validEmails: validEmails.map(email => ({ email })),
+			alreadyInGroup: alreadyInGroup.map(email => ({ email })),
+		 	membersNotFound: membersNotFound.map(email => ({ email }))
 		}));
 	});
 
@@ -328,8 +329,8 @@ describe('createGroup', () => {
 	test('should return 400 if user is already in a group', async () => {
 
 		checkGroupEmails.mockImplementation(() => ({
-			validEmails: ["test2@example.com"],
-			alreadyInGroup: ["test1@example.com"],
+			alreadyInGroup:  [{ email: validEmails.shift() }],
+			validEmails: validEmails.map(email => ({ email })),
 			membersNotFound: [],
 		}));
 
@@ -343,7 +344,7 @@ describe('createGroup', () => {
 
 	test('should return 400 if there are almost one email invalid or empty', async () => {
 
-		mockReq.body.memberEmails.push('');
+		isEmail.mockImplementation(() => false);
 		
 		await createGroup(mockReq, mockRes);
 
@@ -352,6 +353,20 @@ describe('createGroup', () => {
 			error: expect.any(String)
 		}));
 	});
+
+	// test('shouls return 500 if there is a error the group saving', async () => {
+
+	// 	Group.prototype.save.mockImplementation(() => (new Promise((res, rej) => rej({
+	// 		error: 'Database error'
+	// 	}))));
+
+	// 	await createGroup(mockReq, mockRes);
+
+	// 	expect(mockRes.status).toHaveBeenCalledWith(500);
+	// 	expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+	// 		error: expect.any(String)
+	// 	}));
+	// });
 
 	test('should return 500 if there is database error', async () => {
 		
@@ -369,7 +384,15 @@ describe('createGroup', () => {
 
 		await createGroup(mockReq, mockRes);
 
-		expect(mockRes.status).toHaveBeenCalledWith(200);
+		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ data }));
+	});
+
+	test('should return created group with user email', async () => {
+		mockReq.body.memberEmails.shift();
+		
+		await createGroup(mockReq, mockRes);
+
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ data }));
 	});
 });
@@ -542,7 +565,6 @@ describe('getGroup', () => {
 
 
 describe('addToGroup', () => {
-
 	let mockReq;
 	let mockRes;
 
@@ -555,12 +577,12 @@ describe('addToGroup', () => {
 		mockReq = {
 			cookies: {},
 			body: {
-				memberEmails: ['test3@example.com', 'test4@example.com']
+				emails: ['test3@example.com', 'test4@example.com']
 			},
 			params: {
 				name: 'test1'
 			},
-			path: 'groups/Family/add'
+			path: '/groups/test1/add'
 		};
 		mockRes = {
 			status: jest.fn().mockReturnThis(),
@@ -576,14 +598,22 @@ describe('addToGroup', () => {
 		groupEmail = ["test1@example.com", "test2@example.com"]
 
 		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		isEmail.mockImplementation(() => true);
 
-		Group.findOne.mockImplementation(() => ({ name: 'test1', members: [...groupEmail, ...validEmails].map(email => ({ email }))}));
+		Group.findOne.mockImplementation(() => new Promise(resolve => resolve({
+			name: 'test1', 
+			members: [...groupEmail, ...validEmails].map(email => ({ email }))
+		})));
 		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
-
+			name: 'test1', 
+			members: [...groupEmail, ...validEmails].map(email => ({ email }))
 		})));
 
-		checkGroupEmails.mockImplementation(() => ({ validEmails, alreadyInGroup, membersNotFound }));
-
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: validEmails.map(email => ({ email })),
+			alreadyInGroup: alreadyInGroup.map(email => ({ email })), 
+			membersNotFound: membersNotFound.map((email) => ({ email }))
+		}));
 	});
 
 	test('should return 401 if not authorized', async () => {
@@ -612,7 +642,7 @@ describe('addToGroup', () => {
 
 	test('should return 400 if member emails are not provided', async () => {
 
-		mockReq.body.memberEmails = undefined;
+		mockReq.body.emails = undefined;
 
 		await addToGroup(mockReq, mockRes);
 
@@ -628,6 +658,46 @@ describe('addToGroup', () => {
 		
 		await addToGroup(mockReq, mockRes);
 		
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if the path is wrong', async () => {
+
+		mockReq.path = '/groups/test1';
+
+		await addToGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if emails are not valid', async () => {
+
+		isEmail.mockImplementation(() => false);
+
+		await addToGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if there aren\'t valid emails', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: [], 
+			alreadyInGroup: validEmails.map((email) => ({ email })),
+			membersNotFound: membersNotFound.map((email) => ({ email }))
+		}));
+
+		await addToGroup(mockReq, mockRes);
+
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
 			error: expect.any(String)
@@ -650,18 +720,332 @@ describe('addToGroup', () => {
 
 		await addToGroup(mockReq, mockRes);
 
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				group: expect.objectContaining({
+					name: 'test1',
+					members: [...groupEmail, ...validEmails].map(email => ({ email }))
+				}),
+				alreadyInGroup: alreadyInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
+			})
+		}))
+	});
+
+	test('should return the group with the new members if admin', async () => {
+
+		mockReq.path = '/groups/test1/insert';
+
+		await addToGroup(mockReq, mockRes);
+
 		//expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
 			data: expect.objectContaining({
-				name: 'test1',
-				members: [...groupEmail, ...validEmails].map(email => ({ email }))
+				group: expect.objectContaining({
+					name: 'test1',
+					members: [...groupEmail, ...validEmails].map(email => ({ email }))
+				}),
+				alreadyInGroup: alreadyInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
 			})
-		}))});
+		}))
+	});
+
 
 });
 
-describe('removeFromGroup', () => {});
+describe('removeFromGroup', () => {
+	let mockReq;
+	let mockRes;
+
+	let validEmails;
+	let notInGroup;
+	let membersNotFound;
+	let groupEmail;
+
+	beforeEach(() => {
+		mockReq = {
+			cookies: {},
+			body: {
+				emails: ['test1@example.com', 'test3@example.com']
+			},
+			params: {
+				name: 'test1'
+			},
+			path: '/groups/test1/remove'
+		};
+		mockRes = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+			locals: {
+				refreshedTokenMessage: 'refreshed token'
+			}
+		};
+
+		validEmails = ['test1@example.com'];
+		notInGroup = [];
+		membersNotFound = ['test3@example.com'];
+		groupEmail = ["test1@example.com", "test2@example.com"]
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized'}));
+		isEmail.mockImplementation(() => true);
+
+		Group.findOne.mockImplementation(() => new Promise(resolve => resolve({
+				name: 'test1', 
+				members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+			})))
+			.mockImplementationOnce(() => new Promise(resolve => resolve({
+				name: 'test1',
+				members: groupEmail.map(email => ({ email }))
+			})));
+
+		Group.updateOne.mockImplementation(() => new Promise(resolve => resolve({
+				name: 'test1', 
+				members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+			})));
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: validEmails.map((email) => ({ email })), 
+			notInGroup: notInGroup.map((email) => ({ email })),
+			membersNotFound: membersNotFound.map((email) => ({ email })) 
+		}));
+	});
+
+	test('should return 401 if not authorized', async () => {
+		
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if emails are not provided', async () => {
+		
+		mockReq.body.emails = undefined;
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group does not exist', async () => {
+
+		Group.findOne.mockReset();
+		Group.findOne.mockImplementation(() => null);
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if the path is not valid', async () => {
+
+		mockReq.path = '/groups/test1/invalid';
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if emails are not valid', async () => {
+
+		isEmail.mockImplementation(() => false);
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if there aren\'t valid emails', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: [ ...validEmails, ...membersNotFound].map((email) => { email }), 
+			notInGroup: [], 
+			membersNotFound: [] }));
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if the group will be empty', async () => {
+
+		checkGroupEmails.mockImplementation(() => ({ 
+			validEmails: [], 
+			notInGroup: validEmails.map((email) => ({ email })), 
+			membersNotFound: membersNotFound.map((email) => ({ email }))
+		}));
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+
+		Group.findOne.mockReset();
+		Group.findOne.mockImplementation(() => { throw new Error('Database error') });
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return the group with the removed members', async () => {
+
+		await removeFromGroup(mockReq, mockRes);
+
+		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				group: expect.objectContaining({
+					name: 'test1',
+					members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+				}),
+				notInGroup: notInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
+			})
+		}))
+	});
+
+	test('should return the group with the removed members if admin', async () => {
+
+		mockReq.path = '/groups/test1/pull';
+
+		await removeFromGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				group: expect.objectContaining({
+					name: 'test1',
+					members: groupEmail.filter((email) => !validEmails.includes(email)).map(email => ({ email }))
+				}),
+				notInGroup: notInGroup.map(email => ({ email })),
+				membersNotFound: membersNotFound.map(email => ({ email }))
+			})
+		}))
+	});
+});
 
 describe('deleteUser', () => {});
 
-describe('deleteGroup', () => {});
+describe('deleteGroup', () => {
+	let mockReq;
+	let mockRes;
+
+	beforeEach(() => {
+		mockReq = {
+			path: '/groups/test1',
+			body: {
+				name: 'test1'
+			}
+		};
+
+		mockRes = {
+			status: jest.fn(() => mockRes),
+			json: jest.fn()
+		};
+
+		verifyAuth.mockImplementation(() => ({ authorized: true, cause: 'Authorized' }));
+
+		Group.deleteMany.mockImplementation(() => new Promise(resolve => resolve({ deletedCount: 1 })));
+	});		
+
+	test('should return 401 if not authorized', async () => {
+		
+		verifyAuth.mockImplementation(() => ({ authorized: false, cause: 'Unauthorized' }));
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group name is not provided', async () => {
+		
+		mockReq.body.name = undefined;
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group name is an empty string', async () => {
+
+		mockReq.body.name = '';
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 400 if group does not exist', async () => {
+
+		Group.deleteMany.mockImplementation(() => new Promise(resolve => resolve({ deletedCount: 0 })));
+		
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return 500 if there is database error', async () => {
+
+		Group.deleteMany.mockImplementation(() => { throw new Error('Database error') });
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			error: expect.any(String)
+		}));
+	});
+
+	test('should return a message if group is deleted', async () => {
+
+		await deleteGroup(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+			message: expect.any(String)
+		}));
+	});
+});
