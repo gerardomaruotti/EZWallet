@@ -184,7 +184,57 @@ describe('getUser', () => {
 
 describe('createGroup', () => {});
 
-describe('getGroups', () => {});
+describe('getGroups', () => {
+	beforeAll(async () => {
+		const tester1 = await User.create({
+			username: 'tester1',
+			email: 'tester1@gmail.com',
+			password: 'tester1password',
+			refreshToken: 'refreshtokentest1',
+		});
+
+		const tester2 = await User.create({
+			username: 'tester2',
+			email: 'tester2@gmail.com',
+			password: 'tester2password',
+			refreshToken: 'refreshtokentest2',
+		});
+	});
+
+	test('Should return an error if the access token are empty', (done) => {
+		request(app)
+			.get('/api/groups')
+			.set('Cookie', `accessToken="" refreshToken=""`)
+			.then((response) => {
+				expect(response.status).toBe(401);
+
+				done();
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Nominal case: should retrieve list of all groups', (done) => {
+		Group.create({
+			name: 'testGroup',
+			members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
+		}).then(() => {
+			request(app)
+				.get('/api/groups')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(200);
+					done();
+				});
+		});
+	});
+
+	afterAll(async () => {
+		await Group.deleteMany();
+	});
+});
 
 describe('getGroup', () => {});
 
