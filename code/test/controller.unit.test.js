@@ -1405,12 +1405,13 @@ describe('getTransactionsByGroup', () => {
 		}));
 
 		mockReq.params = { name: 'test1' };
+		mockReq.url = '/api/group/test1';
+		find.mockResolvedValue({ username: 'test' });
 		Group.findOne.mockResolvedValue( {
 			name: 'test1',
 			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
 			
 		});
-		User.find.mockResolvedValue([ 'test', 'test1' ]);
 		transactions.aggregate.mockResolvedValue([
 			{
 				username: 'test1',
@@ -1473,31 +1474,135 @@ describe('getTransactionsByGroup', () => {
 		expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
 	});
 
-	test('should return empty list if user has no transactions', async () => {
+});
+
+describe('getTransactionsByGroupByCategory', () =>  {
+	
+	test('should return 401 if user is not authorized', async () => {
+		mockReq.params.name = 'testGroup';
+		mockReq.params.category = 'income';
+		mockReq.params.url = '/api/testGroup/income';
+		Group.findOne.mockResolvedValue( {
+			name: 'test1',
+			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			
+		});
+		User.find.mockResolvedValue({ username: 'test', email: 'email2', password: 'password', role: 'user' });
+
+		
+		verifyAuth.mockImplementation(() => ({
+			authorized: false,
+			cause: 'Not authorized',
+		}));
+		await getTransactionsByGroupByCategory(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(401);
+		expect(mockRes.json).toHaveBeenCalledWith({ error: 'Not authorized' });
+	});
+
+
+	test('should return 400 if group name is missing', async () => {
+		mockReq.params = {};
+
+	
+
+		await getTransactionsByGroupByCategory(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith({
+			error: 'missing parameters',
+		});
+	});
+
+
+	test('should return 400 if Group does not exist', async () => {
+		mockReq.params = { name: 'test'};
+		Group.findOne.mockResolvedValue(null);
+
+
+		await getTransactionsByGroupByCategory(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(400);
+		expect(mockRes.json).toHaveBeenCalledWith({
+			error: 'Group not found.',
+		});
+	});
+
+	test('should return transactions for group', async () => {
+		verifyAuth.mockImplementation(() => ({
+			authorized: true,
+			cause: 'Authorized',
+		}));
+
+		mockReq.params = { name: 'test1' };
+		User.find.mockResolvedValue({ username: 'test', email: 'email2', password: 'password', role: 'user' });
+		Group.findOne.mockResolvedValue( {
+			name: 'test1',
+			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			
+		});
+		transactions.aggregate.mockResolvedValue([
+			{
+				username: 'test1',
+				amount: 100,
+				type: 'income',
+				date: new Date(),
+				joinedData: { color: 'green' },
+			},
+		]);
+
+		await getTransactionsByGroupByCategory(mockReq, mockRes);
+
+		expect(transactions.aggregate).toHaveBeenCalledWith([
+			{
+				$lookup: {
+					from: 'categories',
+					localField: 'type',
+					foreignField: 'type',
+					as: 'joinedData',
+				},
+			},
+			{
+				$unwind: '$joinedData',
+			},
+		]);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith({
+			data: [
+				{
+					username: 'test',
+					amount: 100,
+					type: 'income',
+					date: expect.any(Date),
+					color: 'green',
+				},
+			],
+			refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
+		});
+
+	});	
+	
+	test('should return 500 if an error occurs', async () => {
 		verifyMultipleAuth.mockImplementation(() => ({
 			authorized: true,
 			cause: 'Authorized',
 		}));
-		mockReq.params = { username: 'test', category: 'income' };
-		User.findOne.mockResolvedValue({ username: 'test' });			
-		categories.findOne.mockResolvedValue({type: 'income', color: 'green' });
-		transactions.aggregate.mockResolvedValue([]);
+		mockReq.params = { name: 'test' };
+		Group.findOne.mockImplementation(() => {
+			throw new Error('Database error');
+		});			
 
-		await getTransactionsByGroup(mockReq, mockRes);
+		
 
-		expect(mockRes.status).toHaveBeenCalledWith(200);
-		expect(mockRes.json).toHaveBeenCalledWith({
-			data: [],
-			refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
-		});
+		
+
+		await getTransactionsByGroupByCategory(mockReq, mockRes);
+
+		expect(mockRes.status).toHaveBeenCalledWith(500);
+		expect(mockRes.json).toHaveBeenCalledWith({ error: 'Database error' });
 	});
 
-});
-
-describe('getTransactionsByGroupByCategory', () => {
-	test('Dummy test, change it', () => {
-		expect(true).toBe(true);
-	});
 });
 
 //OK

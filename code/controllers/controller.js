@@ -80,7 +80,7 @@ export const updateCategory = async (req, res) => {
 		res.status(200).json({
 			data: {
 				message: 'Category edited successfully',
-				count: typeTransactions.length,
+				count: typeTransactions.length ? typeTransactions.length : 0,
 			},
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
@@ -267,7 +267,9 @@ export const getAllTransactions = async (req, res) => {
 export const getTransactionsByUser = async (req, res) => {
 	try {
 		const username = req.params.username;
-
+		if (!username) {
+			return res.status(400).json({ error: 'Missing parameters' });
+		}
 		const userLook = await User.findOne({ username: username });
 		if (!userLook) {
 			return res.status(400).json({ error: 'User does not exist' });
@@ -309,8 +311,14 @@ export const getTransactionsByUser = async (req, res) => {
 							}
 						)
 					);
+					if (data.length === 0) {
+						return res.status(200).json({
+							data: [],
+							refreshedTokenMessage: res.locals.refreshedTokenMessage,
+						});
+					}
 					res.status(200).json({
-						data: data.length === 0 ? [] : data,
+						data: data,
 						refreshedTokenMessage: res.locals.refreshedTokenMessage,
 					});
 				});
@@ -379,8 +387,14 @@ export const getTransactionsByUser = async (req, res) => {
 							}
 						)
 					);
+					if (data.length === 0) {
+						return res.status(200).json({
+							data: [],
+							refreshedTokenMessage: res.locals.refreshedTokenMessage,
+						});
+					}
 					res.status(200).json({
-						data: data.length === 0 ? [] : data,
+						data: data,
 						refreshedTokenMessage: res.locals.refreshedTokenMessage,
 					});
 				});
@@ -718,6 +732,6 @@ export const deleteTransactions = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(400).json({ error: 'Transactions not found' });
 	}
 };
