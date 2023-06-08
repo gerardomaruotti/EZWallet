@@ -405,6 +405,14 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 		});
 		if (!authorized) return res.status(401).json({ error: cause });
 
+		const username = req.params.username;
+		if (!username) {
+			return res.status(400).json({ error: 'missing parameters' });
+		}
+		const type = req.params.category;
+		if (!type) {
+			return res.status(400).json({ error: 'missing parameters' });
+		}
 		const typeLook = await categories.findOne({ type: type });
 		if (!typeLook) {
 			return res.status(400).json({ error: 'Category does not exist' });
@@ -587,8 +595,6 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 		});
 
 		const usernames = users.map((user) => user.username);
-
-		const categoryVar = type;
 
 		transactions
 			.aggregate([
