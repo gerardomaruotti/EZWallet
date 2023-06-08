@@ -80,7 +80,7 @@ export const updateCategory = async (req, res) => {
 		res.status(200).json({
 			data: {
 				message: 'Category edited successfully',
-				count: typeTransactions.length ? typeTransactions.length : 0,
+				count: typeTransactions.length,
 			},
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
@@ -267,9 +267,7 @@ export const getAllTransactions = async (req, res) => {
 export const getTransactionsByUser = async (req, res) => {
 	try {
 		const username = req.params.username;
-		if (!username) {
-			return res.status(400).json({ error: 'Missing parameters' });
-		}
+
 		const userLook = await User.findOne({ username: username });
 		if (!userLook) {
 			return res.status(400).json({ error: 'User does not exist' });
@@ -311,14 +309,8 @@ export const getTransactionsByUser = async (req, res) => {
 							}
 						)
 					);
-					if (data.length === 0) {
-						return res.status(200).json({
-							data: [],
-							refreshedTokenMessage: res.locals.refreshedTokenMessage,
-						});
-					}
 					res.status(200).json({
-						data: data,
+						data: data.length === 0 ? [] : data,
 						refreshedTokenMessage: res.locals.refreshedTokenMessage,
 					});
 				});
@@ -387,14 +379,8 @@ export const getTransactionsByUser = async (req, res) => {
 							}
 						)
 					);
-					if (data.length === 0) {
-						return res.status(200).json({
-							data: [],
-							refreshedTokenMessage: res.locals.refreshedTokenMessage,
-						});
-					}
 					res.status(200).json({
-						data: data,
+						data: data.length === 0 ? [] : data,
 						refreshedTokenMessage: res.locals.refreshedTokenMessage,
 					});
 				});
@@ -521,9 +507,13 @@ export const getTransactionsByGroup = async (req, res) => {
 			if (!authorized) return res.status(401).json({ error: cause });
 		}
 
-		const usernames = await User.find({
+		const users = await User.find({
 			email: { $in: memberEmails },
-		}).distinct('username');
+		});
+
+		const usernames = users.map((user) => user.username);
+
+		console.log(usernames);
 
 		transactions
 			.aggregate([
@@ -731,6 +721,6 @@ export const deleteTransactions = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(400).json({ error: 'Transactions not found' });
+		res.status(500).json({ error: error.message });
 	}
 };
