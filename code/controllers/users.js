@@ -361,8 +361,9 @@ export const deleteUser = async (req, res) => {
 		const user = await User.findOne({ email: email });
 		if (!user) return res.status(400).json({ error: 'User not found' });
 
-		if(user.role === 'Admin') 
+		if(user.role === 'Admin') {
 			return res.status(400).json({ error: 'Cannot delete an admin' });
+		}
 
 		const deletedTransactions = await transactions.deleteMany({
 			email: email,

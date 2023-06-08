@@ -565,7 +565,6 @@ describe('getGroup', () => {
 	});
 });
 
-
 describe('addToGroup', () => {
 	let mockReq;
 	let mockRes;
@@ -754,7 +753,7 @@ describe('addToGroup', () => {
 
 		await addToGroup(mockReq, mockRes);
 
-		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
 			data: expect.objectContaining({
 				group: expect.objectContaining({
