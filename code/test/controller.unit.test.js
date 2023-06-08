@@ -1355,8 +1355,15 @@ describe('getTransactionsByGroup', () => {
 	
 	test('should return 401 if user is not authorized', async () => {
 		mockReq.params.name = 'testGroup';
-		Group.findOne.mockResolvedValue( {name: "testGroup", memberEmails: ["test1@example.com", "test2@example.com"]});
-
+		Group.findOne.mockResolvedValue( {
+			name: 'test1',
+			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			
+		});
+		verifyAuth.mockImplementation(() => ({
+			authorized: false,
+			cause: 'Not authorized',
+		}));
 		await getTransactionsByGroup(mockReq, mockRes);
 
 		expect(mockRes.status).toHaveBeenCalledWith(401);
@@ -1380,29 +1387,33 @@ describe('getTransactionsByGroup', () => {
 
 	test('should return 400 if Group does not exist', async () => {
 		mockReq.params = { name: 'test'};
-		Group.findOne.mockResolvedValue({ name: 'test' });
-		categories.findOne.mockResolvedValue(null);
+		Group.findOne.mockResolvedValue(null);
 
 
 		await getTransactionsByGroup(mockReq, mockRes);
 
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			error: 'Group not found',
+			error: 'Group not found.',
 		});
 	});
 
-	test('should return transactions for user', async () => {
+	test('should return transactions for group', async () => {
 		verifyAuth.mockImplementation(() => ({
 			authorized: true,
 			cause: 'Authorized',
 		}));
-		mockReq.params = { username: 'test', category: 'income' };
-		User.findOne.mockResolvedValue({ username: 'test' });
-		categories.findOne.mockResolvedValue({type: 'income', color: 'green' });
+
+		mockReq.params = { name: 'test1' };
+		Group.findOne.mockResolvedValue( {
+			name: 'test1',
+			members: [{"email":'test1@example.com'},{"email":'test2@example.com'}]
+			
+		});
+		User.find.mockResolvedValue([ 'test', 'test1' ]);
 		transactions.aggregate.mockResolvedValue([
 			{
-				username: 'test',
+				username: 'test1',
 				amount: 100,
 				type: 'income',
 				date: new Date(),
@@ -1423,12 +1434,6 @@ describe('getTransactionsByGroup', () => {
 			},
 			{
 				$unwind: '$joinedData',
-			},
-			{
-				$match: {
-					'joinedData.type': 'income',
-					username: 'test',
-				},
 			},
 		]);
 
@@ -1453,11 +1458,10 @@ describe('getTransactionsByGroup', () => {
 			authorized: true,
 			cause: 'Authorized',
 		}));
-		mockReq.params = { username: 'test', category: 'income' };
-		User.findOne.mockImplementation(() => {
+		mockReq.params = { name: 'test' };
+		Group.findOne.mockImplementation(() => {
 			throw new Error('Database error');
 		});			
-		categories.findOne.mockResolvedValue({type: 'income', color: 'green' });
 
 		
 
