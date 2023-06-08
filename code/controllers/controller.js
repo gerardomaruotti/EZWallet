@@ -510,14 +510,14 @@ export const getTransactionsByGroup = async (req, res) => {
 
 		const memberEmails = group.members.map((member) => member.email);
 
-		const { authorized, cause } = verifyAuth(req, res, {
-			authType: 'Group',
-			groupEmails: memberEmails,
-		});
-		if (!authorized) return res.status(401).json({ error: cause });
-
 		if (req.url.indexOf('transactions/groups') >= 0) {
 			let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
+			if (!authorized) return res.status(401).json({ error: cause });
+		} else {
+			const { authorized, cause } = verifyAuth(req, res, {
+				authType: 'Group',
+				groupEmails: memberEmails,
+			});
 			if (!authorized) return res.status(401).json({ error: cause });
 		}
 
@@ -625,7 +625,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 				},
 				{
 					$match: {
-						'joinedData.type': categoryVar,
+						'joinedData.type': type,
 					},
 				},
 			])
