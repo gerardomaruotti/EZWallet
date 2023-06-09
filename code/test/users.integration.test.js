@@ -267,24 +267,13 @@ describe('createGroup', () => {
 			)
 			.send(group)
 			.then((response) => {
-				expect(response.status).toBe(200);
-				request(app)
-					.post('/api/groups')
-					.set(
-						'Cookie',
-						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
-					)
-					.send(group)
-					.then((response) => {
-						expect(response.status).toBe(400);
-						expect(response.body).toEqual({
-							error: 'A group with the same name already exists'
-						});
-						done();
-					})
-					.catch((err) => done(err));
+				expect(response.status).toBe(400);
+				expect(response.body).toEqual({
+					error: 'A group with the same name already exists'
+				});
+				done();
 			})
-			.catch((err) => done(err));	
+			.catch((err) => done(err));
 	})
 
 	test('Should return an error if the email are not well formatted', (done) => {
@@ -605,3 +594,24 @@ describe('removeFromGroup', () => {
 describe('deleteUser', () => {});
 
 describe('deleteGroup', () => {});
+
+const createGroup = async (name, memberEmails) => {
+	try {
+		const members = await Promise.all(
+			memberEmails.map(async (email) => ({
+				email: email,
+				user: await User.findOne({ email: email })
+			}))
+		);
+
+		const group = {
+			name: name,
+			members: members
+		};
+	
+		await Group.create(group);
+		return Promise.resolve();
+	} catch (err) {
+		return Promise.reject(err);
+	}
+};
