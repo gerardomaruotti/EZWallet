@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { Group } from '../models/User.js';
+import { Group, User } from '../models/User.js';
 
 /**
  * Handle possible date filtering options in the query parameters for getTransactionsByUser when called by a Regular user.

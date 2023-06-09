@@ -96,7 +96,7 @@ export const createGroup = async (req, res) => {
 				.status(400)
 				.json({ error: 'A group with the same name already exists' });
 
-		const userEmail = jwt.verify(req.cookie.refreshToken, process.env.ACCESS_KEY).email;
+		const userEmail = jwt.verify(req.cookies.refreshToken, process.env.ACCESS_KEY).email;
 
 		if (memberEmails.every((email) => email !== userEmail))
 			memberEmails = [...memberEmails, userEmail];
