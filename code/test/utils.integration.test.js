@@ -54,9 +54,8 @@ const testerAccessTokenValid = jwt.sign(
 		role: 'Regular',
 	},
 	process.env.ACCESS_KEY,
-	{ expiresIn: '1y' }
+	{ expiresIn: '100s' }
 );
-
 //These tokens can be used in order to test the specific authentication error scenarios inside verifyAuth (no need to have multiple authentication error tests for the same route)
 const testerAccessTokenExpired = jwt.sign(
 	{
@@ -71,7 +70,7 @@ const testerAccessTokenEmpty = jwt.sign({}, process.env.ACCESS_KEY, {
 	expiresIn: '1y',
 });
 
-describe.skip('utils.js', () => {
+describe('utils.js', () => {
 	describe('verifyAuth', () => {
 		/**
 		 * When calling verifyAuth directly, we do not have access to the req and res objects created by express, so we must define them manually
@@ -82,6 +81,9 @@ describe.skip('utils.js', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
 			//Meaning that the same object can be used for both
 			const req = {
+				params: {
+                    username: 'tester'
+				},
 				cookies: {
 					accessToken: testerAccessTokenValid,
 					refreshToken: testerAccessTokenValid,
@@ -111,6 +113,9 @@ describe.skip('utils.js', () => {
 		 */
 		test('Access token expired and refresh token belonging to the requested user', () => {
 			const req = {
+				params: {
+                    username: 'tester'
+				},
 				cookies: {
 					accessToken: testerAccessTokenExpired,
 					refreshToken: testerAccessTokenValid,
@@ -150,6 +155,352 @@ describe.skip('utils.js', () => {
 				? true
 				: false;
 			expect(message).toBe(true);
+		});
+		test('Tokens are both valid and belong to the requested user and to be false accessToken missing email ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					username: 'tester',
+					role: 'Regular',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid3,
+					refreshToken: testerAccessTokenValid,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Token is missing information')
+		});
+		test('Tokens are both valid and belong to the requested user and to be false accessToken username ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester@test.com',
+					role: 'Regular',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid3,
+					refreshToken: testerAccessTokenValid,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Token is missing information')
+		});
+		test('Tokens are both valid and belong to the requested user and to be false accessToken role ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester@test.com',
+					username: 'tester',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid3,
+					refreshToken: testerAccessTokenValid,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Token is missing information')
+		});
+		test('Tokens are both valid and belong to the requested user and to be false RefreshToken missing email ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					username: 'tester',
+					role: 'Regular',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Token is missing information')
+		});
+		test('Tokens are both valid and belong to the requested user and to be false RefreshToken username ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester@test.com',
+					role: 'Regular',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Token is missing information')
+		});
+		test('Tokens are both valid and belong to the requested user and to be false RefreshToken role ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester@test.com',
+					username: 'tester',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Token is missing information')
+		});
+		test('Tokens are both valid but both token have different users ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester2@test.com',
+					username: 'tester2',
+					role: 'Regular2',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Mismatched users')
+		});
+		test('Tokens are both valid but user is not the same as the one in the params ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester2@test.com',
+					username: 'tester2',
+					role: 'Regular2',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid3,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Requested user different from the logged one')
+		});
+		test('Tokens is from a user trying to pass as an admin it should give an error ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester2@test.com',
+					username: 'tester2',
+					role: 'Regular',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid3,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'Admin',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Not admin')
+		});
+		test('Tokens is from a user trying to pass as a member of a group he is not in it should give an error ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester@test.com',
+					username: 'tester',
+					role: 'Regular',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '100s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid3,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'Group',
+				groupEmails: ['tester','tester2'],
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('User not in group')
+		});
+		test('expired refresh token->user should loggin again message ', () => {
+			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+			//Meaning that the same object can be used for both
+			const testerAccessTokenValid3 = jwt.sign(
+				{
+					email: 'tester@test.com',
+					username: 'tester',
+					role: 'Regular',
+				},
+				process.env.ACCESS_KEY,
+				{ expiresIn: '0s' }
+			);
+			const req = {
+				params: {
+                    username: 'tester'
+				},
+				cookies: {
+					accessToken: testerAccessTokenValid,
+					refreshToken: testerAccessTokenValid3,
+				},
+			};
+			const res = {};
+			//The function is called in the same way as in the various methods, passing the necessary authType and other information
+			const response = verifyAuth(req, res, {
+				authType: 'User',
+				username: 'tester',
+			});
+			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+			//Checks on the "cause" field are omitted since it can be any string
+			expect(Object.values(response).includes(false)).toBe(true);
+			expect(response.cause).toBe('Perform login again')
 		});
 	});
 });

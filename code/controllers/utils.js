@@ -102,8 +102,7 @@ export const verifyAuth = (req, res, info) => {
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
 		);
-
-		if (
+				if (
 			!decodedAccessToken.username ||
 			!decodedAccessToken.email ||
 			!decodedAccessToken.role
@@ -150,7 +149,7 @@ export const verifyAuth = (req, res, info) => {
 
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
-		if (err.message === 'TokenExpiredError') {
+		if (err.name === 'TokenExpiredError') {
 			try {
 				const refreshToken = jwt.verify(
 					cookie.refreshToken,
@@ -166,6 +165,7 @@ export const verifyAuth = (req, res, info) => {
 					process.env.ACCESS_KEY,
 					{ expiresIn: '1h' }
 				);
+				
 				res.cookie('accessToken', newAccessToken, {
 					httpOnly: true,
 					path: '/api',
@@ -178,7 +178,7 @@ export const verifyAuth = (req, res, info) => {
 					'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls';
 				return { authorized: true, cause: 'Authorized' };
 			} catch (err) {
-				if (err.message === 'TokenExpiredError') {
+				if (err.name === 'TokenExpiredError') {
 					return { authorized: false, cause: 'Perform login again' };
 				}
 			}
