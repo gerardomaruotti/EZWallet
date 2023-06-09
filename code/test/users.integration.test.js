@@ -344,8 +344,134 @@ describe('getGroups', () => {
 	});
 });
 
+describe('getGroup', () => {
+	beforeAll(async () => {
+		await User.create({
+			username: 'tester1',
+			email: 'tester1@gmail.com',
+			password: 'tester1password',
+			refreshToken: 'refreshtokentest1',
+		});
 
-describe('getGroup', () => {});
+		await User.create({
+			username: 'tester2',
+			email: 'tester2@gmail.com',
+			password: 'tester2password',
+			refreshToken: 'refreshtokentest2',
+		});
+	});
+
+	afterEach(async () => {
+		await Group.deleteMany();
+	});
+
+	test('A group already exists!', (done) => {
+		const name = 'testGroup2';
+		Group.create({
+			name: 'testGroup',
+			members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
+		}).then(() => {
+			request(app)
+				.get(`/api/groups/${name}`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(400);
+
+					done();
+				});
+		});
+	});
+
+	test('Should return an error if the access token are empty', (done) => {
+		const name = 'testGroup';
+		Group.create({
+			name: 'testGroup',
+			members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
+		}).then(() => {
+			request(app)
+				.get(`/api/groups/${name}`)
+				.set('Cookie', `accessToken="" refreshToken=""`)
+				.then((response) => {
+					expect(response.status).toBe(401);
+
+					done();
+				});
+		});
+	});
+
+	test('A group already exists!', (done) => {
+		const name = 'testGroup';
+		Group.create({
+			name: 'testGroup',
+			members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
+		}).then(() => {
+			request(app)
+				.get(`/api/groups/${name}`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.then((response) => {
+					expect(response.status).toBe(200);
+					expect(response.body).toStrictEqual({
+						data: {
+							name: 'testGroup',
+							members: [
+								{ email: 'tester1@gmail.com' },
+								{ email: 'tester2@gmail.com' },
+							],
+						},
+					});
+
+					done();
+				});
+		});
+	});
+});
+// test('Should return an error if the access token are empty', (done) => {
+// 	const name = 'Family';
+// 	Group.create({
+// 		name: 'Family',
+// 		members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
+// 	}).then(() => {
+// 		request(app)
+// 			.get(`/api/groups/${name}`)
+// 			.set('Cookie', `accessToken="" refreshToken=""`)
+// 			.then((response) => {
+// 				expect(response.status).toBe(401);
+// 				done();
+// 			})
+// 			.catch((err) => done(err));
+// 	});
+// });
+
+// test('Nominal case: should retrieve group', (done) => {
+// 	const name = 'Family';
+// 	Group.create({
+// 		name: 'Family',
+// 		members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
+// 	}).then(() => {
+// 		request(app)
+// 			.get(`/api/groups/${name}`)
+// 			.set(
+// 				'Cookie',
+// 				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+// 			)
+// 			.then((response) => {
+// 				expect(response.status).toBe(200);
+// 				// expect(response.body.data[0].members[0].email).toBe(
+// 				// 	'tester1@gmail.com'
+// 				// );
+// 				// expect(response.body.data[0].members[1].email).toBe(
+// 				// 	'tester2@gmail.com'
+// 				// );
+// 				done();
+// 			});
+// 	});
+// });
 
 describe('addToGroup', () => {});
 
