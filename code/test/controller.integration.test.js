@@ -55,7 +55,6 @@ beforeEach(async () => {
 	await Group.deleteMany({});
 });
 
-//OK
 describe('createCategory', () => {
 	test('Should create a category and return it', (done) => {
 		request(app)
@@ -114,17 +113,14 @@ describe('createCategory', () => {
 	});
 });
 
-//OK
 describe('updateCategory', () => {
 	test('Returns a message for confirmation and the number of updated transactions', (done) => {
-		//We create a category in our empty database (we know it's empty thanks to the beforeEach above)
 		categories
 			.create({
 				type: 'food',
 				color: 'red',
 			})
 			.then(() => {
-				//We insert two users in the datbase: an Admin and a user that made two transactions
 				User.create(
 					{
 						username: 'tester',
@@ -140,7 +136,6 @@ describe('updateCategory', () => {
 						role: 'Admin',
 					}
 				).then(() => {
-					//We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
 					transactions
 						.create([
 							{
@@ -156,23 +151,16 @@ describe('updateCategory', () => {
 						])
 						.then(() => {
 							request(app)
-								.patch('/api/categories/food') //Route to call
+								.patch('/api/categories/food')
 								.set(
 									'Cookie',
 									`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-								) //Setting cookies in the request
-								.send({ type: 'health', color: 'red' }) //Definition of the request body
+								)
+								.send({ type: 'health', color: 'red' })
 								.then((response) => {
-									//After obtaining the response, we check its actual body content
-									//The status must represent successful execution
 									expect(response.status).toBe(200);
-									//The "data" object must have a field named "message" that confirms that changes are successful
-									//The actual value of the field could be any string, so it's not checked
 									expect(response.body.data).toHaveProperty('message');
-									//We expect the count of edited transactions returned to be equal to 2 (the two transactions we placed in the database)
 									expect(response.body.data).toHaveProperty('count', 2);
-
-									//Must be called at the end of every test or the test will fail while waiting for it to be called
 									done();
 								});
 						});
@@ -399,7 +387,6 @@ describe('updateCategory', () => {
 	});
 });
 
-//OK
 describe('deleteCategory', () => {
 	test('should return 401 if not authorized', (done) => {
 		request(app)
@@ -529,7 +516,6 @@ describe('deleteCategory', () => {
 	});
 });
 
-//OK
 describe('getCategories', () => {
 	beforeEach(async () => {
 		await categories.deleteMany();
@@ -566,7 +552,6 @@ describe('getCategories', () => {
 	});
 });
 
-//OK
 describe('createTransaction', () => {
 	test('Should return 401 if not authorized', (done) => {
 		const username = 'tester';
@@ -647,7 +632,6 @@ describe('createTransaction', () => {
 	});
 });
 
-//OK
 describe('getAllTransactions', () => {
 	test('should return 401 if not authorized', (done) => {
 		request(app)
@@ -683,7 +667,6 @@ describe('getAllTransactions', () => {
 	});
 });
 
-//OK
 describe('getTransactionsByUser', () => {
 	test('should return 400 if no user is found with provided username', (done) => {
 		const username = 'admin';
@@ -897,7 +880,6 @@ describe('getTransactionsByUser', () => {
 	});
 });
 
-//OK
 describe('getTransactionsByUserByCategory', () => {
 	test('should return 401 if not authorized', (done) => {
 		const username = 'admin';
@@ -1029,7 +1011,6 @@ describe('getTransactionsByUserByCategory', () => {
 	});
 });
 
-//OK
 describe('getTransactionsByGroup', () => {
 	test('should return 401 if not authorized', (done) => {
 		const name = 'adminGroup';
@@ -1130,7 +1111,6 @@ describe('getTransactionsByGroup', () => {
 	});
 });
 
-//OK
 describe('getTransactionsByGroupByCategory', () => {
 	test('should return 401 if not authorized', (done) => {
 		const name = 'adminGroup';
@@ -1292,7 +1272,6 @@ describe('getTransactionsByGroupByCategory', () => {
 	});
 });
 
-//OK
 describe('deleteTransaction', () => {
 	test('should return 401 if not authorized', (done) => {
 		const username = 'admin';
@@ -1402,7 +1381,6 @@ describe('deleteTransaction', () => {
 	});
 });
 
-//OK
 describe('deleteTransactions', () => {
 	test('should return 401 if not authorized', (done) => {
 		request(app)

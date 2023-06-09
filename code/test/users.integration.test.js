@@ -27,10 +27,6 @@ const testerAccessTokenValid = jwt.sign(
 	process.env.ACCESS_KEY,
 	{ expiresIn: '1y' }
 );
-/**
- * Necessary setup in order to create a new database for testing purposes before starting the execution of test cases.
- * Each test suite has its own database in order to avoid different tests accessing the same database at the same time and expecting different data.
- */
 
 beforeAll(async () => {
 	const dbName = 'testingDatabaseUsers';
@@ -42,24 +38,19 @@ beforeAll(async () => {
 	});
 });
 
-/**
- * After all test cases have been executed the database is deleted.
- * This is done so that subsequent executions of the test suite start with an empty database.
- */
 afterAll(async () => {
 	await mongoose.connection.db.dropDatabase();
 	await mongoose.connection.close();
 });
 
 beforeEach(async () => {
+	await categories.deleteMany({});
+	await transactions.deleteMany({});
 	await User.deleteMany({});
+	await Group.deleteMany({});
 });
 
 describe('getUsers', () => {
-	/**
-	 * Database is cleared before each test case, in order to allow insertion of data tailored for each specific test case.
-	 */
-
 	test('should return empty list if there are no users', (done) => {
 		request(app)
 			.get('/api/users')
@@ -78,10 +69,8 @@ describe('getUsers', () => {
 		User.create({
 			username: 'tester',
 			email: 'tester@test.com',
-			//role: 'Regular',
 			password: 'tester',
 			role: 'Regular',
-			//refreshToken: adminAccessTokenValid,
 		}).then(() => {
 			request(app)
 				.get('/api/users')
@@ -109,10 +98,6 @@ describe('getUsers', () => {
 				done();
 			})
 			.catch((err) => done(err));
-	});
-
-	afterAll(async () => {
-		await User.deleteMany();
 	});
 });
 
@@ -182,7 +167,193 @@ describe('getUser', () => {
 	});
 });
 
-describe('createGroup', () => {});
+describe('createGroup', () => {
+	test('Nominal case: should create a group', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'admin@email.com',
+			password: 'tester',
+		}).then(() => {
+			request(app)
+				.post('/api/groups')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+				)
+				.send({ name: 'testGroup', memberEmails: ['admin@example.com'] })
+				.then((response) => {
+					expect(response.status).toBe(200);
+					done();
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if the request body is empty', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'admin@email.com',
+			password: 'tester',
+		}).then(() => {
+			request(app)
+				.post('/api/groups')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+				)
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if the access token are empty', (done) => {
+		request(app)
+			.post('/api/groups')
+			.set('Cookie', `accessToken="" refreshToken=""`)
+			.send({ name: 'testGroup', memberEmails: ['admin@example.com'] })
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Should return an error if the group name is empty', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'admin@email.com',
+			password: 'tester',
+		}).then(() => {
+			request(app)
+				.post('/api/groups')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+				)
+				.send({ name: '', memberEmails: ['admin@example.com'] })
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if the group name is already taken', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'admin@email.com',
+			password: 'tester',
+		}).then(() => {
+			Group.create({
+				name: 'testGroup',
+				members: [{ email: 'pisjdpiasjdm@email.com' }],
+			}).then(() => {
+				request(app)
+					.post('/api/groups')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.send({ name: 'testGroup', memberEmails: ['admin@example.com'] })
+					.then((response) => {
+						expect(response.status).toBe(400);
+						done();
+					})
+					.catch((err) => done(err));
+			});
+		});
+	});
+
+	test('Should return an error if the email are not well formatted', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'admin@email.com',
+			password: 'tester',
+		}).then(() => {
+			request(app)
+				.post('/api/groups')
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+				)
+				.send({ name: 'testGroup', memberEmails: ['adminexampleom'] })
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if emails are invalid', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'test@email.com',
+			password: 'tester',
+		}).then(() => {
+			Group.create({
+				name: 'testGroup',
+				members: [{ email: 'test@email.com' }],
+			}).then(() => {
+				request(app)
+					.post('/api/groups')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.send({ name: 'poi', memberEmails: ['test@email.com'] })
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body.error).toBe('All the emails are invalid');
+						done();
+					})
+					.catch((err) => done(err));
+			});
+		});
+	});
+
+	test('Should return an error if user is already in a group', (done) => {
+		User.create({
+			username: 'tester',
+			email: 'test123@email.com',
+			password: 'tester',
+		}).then(() => {
+			User.create({
+				username: 'tester23',
+				email: 'tester2@email.com',
+				password: 'tester2',
+			}).then(() => {
+				Group.create({
+					name: 'group.name',
+					members: [{ email: 'test123@email.com' }],
+				}).then(() => {
+					request(app)
+						.post('/api/groups')
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+						)
+						.send({
+							name: 'otherName',
+							memberEmails: ['tester2@email.com', 'test123@email.com'],
+						})
+						.then((response) => {
+							expect(response.status).toBe(400);
+							expect(response.body).toEqual({
+								error: 'User already in a group',
+							});
+							done();
+						})
+						.catch((err) => done(err));
+				});
+			});
+		});
+	});
+});
 
 describe('getGroups', () => {
 	beforeAll(async () => {
@@ -330,52 +501,475 @@ describe('getGroup', () => {
 		});
 	});
 });
-// test('Should return an error if the access token are empty', (done) => {
-// 	const name = 'Family';
-// 	Group.create({
-// 		name: 'Family',
-// 		members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
-// 	}).then(() => {
-// 		request(app)
-// 			.get(`/api/groups/${name}`)
-// 			.set('Cookie', `accessToken="" refreshToken=""`)
-// 			.then((response) => {
-// 				expect(response.status).toBe(401);
-// 				done();
-// 			})
-// 			.catch((err) => done(err));
-// 	});
-// });
-
-// test('Nominal case: should retrieve group', (done) => {
-// 	const name = 'Family';
-// 	Group.create({
-// 		name: 'Family',
-// 		members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
-// 	}).then(() => {
-// 		request(app)
-// 			.get(`/api/groups/${name}`)
-// 			.set(
-// 				'Cookie',
-// 				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-// 			)
-// 			.then((response) => {
-// 				expect(response.status).toBe(200);
-// 				// expect(response.body.data[0].members[0].email).toBe(
-// 				// 	'tester1@gmail.com'
-// 				// );
-// 				// expect(response.body.data[0].members[1].email).toBe(
-// 				// 	'tester2@gmail.com'
-// 				// );
-// 				done();
-// 			});
-// 	});
-// });
 
 describe('addToGroup', () => {});
 
-describe('removeFromGroup', () => {});
+describe('removeFromGroup', () => {
+	test('Nominal case: should remove a user from a group', (done) => {
+		const name = 'groupname';
+		User.create({
+			username: 'tes123',
+			email: 'admin@email.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [
+					{ email: 'okok123@example.com' },
+					{ email: 'admin@email.com' },
+				],
+			})
+				.then(() => {
+					request(app)
+						.patch(`/api/groups/${name}/remove`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({
+							emails: ['admin@email.com'],
+						})
+						.then((response) => {
+							expect(response.status).toBe(200);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
 
-describe('deleteUser', () => {});
+	test('Should return an error if body is empty', (done) => {
+		const name = 'groupname';
+		User.create({
+			username: 'tes123',
+			email: 'admin@email.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [
+					{ email: 'okok123@example.com' },
+					{ email: 'admin@email.com' },
+				],
+			})
+				.then(() => {
+					request(app)
+						.patch(`/api/groups/${name}/remove`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(400);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
 
-describe('deleteGroup', () => {});
+	test("Should return an error if the users aren't registered", (done) => {
+		const name = 'groupname';
+		Group.create({
+			name: 'groupname',
+			members: [{ email: 'okok123@example.com' }, { email: 'admin@email.com' }],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${name}/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.send({
+					emails: ['admin@email.com'],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test("Should return an error if the group doesn't exist", (done) => {
+		const name = 'groupname';
+		User.create({
+			username: 'tes123',
+			email: 'admin@email.com',
+			password: '12345678',
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${name}/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+				)
+				.send({
+					emails: ['admin@email.com'],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if the emails are empty', (done) => {
+		const name = 'groupname';
+		User.create({
+			username: 'tes123',
+			email: 'admin@email.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [
+					{ email: 'okok123@example.com' },
+					{ email: 'admin@email.com' },
+				],
+			})
+				.then(() => {
+					request(app)
+						.patch(`/api/groups/${name}/remove`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({
+							emails: [''],
+						})
+						.then((response) => {
+							expect(response.status).toBe(400);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if the access token are empty', (done) => {
+		const name = 'groupname';
+		User.create({
+			username: 'tes123',
+			email: 'admin@email.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [
+					{ email: 'okok123@example.com' },
+					{ email: 'admin@email.com' },
+				],
+			})
+				.then(() => {
+					request(app)
+						.patch(`/api/groups/${name}/remove`)
+						.set('Cookie', `accessToken=''; refreshToken=''`)
+						.send({
+							emails: ['admin@email.com'],
+						})
+						.then((response) => {
+							expect(response.status).toBe(401);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if the user is not in the group', (done) => {
+		const name = 'groupname';
+		User.create({
+			username: 'tes123',
+			email: 'admin@email.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [
+					{ email: 'okok123@example.com' },
+					{ email: 'sadmin@email.com' },
+				],
+			})
+				.then(() => {
+					request(app)
+						.patch(`/api/groups/${name}/remove`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({
+							emails: ['admin@email.com'],
+						})
+						.then((response) => {
+							expect(response.status).toBe(401);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('Should return an error if try to delete all the users in the group', (done) => {
+		const name = 'groupname';
+		User.create({
+			username: 'tes123',
+			email: 'admin@email.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [{ email: 'admin@email.com' }],
+			})
+				.then(() => {
+					request(app)
+						.patch(`/api/groups/${name}/remove`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({
+							emails: ['admin@email.com'],
+						})
+						.then((response) => {
+							expect(response.status).toBe(400);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
+});
+
+describe('deleteUser', () => {
+	test('Should delete the user from the group', (done) => {
+		User.create({
+			username: 'tes123',
+			email: 'okok123@example.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [
+					{ email: 'okok123@example.com' },
+					{ email: 'admin@email.com' },
+				],
+			})
+				.then(() => {
+					request(app)
+						.delete(`/api/users`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({
+							email: 'okok123@example.com',
+						})
+						.then((response) => {
+							expect(response.status).toBe(200);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('should retrun 401 if the user is not logged in', (done) => {
+		request(app)
+			.delete(`/api/users`)
+			.send({
+				email: 'test123@example.com',
+			})
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			})
+			.catch((err) => done(err));
+	});
+
+	test('should return 400 if the email is not correct formatted', (done) => {
+		User.create({
+			username: 'tes123',
+			email: 'okok123@example.com',
+			password: '12345678',
+		}).then(() => {
+			Group.create({
+				name: 'groupname',
+				members: [
+					{ email: 'okok123@example.com' },
+					{ email: 'admin@email.com' },
+				],
+			})
+				.then(() => {
+					request(app)
+						.delete(`/api/users`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.send({
+							email: 'okok123examplecom',
+						})
+						.then((response) => {
+							expect(response.status).toBe(400);
+							done();
+						})
+						.catch((err) => done(err));
+				})
+				.catch((err) => done(err));
+		});
+	});
+
+	test('should return 400 if email is not defined', (done) => {
+		request(app)
+			.delete(`/api/users`)
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.then((response) => {
+				expect(response.status).toBe(400);
+				done();
+			})
+			.catch((err) => done(err));
+	});
+
+	test('should return 400 if the user is not found', (done) => {
+		request(app)
+			.delete(`/api/users`)
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			)
+			.send({ email: 'ok@test.com' })
+			.then((response) => {
+				expect(response.status).toBe(400);
+				done();
+			})
+			.catch((err) => done(err));
+	});
+});
+
+describe('deleteGroup', () => {
+	test('Nominal:Should delete group and return "group deleted"', (done) => {
+		Group.create({
+			name: 'testGroup',
+			members: [{ email: 'admin@example.com' }],
+		})
+			.then(() => {
+				request(app)
+					.delete(`/api/groups`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.send({ name: 'testGroup' })
+					.then((response) => {
+						expect(response.status).toBe(200);
+						expect(response.body.data).toEqual({
+							message: 'Group deleted',
+						});
+
+						done();
+					});
+			})
+			.catch((err) => done(err));
+	});
+
+	test('not authorize', (done) => {
+		Group.create({
+			name: 'testGroup',
+			members: [{ email: 'admin@email.com' }],
+		})
+			.then(() => {
+				request(app)
+					.delete(`/api/groups`)
+					.set('Cookie', `accessToken="" refreshToken=""`)
+					.then((response) => {
+						expect(response.status).toBe(401);
+						done();
+					});
+			})
+			.catch((err) => done(err));
+	});
+
+	test('should give error if missing parameters', (done) => {
+		Group.create({
+			name: 'group.name',
+			members: [{ email: 'admin@email.com' }],
+		})
+			.then(() => {
+				request(app)
+					.delete(`/api/groups`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'Missing parameters',
+						});
+						done();
+					});
+			})
+			.catch((err) => done(err));
+	});
+
+	test('should give error if empty name parameter', (done) => {
+		Group.create({
+			name: 'group125',
+			members: [{ email: 'admin@email.com' }],
+		})
+			.then(() => {
+				request(app)
+					.delete(`/api/groups`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.send({ name: '' })
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'Empty name',
+						});
+						done();
+					});
+			})
+			.catch((err) => done(err));
+	});
+
+	test('should give error if group not found', (done) => {
+		Group.create({
+			name: 'fnndonf',
+			members: [{ email: 'admin@email.com' }],
+		})
+			.then(() => {
+				request(app)
+					.delete(`/api/groups`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.send({ name: 'sdf' })
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'Group not found',
+						});
+
+						done();
+					});
+			})
+			.catch((err) => done(err));
+	});
+});
