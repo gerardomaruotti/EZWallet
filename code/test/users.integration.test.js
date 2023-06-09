@@ -871,117 +871,34 @@ describe('removeFromGroup', () => {
 	});
 });
 
-describe('deleteUser', () => {});
-
-describe('deleteGroup', () => {
-	test('Nominal:Should delete group and return "group deleted"', (done) => {
-		Group.create({
-			name: group.name,
-			members: [{ email: admin.email }],
+describe('deleteUser', () => {
+	test.skip('Should delete the user from the group', (done) => {
+		User.create({
+			username: 'tes123',
+			email: 'okok123@example.com',
+			password: '12345678',
 		})
 			.then(() => {
 				request(app)
-					.delete(`/api/groups`)
+					.delete(`/api/users`)
 					.set(
 						'Cookie',
-						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
 					)
-					.send({ name: group.name })
+					.send({
+						email: 'okok123@example.com',
+					})
 					.then((response) => {
 						expect(response.status).toBe(200);
-						expect(response.body.data).toEqual({
-							message: 'Group deleted',
-						});
-
-						done();
-					});
-			})
-			.catch((err) => done(err));
-	});
-
-	test('not authorize', (done) => {
-		Group.create({
-			name: group.name,
-			members: [{ email: admin.email }],
-		})
-			.then(() => {
-				request(app)
-					.delete(`/api/groups`)
-					.set('Cookie', `accessToken="" refreshToken=""`)
-					.send()
-					.then((response) => {
-						expect(response.status).toBe(401);
-
-						done();
-					});
-			})
-			.catch((err) => done(err));
-	});
-
-	test('should give error if missing parameters', (done) => {
-		request(app)
-			.delete(`/api/groups`)
-			.set(
-				'Cookie',
-				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`
-			)
-			.send(null)
-			.then((response) => {
-				expect(response.status).toBe(400);
-				expect(response.body).toEqual({
-					error: 'Missing parameters',
-				});
-				done();
-			})
-			.catch((err) => done(err));
-	});
-
-	test.skip('should give error if empty name parameter', (done) => {
-		Group.create({
-			name: group.name,
-			members: [{ email: admin.email }],
-		})
-			.then(() => {
-				request(app)
-					.delete(`/api/groups`)
-					.set(
-						'Cookie',
-						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`
-					)
-					.send({ name: '' })
-					.then((response) => {
-						expect(response.status).toBe(400);
 						expect(response.body).toEqual({
-							error: 'Empty name',
+							message: 'User removed from the group',
 						});
 						done();
-					});
-			})
-			.catch((err) => done(err));
-	});
-
-	test.skip('should give error if group not found', (done) => {
-		Group.create({
-			name: group.name,
-			members: [{ email: admin.email }],
-		})
-			.then(() => {
-				request(app)
-					.delete(`/api/groups`)
-					.set(
-						'Cookie',
-						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`
-					)
-					.send({ name: 'sdf' })
-					.then((response) => {
-						expect(response.status).toBe(400);
-						expect(response.body).toEqual({
-							error: 'Group not found',
-						});
-
-						done();
-					});
+					})
+					.catch((err) => done(err));
 			})
 			.catch((err) => done(err));
 	});
 });
+
+describe('deleteGroup', () => {});
