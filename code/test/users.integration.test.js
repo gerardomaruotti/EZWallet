@@ -66,6 +66,23 @@ admin.refreshToken = jwt.sign(
 	{ expiresIn: '1y' }
 );
 
+const group = {
+	name: 'testGroup',
+	memberEmails: [users[0].email, users[1].email]
+}
+
+const response_group = {
+	name: group.name,
+	members: [
+		{
+			email: users[0].email,
+		},
+		{
+			email: users[1].email,
+		}
+	]	
+};
+
 /**
  * Necessary setup in order to create a new database for testing purposes before starting the execution of test cases.
  * Each test suite has its own database in order to avoid different tests accessing the same database at the same time and expecting different data.
@@ -103,6 +120,11 @@ beforeEach(async () => {
 		await User.create(users[i]);
 	}
 });
+
+afterEach(async () => {
+	await Group.deleteMany({});
+});
+
 
 describe('getUsers', () => {
 
@@ -189,20 +211,15 @@ describe('createGroup', () => {
 				'Cookie',
 				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
 			)
-			.send({
-				name: 'testGroup',
-				memberEmails: [users[0].email, users[1].email]
-			})
+			.send(group)
 			.then((response) => {
-				//expect(response.status).toBe(200);
+				expect(response.status).toBe(200);
 				expect(response.body.data).toEqual({
-					group: {
-						name: 'testGroup',
-						members: [{email: users[0].email }, { email: users[1].email }],
-					},
+					group: response_group,
 					alreadyInGroup: [],
 					membersNotFound: [],		
 				});
+				
 				done();
 			})
 			.catch((err) => done(err));		
@@ -212,10 +229,7 @@ describe('createGroup', () => {
 		request(app)
 			.post('/api/groups')
 			.set('Cookie', `accessToken="" refreshToken=""`)
-			.send({
-				name: 'testGroup',
-				memberEmails: [users[0].email, users[1].email]
-			})
+			.send(group)
 			.then((response) => {
 				expect(response.status).toBe(401);
 				done();
@@ -251,11 +265,59 @@ describe('createGroup', () => {
 				'Cookie',
 				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
 			)
+			.send(group)
+			.then((response) => {
+				expect(response.status).toBe(200);
+				request(app)
+					.post('/api/groups')
+					.set(
+						'Cookie',
+						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+					)
+					.send(group)
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'A group with the same name already exists'
+						});
+						done();
+					})
+					.catch((err) => done(err));
+			})
+			.catch((err) => done(err));	
+	})
+
+	test('Should return an error if the email are not well formatted', (done) => {
+		request(app)
+			.post('/api/groups')
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+			)
 			.send({
-				name: 'testGroup',
-				memberEmails: [users[0].email, users[1].email]
+				name: group.name,
+				memberEmails: ['test', 'test2']
 			})
 			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toEqual({
+					error: 'Mail not correct formatted'
+				});
+				done();
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Should return an error if user is already in a group', (done) => {
+		request(app)
+			.post('/api/groups')
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+			)
+			.send(group)
+			.then((response) => {
+				expect(response.status).toBe(200);
 				request(app)
 					.post('/api/groups')
 					.set(
@@ -263,19 +325,23 @@ describe('createGroup', () => {
 						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
 					)
 					.send({
-						name: 'testGroup',
+						name: 'test',
 						memberEmails: [users[0].email, users[1].email]
 					})
 					.then((response) => {
 						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'User already in a group'
+						});
 						done();
 					})
 					.catch((err) => done(err));
 			})
-			.catch((err) => done(err));		
-	});
-
+			.catch((err) => done(err));	
+	})
+	
 });
+
 
 
 describe('getGroups', () => {
@@ -285,49 +351,26 @@ describe('getGroups', () => {
 			.post('/api/groups')
 			.set(
 				'Cookie',
-				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
 			)
-			.send({
-				name: 'testGroup1',
-				memberEmails: [users[0].email, users[1].email]
-			})
+			.send(group)
 			.then((response) => {
 				expect(response.status).toBe(200);
 				request(app)
-					.post('/api/groups')
+					.get('/api/groups')
 					.set(
 						'Cookie',
-						`accessToken=${users[2].refreshToken}; refreshToken=${users[2].refreshToken}`
+						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
 					)
-					.send({
-						name: 'testGroup2',
-						memberEmails: [users[2].email]
-					})
 					.then((response) => {
 						expect(response.status).toBe(200);
-						request(app)
-							.get('/api/groups')
-							.set(
-								'Cookie',
-								`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
-							)
-							.then((response) => {
-								expect(response.status).toBe(200);
-								expect(response.body.data).toEqual([
-									{
-										name: 'testGroup1',
-										members: [{email: users[0].email }, { email: users[1].email }],
-									},
-									{
-										name: 'testGroup2',
-										members: [{email: users[2].email }],
-									}
-								]);
-								done();
-							})
-							.catch((err) => done(err));
+						expect(response.body.data).toEqual([
+							response_group
+						]);
+						done();
 					})
 					.catch((err) => done(err));
+		
 			})
 			.catch((err) => done(err));
 	});
@@ -345,44 +388,62 @@ describe('getGroups', () => {
 });
 
 describe('getGroup', () => {
-	beforeAll(async () => {
-		await User.create({
-			username: 'tester1',
-			email: 'tester1@gmail.com',
-			password: 'tester1password',
-			refreshToken: 'refreshtokentest1',
-		});
 
-		await User.create({
-			username: 'tester2',
-			email: 'tester2@gmail.com',
-			password: 'tester2password',
-			refreshToken: 'refreshtokentest2',
-		});
+	test('Nominal case: should retrieve the group', (done) => {	
+		request(app)
+			.post('/api/groups')
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+			)
+			.send(group)
+			.then((response) => {
+				expect(response.status).toBe(200);
+				request(app)
+					.get(`/api/groups/${group.name}`)
+					.set(
+						'Cookie',
+						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+					)
+					.then((response) => {
+						expect(response.status).toBe(200);
+						expect(response.body.data).toEqual(
+							response_group
+						);
+						done();
+					})
+					.catch((err) => done(err));
+		
+			})
+			.catch((err) => done(err));
 	});
 
-	afterEach(async () => {
-		await Group.deleteMany();
-	});
+	test('A group doesn\'t exist!', (done) => {
+		request(app)
+			.post('/api/groups')
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+			)
+			.send(group)
+			.then((response) => {
+				expect(response.status).toBe(200);
+				request(app)
+					.get(`/api/groups/notagroup`)
+					.set(
+						'Cookie',
+						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+					)
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'Group not found'
+						});
+						done();
+					});
+			})
+			.catch((err) => done(err));
 
-	test('A group already exists!', (done) => {
-		const name = 'testGroup2';
-		Group.create({
-			name: 'testGroup',
-			members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
-		}).then(() => {
-			request(app)
-				.get(`/api/groups/${name}`)
-				.set(
-					'Cookie',
-					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-				)
-				.then((response) => {
-					expect(response.status).toBe(400);
-
-					done();
-				});
-		});
 	});
 
 	test('Should return an error if the access token are empty', (done) => {
@@ -401,81 +462,145 @@ describe('getGroup', () => {
 				});
 		});
 	});
+});
 
-	test('A group already exists!', (done) => {
-		const name = 'testGroup';
-		Group.create({
-			name: 'testGroup',
-			members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
-		}).then(() => {
-			request(app)
-				.get(`/api/groups/${name}`)
-				.set(
-					'Cookie',
-					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-				)
-				.then((response) => {
-					expect(response.status).toBe(200);
-					expect(response.body).toStrictEqual({
-						data: {
-							name: 'testGroup',
-							members: [
-								{ email: 'tester1@gmail.com' },
-								{ email: 'tester2@gmail.com' },
-							],
-						},
-					});
+describe('addToGroup', () => {
 
-					done();
+	test('Nominal case: should add a user to a group', (done) => {
+		request(app)
+			.post('/api/groups')
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+			)
+			.send(group)
+			.then((response) => {
+				expect(response.status).toBe(200);
+				request(app)
+					.patch(`/api/groups/${group.name}/add`)
+					.set(
+						'Cookie',
+						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
+					)
+					.send({
+						emails: [users[2].email]
+					})
+					.then((response) => {
+						const add_group = response_group;
+						add_group.members.push({ email: users[2].email });
+						expect(response.status).toBe(200);
+						expect(response.body.data).toEqual({
+							group: add_group,
+							alreadyInGroup: [],
+							membersNotFound: [],	
+						});
+						done();
+					})
+					.catch((err) => done(err));
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Should return an error if the access token are empty', (done) => {
+		request(app)
+			.patch(`/api/groups/${group.name}/insert`)
+			.set('Cookie', `accessToken="" refreshToken=""`)
+			.send({
+				emails: [users[2].email]
+			})
+			.then((response) => {
+				expect(response.status).toBe(401);
+				done();
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Should return an error if the group doesn\'t exist', (done) => {
+		request(app)
+			.patch(`/api/groups/notagroup/insert`)
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
+			)
+			.send({
+				emails: [users[2].email]
+			})
+			.then((response) => {
+				expect(response.status).toBe(400);
+				expect(response.body).toEqual({
+					error: 'Group not found'
 				});
-		});
+				done();
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Should return an error if the emails are empty', (done) => {
+		request(app)
+			.post('/api/groups')
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+			)
+			.send(group)
+			.then((response) => {
+				expect(response.status).toBe(200);
+				request(app)
+					.patch(`/api/groups/${group.name}/add`)
+					.set(
+						'Cookie',
+						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
+					)
+					.send({
+						emails: ['', '']
+					})
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'Mail not correct formatted'
+						});
+						done();
+					})
+					.catch((err) => done(err));
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Should return an error if the users aren\'t registered', (done) => {
+		request(app)
+			.post('/api/groups')
+			.set(
+				'Cookie',
+				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
+			)
+			.send(group)
+			.then((response) => {
+				expect(response.status).toBe(200);
+				request(app)
+					.patch(`/api/groups/${group.name}/add`)
+					.set(
+						'Cookie',
+						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
+					)
+					.send({
+						emails: ['notanuser@example.com']
+					})
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'All the emails are invalid'
+						});
+						done();
+					})
+					.catch((err) => done(err));
+			})
+			.catch((err) => done(err));
 	});
 });
-// test('Should return an error if the access token are empty', (done) => {
-// 	const name = 'Family';
-// 	Group.create({
-// 		name: 'Family',
-// 		members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
-// 	}).then(() => {
-// 		request(app)
-// 			.get(`/api/groups/${name}`)
-// 			.set('Cookie', `accessToken="" refreshToken=""`)
-// 			.then((response) => {
-// 				expect(response.status).toBe(401);
-// 				done();
-// 			})
-// 			.catch((err) => done(err));
-// 	});
-// });
 
-// test('Nominal case: should retrieve group', (done) => {
-// 	const name = 'Family';
-// 	Group.create({
-// 		name: 'Family',
-// 		members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
-// 	}).then(() => {
-// 		request(app)
-// 			.get(`/api/groups/${name}`)
-// 			.set(
-// 				'Cookie',
-// 				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-// 			)
-// 			.then((response) => {
-// 				expect(response.status).toBe(200);
-// 				// expect(response.body.data[0].members[0].email).toBe(
-// 				// 	'tester1@gmail.com'
-// 				// );
-// 				// expect(response.body.data[0].members[1].email).toBe(
-// 				// 	'tester2@gmail.com'
-// 				// );
-// 				done();
-// 			});
-// 	});
-// });
-
-describe('addToGroup', () => {});
-
-describe('removeFromGroup', () => {});
+describe('removeFromGroup', () => {
+	
+});
 
 describe('deleteUser', () => {});
 
