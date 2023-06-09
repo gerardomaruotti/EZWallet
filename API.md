@@ -5,7 +5,7 @@ The examples regarding request parameters and request body content must be follo
 In cases where the APIs return an error the correct structure to follow is:
 
 ```javascript
-res.status(errorCode).json({ error: 'Error message' });
+res.status(errorCode).json({ error: "Error message" });
 ```
 
 The actual value of the `error`, `message`, and `refreshedTokenMessage` attributes, where required, does not matter as long as the attributes are included in the return object (any string is accepted).
