@@ -849,7 +849,206 @@ describe('removeFromGroup', () => {
 	});
 });
 
-describe('deleteUser', () => {});
+describe('deleteUser', () => {
+	test('Nominal:Should delete user from group"', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/groups/${group.name}/pull`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send({email: admin.email})
+				.then((response) => {
+					expect(response.status).toBe(200);
+					
 
-describe('deleteGroup', () => {});
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+/*		
+	test('not authorize', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie', `accessToken="" refreshToken=""`)
+				.send()
+				.then((response) => {
+					expect(response.status).toBe(401);
+
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+	test('should give error if missing parameters', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send(null)
+				.then((response) => {
+					expect(response.status).toBe(400);
+                    expect(response.body).toEqual({
+						error: 'Missing parameters',
+					});
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+	test('should give error if empty name parameter', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send({name:''})
+				.then((response) => {
+					expect(response.status).toBe(400);
+                    expect(response.body).toEqual({
+						error: 'Empty name',
+					});
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+	test('should give error if group not found', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send({name:'sdf'})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Group not found',
+					});
+
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});*/
+});
+
+describe('deleteGroup', () => {
+	test('Nominal:Should delete group and return "group deleted"', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send({name: group.name})
+				.then((response) => {
+					expect(response.status).toBe(200);
+					expect(response.body.data).toEqual({
+						message: 'Group deleted',
+					});
+
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+	test('not authorize', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie', `accessToken="" refreshToken=""`)
+				.send()
+				.then((response) => {
+					expect(response.status).toBe(401);
+
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+	test('should give error if missing parameters', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send(null)
+				.then((response) => {
+					expect(response.status).toBe(400);
+                    expect(response.body).toEqual({
+						error: 'Missing parameters',
+					});
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+	test('should give error if empty name parameter', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send({name:''})
+				.then((response) => {
+					expect(response.status).toBe(400);
+                    expect(response.body).toEqual({
+						error: 'Empty name',
+					});
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+	test('should give error if group not found', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.delete(`/api/groups`)
+				.set('Cookie',
+				`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken};`)
+				.send({name:'sdf'})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Group not found',
+					});
+
+					done();
+				});
+		})
+		.catch((err) => done(err));
+	});
+});
 
