@@ -502,7 +502,190 @@ describe('getGroup', () => {
 	});
 });
 
-describe('addToGroup', () => {});
+describe('addToGroup', () => {
+	beforeEach(async () => {
+		await User.create({
+			username: 'tester1',
+			email: 'tester1@gmail.com',
+			password: 'testerpassword1',
+			refreshToken: 'userToken1',
+			role: 'Regular',
+		});
+		await User.create({
+			username: 'tester2',
+			email: 'tester2@gmail.com',
+			password: 'testerpassword2',
+			refreshToken: 'userToken2',
+			role: 'Regular',
+		});
+	});
+	afterEach(async () => {
+		// Remove the test user after each test case
+		await User.deleteMany();
+		await Group.deleteMany();
+	});
+
+	test('should add members to a group', async () => {
+		const name = 'grouptest';
+		await Group.create({
+			name: 'grouptest',
+			members: [{ email: 'tester1@gmail.com' }],
+		});
+		const requestBody = {
+			emails: ['tester2@gmail.com'],
+		};
+
+		const response = await request(app)
+			.patch(`/api/groups/${name}/insert`)
+			.send({ emails: ['tester2@gmail.com'] })
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+			);
+
+		// Assert the response status code
+		expect(response.status).toBe(200);
+
+		// Assert the response body structure and content
+		// expect(response.body.data).toBeDefined();
+		// expect(response.body.data.group).toBeDefined();
+		// expect(response.body.data.group.name).toBe('Group 1');
+		// expect(response.body.data.group.members.length).toBe(2); // Assuming the group already has one member
+		// expect(response.body.data.group.members[1].email).toBe(user2.email);
+		// expect(response.body.data.alreadyInGroup).toEqual([]);
+		// expect(response.body.data.membersNotFound).toEqual([]);
+	});
+
+	test('An error should be return if there is not request in the body', async () => {
+		const name = 'grouptest';
+		await Group.create({
+			name: 'grouptest',
+			members: [{ email: 'tester1@gmail.com' }],
+		});
+		const response = await request(app)
+			.patch(`/api/groups/${name}/insert`)
+			.send({});
+
+		// Assert the response status code and error message
+		expect(response.status).toBe(400);
+		expect(response.body.error).toBe(
+			'The request body does not contain all the necessary attributes'
+		);
+	});
+
+	test('An error should be return if a group does not exist!', async () => {
+		await Group.create({
+			name: 'grouptest',
+			members: [{ email: 'tester1@gmail.com' }],
+		});
+		const response = await request(app)
+			.patch('/api/groups/gruppononesistente/add')
+			.send({ emails: ['tester2@gmail.com'] })
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
+			);
+
+		// Assert the response status code and error message
+		expect(response.status).toBe(400);
+		expect(response.body.error).toBe('Group not found');
+	});
+
+	test('Access token invalid in the case of add path', async () => {
+		const name = 'grouptest';
+		await Group.create({
+			name: 'grouptest',
+			members: [{ email: 'tester1@gmail.com' }],
+		});
+
+		const response = await request(app)
+			.patch(`/api/groups/${name}/add`)
+			.send({ emails: ['tester2@gmail.com'] })
+			.set('Cookie', `accessToken=""; refreshToken=""`);
+
+		// Assert the response status code
+		expect(response.status).toBe(401);
+	});
+
+	test('Access token invalid in the case of insert path', async () => {
+		const name = 'grouptest';
+		await Group.create({
+			name: 'grouptest',
+			members: [{ email: 'tester1@gmail.com' }],
+		});
+
+		const response = await request(app)
+			.patch(`/api/groups/${name}/insert`)
+			.send({ emails: ['tester2@gmail.com'] })
+			.set('Cookie', `accessToken=""; refreshToken=""`);
+
+		// Assert the response status code
+		expect(response.status).toBe(401);
+	});
+
+	test('Invalid path', async () => {
+		const name = 'grouptest';
+		await Group.create({
+			name: 'grouptest',
+			members: [{ email: 'tester1@gmail.com' }],
+		});
+
+		const response = await request(app)
+			.patch(`/api/groups/${name}/insert/`)
+			.send({ emails: ['tester2@gmail.com'] })
+			.set('Cookie', `accessToken=""; refreshToken=""`);
+
+		// Assert the response status code
+		expect(response.status).toBe(400);
+	});
+
+	test('should return an error if all member emails are already in a group or do not exist', async () => {
+		// Create a group and add a member
+		const name = 'grouptest1';
+		await Group.create({
+			name: 'grouptest1',
+			members: [
+				{
+					email: 'tester1@gmail.com',
+				},
+			],
+		});
+
+		const response = await request(app)
+			.patch(`/api/groups/${name}/insert`)
+			.send({
+				emails: [],
+			})
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
+			);
+
+		// Assert the response status code and error message
+		expect(response.status).toBe(400);
+		expect(response.body.error).toBe('All the emails are invalid');
+	});
+
+	test('An error should be return if one or more are not correctly formatted!', async () => {
+		const name = 'grouptest';
+		await Group.create({
+			name: 'grouptest',
+			members: [{ email: 'tester1@gmail.com' }],
+		});
+
+		const response = await request(app)
+			.patch(`/api/groups/${name}/insert`)
+			.send({ emails: ['tester2.gmail.com'] })
+			.set(
+				'Cookie',
+				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
+			);
+
+		// Assert the response status code
+		expect(response.status).toBe(400);
+		expect(response.body.error).toBe('Mail not correct formatted');
+	});
+});
 
 describe('removeFromGroup', () => {
 	test('Nominal case: should remove a user from a group', (done) => {
