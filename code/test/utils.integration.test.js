@@ -82,7 +82,7 @@ describe('utils.js', () => {
 			//Meaning that the same object can be used for both
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid,
@@ -114,7 +114,7 @@ describe('utils.js', () => {
 		test('Access token expired and refresh token belonging to the requested user', () => {
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenExpired,
@@ -169,7 +169,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid3,
@@ -185,7 +185,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Token is missing information')
+			expect(response.cause).toBe('Token is missing information');
 		});
 		test('Tokens are both valid and belong to the requested user and to be false accessToken username ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -200,7 +200,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid3,
@@ -216,7 +216,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Token is missing information')
+			expect(response.cause).toBe('Token is missing information');
 		});
 		test('Tokens are both valid and belong to the requested user and to be false accessToken role ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -231,7 +231,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid3,
@@ -247,7 +247,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Token is missing information')
+			expect(response.cause).toBe('Token is missing information');
 		});
 		test('Tokens are both valid and belong to the requested user and to be false RefreshToken missing email ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -262,7 +262,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid,
@@ -278,7 +278,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Token is missing information')
+			expect(response.cause).toBe('Token is missing information');
 		});
 		test('Tokens are both valid and belong to the requested user and to be false RefreshToken username ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -293,7 +293,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid,
@@ -309,7 +309,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Token is missing information')
+			expect(response.cause).toBe('Token is missing information');
 		});
 		test('Tokens are both valid and belong to the requested user and to be false RefreshToken role ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -324,7 +324,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid,
@@ -340,7 +340,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Token is missing information')
+			expect(response.cause).toBe('Token is missing information');
 		});
 		test('Tokens are both valid but both token have different users ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -356,7 +356,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid,
@@ -372,7 +372,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Mismatched users')
+			expect(response.cause).toBe('Mismatched users');
 		});
 		test('Tokens are both valid but user is not the same as the one in the params ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -388,7 +388,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid3,
@@ -404,7 +404,9 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Requested user different from the logged one')
+			expect(response.cause).toBe(
+				'Requested user different from the logged one'
+			);
 		});
 		test('Tokens is from a user trying to pass as an admin it should give an error ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -420,7 +422,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid3,
@@ -436,7 +438,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Not admin')
+			expect(response.cause).toBe('Not admin');
 		});
 		test('Tokens is from a user trying to pass as a member of a group he is not in it should give an error ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -452,7 +454,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid3,
@@ -463,12 +465,12 @@ describe('utils.js', () => {
 			//The function is called in the same way as in the various methods, passing the necessary authType and other information
 			const response = verifyAuth(req, res, {
 				authType: 'Group',
-				groupEmails: ['tester','tester2'],
+				groupEmails: ['tester', 'tester2'],
 			});
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('User not in group')
+			expect(response.cause).toBe('User not in group');
 		});
 		test('expired refresh token->user should loggin again message ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same
@@ -484,7 +486,7 @@ describe('utils.js', () => {
 			);
 			const req = {
 				params: {
-                    username: 'tester'
+					username: 'tester',
 				},
 				cookies: {
 					accessToken: testerAccessTokenValid,
@@ -500,7 +502,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe('Perform login again')
+			expect(response.cause).toBe('Perform login again');
 		});
 	});
 });

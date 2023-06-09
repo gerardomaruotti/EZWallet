@@ -102,7 +102,7 @@ export const verifyAuth = (req, res, info) => {
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
 		);
-				if (
+		if (
 			!decodedAccessToken.username ||
 			!decodedAccessToken.email ||
 			!decodedAccessToken.role
@@ -149,7 +149,7 @@ export const verifyAuth = (req, res, info) => {
 
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
-		if (err.name === 'TokenExpiredError') {
+		if (err.name === 'TokenExpiredError' || err.message === 'jwt expired') {
 			try {
 				const refreshToken = jwt.verify(
 					cookie.refreshToken,
@@ -165,7 +165,7 @@ export const verifyAuth = (req, res, info) => {
 					process.env.ACCESS_KEY,
 					{ expiresIn: '1h' }
 				);
-				
+
 				res.cookie('accessToken', newAccessToken, {
 					httpOnly: true,
 					path: '/api',

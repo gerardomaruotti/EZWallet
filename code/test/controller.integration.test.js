@@ -1035,7 +1035,7 @@ describe('getTransactionsByGroup', () => {
 		const name = 'adminGroup';
 		Group.create({
 			name: 'adminGroup',
-			memberEmails: ['admin@example,com'],
+			members: [{ email: 'admin@email.com' }],
 		}).then(() => {
 			request(app)
 				.get(`/api/groups/${name}/transactions`)
@@ -1054,7 +1054,7 @@ describe('getTransactionsByGroup', () => {
 		const name = 'testGroup';
 		Group.create({
 			name: 'adminGroup',
-			memberEmails: ['admin@example,com'],
+			members: [{ email: 'admin@email.com' }],
 		}).then(() => {
 			request(app)
 				.get(`/api/groups/${name}/transactions`)

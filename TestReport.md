@@ -16,6 +16,7 @@
 
      <report the here the dependency graph of EzWallet>
 
+![Dependency graph](images/dependency_graph.png)
 
 # Integration approach
 
@@ -24,13 +25,25 @@
     <Some steps may  correspond to unit testing (ex step1 in ex above)>
     <One step will  correspond to API testing, or testing unit route.js>
 
+Integration approach: bottom up
+
+Sequence:
+
+1. Unit testing of the functions in `code/controllers/utils.js`
+2. Unit testing of the functions in `code/controllers/auth.js`
+3. Unit testing of the functions in `code/controllers/users.js`
+4. Unit testing of the functions in `code/controllers/controllers.js`
+5. Integration testing of the functions in `code/controllers/utils.js`
+6. Integration testing of the functions in `code/controllers/auth.js`
+7. Integration testing of the functions in `code/controllers/users.js`
+8. Integration testing of the functions in `code/controllers/controllers.js`
+
 # Tests
 
 <in the table below list the test cases defined For each test report the object tested, the test level (API, integration, unit) and the technique used to define the test case (BB/ eq partitioning, BB/ boundary, WB/ statement coverage, etc)> <split the table if needed>
 
 | Test case name | Object(s) tested | Test level | Technique used |
 | -------------- | ---------------- | ---------- | -------------- |
-|                |                  |            |                |
 
 # Coverage
 
