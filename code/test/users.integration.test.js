@@ -472,7 +472,7 @@ describe('getGroup', () => {
 		});
 	});
 
-	test('A group already exists!', (done) => {
+	test('Nominal case: a specific group is obtained by a specific name!', (done) => {
 		const name = 'testGroup';
 		Group.create({
 			name: 'testGroup',
