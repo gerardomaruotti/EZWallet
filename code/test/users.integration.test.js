@@ -525,88 +525,140 @@ describe('addToGroup', () => {
 					.catch((err) => done(err));
 			})
 			.catch((err) => done(err));
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/insert`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: [users[0].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(200);
+					expect(response.body.data).toEqual({
+						group: {
+							name: group.name,
+							members: [{ email: admin.email}, { email: users[0].email}],
+						},
+						alreadyInGroup: [],
+						membersNotFound: [],
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+
+	test('Should return an error if body is empty', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/insert`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send()
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'The request body does not contain all the necessary attributes',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
 	});
 
 	test('Should return an error if the access token are empty', (done) => {
-		request(app)
-			.patch(`/api/groups/${group.name}/insert`)
-			.set('Cookie', `accessToken="" refreshToken=""`)
-			.send({
-				emails: [users[2].email],
-			})
-			.then((response) => {
-				expect(response.status).toBe(401);
-				done();
-			})
-			.catch((err) => done(err));
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/add`)
+				.set('Cookie', `accessToken="" refreshToken=""`)
+				.send({
+					emails: [users[0].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(401);
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
 	});
 
 	test("Should return an error if the group doesn't exist", (done) => {
-		request(app)
-			.patch(`/api/groups/notagroup/insert`)
-			.set(
-				'Cookie',
-				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
-			)
-			.send({
-				emails: [users[2].email],
-			})
-			.then((response) => {
-				expect(response.status).toBe(400);
-				expect(response.body).toEqual({
-					error: 'Group not found',
-				});
-				done();
-			})
-			.catch((err) => done(err));
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/notagroup/insert`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: [users[2].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Group not found',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
 	});
 
 	test('Should return an error if the emails are empty', (done) => {
-		request(app)
-			.post('/api/groups')
-			.set(
-				'Cookie',
-				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
-			)
-			.send(group)
-			.then((response) => {
-				expect(response.status).toBe(200);
-				request(app)
-					.patch(`/api/groups/${group.name}/add`)
-					.set(
-						'Cookie',
-						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
-					)
-					.send({
-						emails: ['', ''],
-					})
-					.then((response) => {
-						expect(response.status).toBe(400);
-						expect(response.body).toEqual({
-							error: 'Mail not correct formatted',
-						});
-						done();
-					})
-					.catch((err) => done(err));
-			})
-			.catch((err) => done(err));
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/insert`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: ['', ''],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Mail not correct formatted',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
 	});
 
 	test("Should return an error if the users aren't registered", (done) => {
-		request(app)
-			.post('/api/groups')
-			.set(
-				'Cookie',
-				`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken};`
-			)
-			.send(group)
-			.then((response) => {
-				expect(response.status).toBe(200);
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
 				request(app)
 					.patch(`/api/groups/${group.name}/add`)
 					.set(
 						'Cookie',
-						`accessToken=${users[0].refreshToken}; refreshToken=${users[0].refreshToken}`
+						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
 					)
 					.send({
 						emails: ['notanuser@example.com'],
@@ -624,7 +676,212 @@ describe('addToGroup', () => {
 	});
 });
 
-describe('removeFromGroup', () => {});
+describe('removeFromGroup', () => {
+	test('Nominal case: should remove a user from a group', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}, { email: users[0].email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: [users[0].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(200);
+					expect(response.body.data).toEqual({
+						group: {
+							name: group.name,
+							members: [{ email: admin.email}],
+						},
+						notInGroup: [],
+						membersNotFound: [],
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+
+	test('Should return an error if body is empty', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}, { email: users[0].email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send()
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Missing parameters',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+
+	test('Should return an error if the access token are empty', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}, { email: users[0].email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/pull`)
+				.set('Cookie', `accessToken="" refreshToken=""`)
+				.send({
+					emails: [users[0].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(401);
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+
+	test("Should return an error if the group doesn't exist", (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/notagroup/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: [users[2].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Group not found',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+
+	test('Should return an error if the emails are empty', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: ['', ''],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Mail not correct formatted',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+
+	test("Should return an error if the users aren't registered", (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+				request(app)
+					.patch(`/api/groups/${group.name}/remove`)
+					.set(
+						'Cookie',
+						`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+					)
+					.send({
+						emails: ['notanuser@example.com']
+					})
+					.then((response) => {
+						expect(response.status).toBe(400);
+						expect(response.body).toEqual({
+							error: 'All the emails are invalid',
+						});
+						done();
+					})
+					.catch((err) => done(err));
+			})
+			.catch((err) => done(err));
+	});
+
+	test('Should return an error if the user is not in the group', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: [users[0].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'All the emails are invalid',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+
+	test('Should return an error if try to delete all the users in the group', (done) => {
+		Group.create({
+			name: group.name,
+			members: [{ email: admin.email}, { email: users[0].email}],
+		}).then(() => {
+			request(app)
+				.patch(`/api/groups/${group.name}/remove`)
+				.set(
+					'Cookie',
+					`accessToken=${admin.refreshToken}; refreshToken=${admin.refreshToken}`
+				)
+				.send({
+					emails: [admin.email, users[0].email],
+				})
+				.then((response) => {
+					expect(response.status).toBe(400);
+					expect(response.body).toEqual({
+						error: 'Group will be empty after removing members',
+					});
+					done();
+				})
+				.catch((err) => done(err));
+		})
+		.catch((err) => done(err));
+	});
+});
 
 describe('deleteUser', () => {
 	test('Nominal:Should delete user from group"', (done) => {
