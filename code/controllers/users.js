@@ -83,19 +83,19 @@ export const createGroup = async (req, res) => {
 	try {
 		let { name, memberEmails } = req.body;
 		if (name === undefined || memberEmails === undefined)
-			return res.status(400).json({ error: 'Missing parameters: ' + name + memberEmails });
-		console.log('name: ' + name + ' memberEmails: ' + memberEmails);
+			return res.status(400).json({ error: 'Missing parameters'});
+		
 		const { authorized, cause } = verifyAuth(req, res, { authType: 'Simple' });
 		if (!authorized) return res.status(401).json({ error: cause });
-		console.log('Authorized');
+		
 		if(name === '')
 			return res.status(400).json({ error: 'Group name cannot be empty' });	
-		console.log('Name not empty');
+		
 		if (await Group.findOne({ name: name }))
 			return res
 				.status(400)
 				.json({ error: 'A group with the same name already exists' });
-		console.log('Group not found');
+		
 		const userEmail = jwt.verify(req.cookies.refreshToken, process.env.ACCESS_KEY).email;
 
 		if (memberEmails.every((email) => email !== userEmail))
@@ -106,11 +106,11 @@ export const createGroup = async (req, res) => {
 
 		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
 
-		if (alreadyInGroup.some((email) => email.email === userEmail))
-			return res.status(400).json({ error: 'User already in a group' });
-			
 		if (validEmails.length == 0)
 			return res.status(400).json({ error: 'All the emails are invalid' });
+
+		if (alreadyInGroup.some((email) => email.email === userEmail))
+			return res.status(400).json({ error: 'User already in a group' });		
 
 		const members = await Promise.all(
 			validEmails.map(async (e) => {
@@ -135,7 +135,6 @@ export const createGroup = async (req, res) => {
 					refreshedTokenMessage: res.locals.refreshedTokenMessage,
 			}))
 	} catch (error) {
-		console.log('Error: ', error);
 		res.status(500).json({ error: error.message });
 	}
 };
