@@ -396,7 +396,7 @@ describe('verifyAuth', () => {
 
 		jwt.verify
 			.mockImplementationOnce(() => {
-				throw new Error('TokenExpiredError');
+				throw new Error('jwt expired');
 			})
 			.mockImplementationOnce(() => {
 				return {
@@ -447,7 +447,7 @@ describe('verifyAuth', () => {
 		const response = verifyAuth(mockReq, mockRes, info);
 
 		expect(response).toHaveProperty('authorized', false);
-		expect(response).toHaveProperty('cause', 'Perform login again');
+		expect(response).toHaveProperty('cause', 'Error');
 	});
 
 	test('should return authorized false if token expired and jwt throws error', () => {

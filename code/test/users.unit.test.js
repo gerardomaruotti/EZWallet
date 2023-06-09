@@ -205,7 +205,7 @@ describe('createGroup', () => {
 
 	beforeEach(() => {
 		mockReq = {
-			cookie: {
+			cookies: {
 				refreshToken: 'refresh token'
 			},
 			body: {
@@ -356,20 +356,6 @@ describe('createGroup', () => {
 		}));
 	});
 
-	// test('shouls return 500 if there is a error the group saving', async () => {
-
-	// 	Group.prototype.save.mockImplementation(() => (new Promise((res, rej) => rej({
-	// 		error: 'Database error'
-	// 	}))));
-
-	// 	await createGroup(mockReq, mockRes);
-
-	// 	expect(mockRes.status).toHaveBeenCalledWith(500);
-	// 	expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-	// 		error: expect.any(String)
-	// 	}));
-	// });
-
 	test('should return 500 if there is database error', async () => {
 		
 		Group.findOne.mockImplementation(() => { throw new Error('Database error') });
@@ -386,7 +372,7 @@ describe('createGroup', () => {
 
 		await createGroup(mockReq, mockRes);
 
-		//expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ data }));
 	});
 
@@ -395,6 +381,7 @@ describe('createGroup', () => {
 		
 		await createGroup(mockReq, mockRes);
 
+		expect(mockRes.status).toHaveBeenCalledWith(200);
 		expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ data }));
 	});
 });
