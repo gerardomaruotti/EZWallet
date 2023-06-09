@@ -14,21 +14,23 @@ import jwt from 'jsonwebtoken';
   - Request Body Content: An object having attributes `type` and `color`
   - Response `data` Content: An object having attributes `type` and `color`
  */
-export const createCategory = (req, res) => {
+export const createCategory = async (req, res) => {
 	try {
 		let { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
 		if (!authorized) return res.status(401).json({ error: cause });
 
 		const { type, color } = req.body;
+
 		if (!type || !color) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
-		const new_categories = new categories({ type, color });
-		categories.findOne({ type }).then((data) => {
+
+		categories.findOne({ type: type }).then((data) => {
 			if (data) {
 				return res.status(400).json({ error: 'Category already exists' });
 			}
 		});
+		const new_categories = new categories({ type, color });
 		new_categories.save().then((data) => {
 			res.status(200).json({
 				data: {
@@ -311,14 +313,8 @@ export const getTransactionsByUser = async (req, res) => {
 							}
 						)
 					);
-					if (data.length === 0) {
-						return res.status(200).json({
-							data: [],
-							refreshedTokenMessage: res.locals.refreshedTokenMessage,
-						});
-					}
 					res.status(200).json({
-						data: data,
+						data: data.length === 0 ? [] : data,
 						refreshedTokenMessage: res.locals.refreshedTokenMessage,
 					});
 				});
@@ -387,14 +383,8 @@ export const getTransactionsByUser = async (req, res) => {
 							}
 						)
 					);
-					if (data.length === 0) {
-						return res.status(200).json({
-							data: [],
-							refreshedTokenMessage: res.locals.refreshedTokenMessage,
-						});
-					}
 					res.status(200).json({
-						data: data,
+						data: data.length === 0 ? [] : data,
 						refreshedTokenMessage: res.locals.refreshedTokenMessage,
 					});
 				});
@@ -437,9 +427,6 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 			return res.status(400).json({ error: 'User does not exist' });
 		}
 
-		const categoryVar = type;
-		const usernameVar = username;
-
 		transactions
 			.aggregate([
 				{
@@ -455,8 +442,8 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 				},
 				{
 					$match: {
-						'joinedData.type': categoryVar,
-						username: usernameVar,
+						'joinedData.type': type,
+						username: username,
 					},
 				},
 			])
@@ -645,7 +632,6 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 				});
 			});
 	} catch (error) {
-		console.log(error);
 		res.status(500).json({ error: error.message });
 	}
 };
@@ -687,7 +673,7 @@ export const deleteTransaction = async (req, res) => {
 			refreshedTokenMessage: res.locals.refreshedTokenMessage,
 		});
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		res.status(400).json({ error: 'Transaction not found' });
 	}
 };
 

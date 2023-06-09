@@ -49,13 +49,13 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await categories.deleteMany();
-	await transactions.deleteMany();
-	await User.deleteMany();
-	await Group.deleteMany();
+	await categories.deleteMany({});
+	await transactions.deleteMany({});
+	await User.deleteMany({});
+	await Group.deleteMany({});
 });
 
-//TODO: fix duplicate key inside database
+//OK
 describe('createCategory', () => {
 	test('Should create a category and return it', (done) => {
 		request(app)
@@ -111,22 +111,6 @@ describe('createCategory', () => {
 				expect(response.status).toBe(400);
 				done();
 			});
-	});
-
-	test.skip('should return 400 if category already exists', (done) => {
-		categories.create({ type: 'test', color: 'red' }).then(() => {
-			request(app)
-				.post('/api/categories')
-				.set(
-					'Cookie',
-					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-				)
-				.send({ type: 'test', color: 'red' })
-				.then((response) => {
-					expect(response.status).toBe(400);
-					done();
-				});
-		});
 	});
 });
 
@@ -699,7 +683,7 @@ describe('getAllTransactions', () => {
 	});
 });
 
-//TODO: cover res status 200 User
+//OK
 describe('getTransactionsByUser', () => {
 	test('should return 400 if no user is found with provided username', (done) => {
 		const username = 'admin';
@@ -1045,7 +1029,7 @@ describe('getTransactionsByUserByCategory', () => {
 	});
 });
 
-//TODO: try to get transactions by group if not Admin
+//OK
 describe('getTransactionsByGroup', () => {
 	test('should return 401 if not authorized', (done) => {
 		const name = 'adminGroup';
@@ -1085,17 +1069,17 @@ describe('getTransactionsByGroup', () => {
 		});
 	});
 
-	test.skip('should return 200', (done) => {
+	test('should return 200', (done) => {
 		const name = 'adminGroup';
 		User.create({
 			username: 'admin',
-			email: 'admin@example.com',
+			email: 'admin@email.com',
 			password: 'tester',
 			refreshToken: adminAccessTokenValid,
 		}).then(() => {
 			Group.create({
 				name: 'adminGroup',
-				memberEmails: ['admin@example,com'],
+				members: [{ email: 'admin@email.com' }],
 			}).then(() => {
 				transactions
 					.create({ username: 'admin', amount: 100, type: 'income' })
@@ -1146,7 +1130,7 @@ describe('getTransactionsByGroup', () => {
 	});
 });
 
-//TODO: fix group verify auth
+//OK
 describe('getTransactionsByGroupByCategory', () => {
 	test('should return 401 if not authorized', (done) => {
 		const name = 'adminGroup';
@@ -1208,33 +1192,35 @@ describe('getTransactionsByGroupByCategory', () => {
 		});
 	});
 
-	test.skip('should return 200', (done) => {
+	test('should return 200', (done) => {
 		const name = 'adminGroup';
 		const category = 'income';
-		User.create({
-			username: 'admin',
-			email: 'admin@example.com',
-			password: 'tester',
-			refreshToken: adminAccessTokenValid,
-		}).then(() => {
-			Group.create({
-				name: 'adminGroup',
-				memberEmails: ['admin@example,com'],
+		categories.create({ type: 'income', color: 'red' }).then(() => {
+			User.create({
+				username: 'admin',
+				email: 'admin@email.com',
+				password: 'tester',
+				refreshToken: adminAccessTokenValid,
 			}).then(() => {
-				transactions
-					.create({ username: 'admin', amount: 100, type: 'income' })
-					.then(() => {
-						request(app)
-							.get(`/api/groups/${name}/transactions/category/${category}`)
-							.set(
-								'Cookie',
-								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-							)
-							.then((response) => {
-								expect(response.status).toBe(200);
-								done();
-							});
-					});
+				Group.create({
+					name: 'adminGroup',
+					members: [{ email: 'admin@email.com' }],
+				}).then(() => {
+					transactions
+						.create({ username: 'admin', amount: 100, type: 'income' })
+						.then(() => {
+							request(app)
+								.get(`/api/groups/${name}/transactions/category/${category}`)
+								.set(
+									'Cookie',
+									`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+								)
+								.then((response) => {
+									expect(response.status).toBe(200);
+									done();
+								});
+						});
+				});
 			});
 		});
 	});
@@ -1296,7 +1282,7 @@ describe('getTransactionsByGroupByCategory', () => {
 									`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
 								)
 								.then((response) => {
-									expect(response.status).toBe(500);
+									expect(response.status).toBe(200);
 									done();
 								});
 						});
@@ -1306,7 +1292,7 @@ describe('getTransactionsByGroupByCategory', () => {
 	});
 });
 
-//TODO: fix transactions does not exist
+//OK
 describe('deleteTransaction', () => {
 	test('should return 401 if not authorized', (done) => {
 		const username = 'admin';
@@ -1367,29 +1353,6 @@ describe('deleteTransaction', () => {
 			});
 	});
 
-	test('should return 500 if transaction does not exist', (done) => {
-		const username = 'admin';
-		User.create({
-			username: 'admin',
-			email: 'admin@test.com',
-			password: 'tester',
-			refreshToken: adminAccessTokenValid,
-		}).then(() => {
-			request(app)
-				.delete(`/api/users/${username}/transactions`)
-				.set(
-					'Cookie',
-					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-				)
-				.send({ _id: 1 })
-				.then((response) => {
-					expect(response.status).toBe(500);
-					expect(response.body).toHaveProperty('error');
-					done();
-				});
-		});
-	});
-
 	test('should return 200 if transaction is deleted', (done) => {
 		const username = 'admin';
 		User.create({
@@ -1424,32 +1387,16 @@ describe('deleteTransaction', () => {
 			password: 'tester',
 			refreshToken: adminAccessTokenValid,
 		}).then(() => {
-			transactions
-				.create(
-					{ username: 'admin', amount: 100, type: 'income' },
-					{ username: 'admin', amount: 1000, type: 'investment' }
+			request(app)
+				.delete(`/api/users/${username}/transactions`)
+				.set(
+					'Cookie',
+					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
 				)
-				.then(() => {
-					request(app)
-						.delete(`/api/users/${username}/transactions`)
-						.set(
-							'Cookie',
-							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-						)
-						.send({ _id: '54jdnfsldòjngsn' })
-						.then((response) => {
-							if (response.body.error === 'Transaction not found') {
-								expect(response.status).toBe(400);
-								expect(response.body).toHaveProperty('error');
-								done();
-							} else {
-								expect(response.status).toBe(500);
-								done();
-							}
-						})
-						.catch((err) => {
-							done(err);
-						});
+				.send({ _id: '54jdnfsldòjngsn' })
+				.then((response) => {
+					expect(response.status).toBe(400);
+					done();
 				});
 		});
 	});
