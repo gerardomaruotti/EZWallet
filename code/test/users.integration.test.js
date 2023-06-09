@@ -319,17 +319,17 @@ describe('createGroup', () => {
 	test('Should return an error if user is already in a group', (done) => {
 		User.create({
 			username: 'tester',
-			email: 'test123@email.com',
+			email: 'admin@email.com',
 			password: 'tester',
 		}).then(() => {
 			User.create({
-				username: 'tester23',
-				email: 'tester2@email.com',
+				username: 'teshglhv',
+				email: 'admpin@email.com',
 				password: 'tester2',
 			}).then(() => {
 				Group.create({
-					name: 'group.name',
-					members: [{ email: 'test123@email.com' }],
+					name: 'buono',
+					members: [{ email: 'admin@email.com' }],
 				}).then(() => {
 					request(app)
 						.post('/api/groups')
@@ -339,7 +339,7 @@ describe('createGroup', () => {
 						)
 						.send({
 							name: 'otherName',
-							memberEmails: ['tester2@email.com', 'test123@email.com'],
+							memberEmails: ['admpin@email.com', 'admin@email.com'],
 						})
 						.then((response) => {
 							expect(response.status).toBe(400);
@@ -472,7 +472,7 @@ describe('getGroup', () => {
 		});
 	});
 
-	test('Nominal case: a specific group is obtained by a specific name!', (done) => {
+	test('Nominal case: a specific group is obtain by a specific name', (done) => {
 		const name = 'testGroup';
 		Group.create({
 			name: 'testGroup',
@@ -520,7 +520,6 @@ describe('addToGroup', () => {
 		});
 	});
 	afterEach(async () => {
-		// Remove the test user after each test case
 		await User.deleteMany();
 		await Group.deleteMany();
 	});
@@ -543,17 +542,7 @@ describe('addToGroup', () => {
 				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
 			);
 
-		// Assert the response status code
 		expect(response.status).toBe(200);
-
-		// Assert the response body structure and content
-		// expect(response.body.data).toBeDefined();
-		// expect(response.body.data.group).toBeDefined();
-		// expect(response.body.data.group.name).toBe('Group 1');
-		// expect(response.body.data.group.members.length).toBe(2); // Assuming the group already has one member
-		// expect(response.body.data.group.members[1].email).toBe(user2.email);
-		// expect(response.body.data.alreadyInGroup).toEqual([]);
-		// expect(response.body.data.membersNotFound).toEqual([]);
 	});
 
 	test('An error should be return if there is not request in the body', async () => {
@@ -566,7 +555,6 @@ describe('addToGroup', () => {
 			.patch(`/api/groups/${name}/insert`)
 			.send({});
 
-		// Assert the response status code and error message
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe(
 			'The request body does not contain all the necessary attributes'
@@ -586,7 +574,6 @@ describe('addToGroup', () => {
 				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
 			);
 
-		// Assert the response status code and error message
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe('Group not found');
 	});
@@ -603,7 +590,6 @@ describe('addToGroup', () => {
 			.send({ emails: ['tester2@gmail.com'] })
 			.set('Cookie', `accessToken=""; refreshToken=""`);
 
-		// Assert the response status code
 		expect(response.status).toBe(401);
 	});
 
@@ -619,7 +605,6 @@ describe('addToGroup', () => {
 			.send({ emails: ['tester2@gmail.com'] })
 			.set('Cookie', `accessToken=""; refreshToken=""`);
 
-		// Assert the response status code
 		expect(response.status).toBe(401);
 	});
 
@@ -635,12 +620,10 @@ describe('addToGroup', () => {
 			.send({ emails: ['tester2@gmail.com'] })
 			.set('Cookie', `accessToken=""; refreshToken=""`);
 
-		// Assert the response status code
 		expect(response.status).toBe(400);
 	});
 
 	test('should return an error if all member emails are already in a group or do not exist', async () => {
-		// Create a group and add a member
 		const name = 'grouptest1';
 		await Group.create({
 			name: 'grouptest1',
@@ -660,8 +643,6 @@ describe('addToGroup', () => {
 				'Cookie',
 				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
 			);
-
-		// Assert the response status code and error message
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe('All the emails are invalid');
 	});
@@ -681,7 +662,6 @@ describe('addToGroup', () => {
 				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
 			);
 
-		// Assert the response status code
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe('Mail not correct formatted');
 	});
