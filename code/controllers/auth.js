@@ -23,7 +23,11 @@ export const register = async (req, res) => {
 			return res.status(400).json({ error: 'Email not correct formatted' });
 
 		if (await User.findOne({ email: email }))
-			return res.status(400).json({ message: 'User already registered' });
+			return res.status(400).json({ error: 'User already registered' });
+
+		if (await User.findOne({ username: username }))
+			return res.status(400).json({ error: 'User already registered' });
+
 		const hashedPassword = await bcrypt.hash(password, 12);
 		await User.create({
 			username,
