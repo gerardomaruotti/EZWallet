@@ -98,10 +98,12 @@ export const verifyAuth = (req, res, info) => {
 			cookie.accessToken,
 			process.env.ACCESS_KEY
 		);
+		console.log(decodedAccessToken)
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
 		);
+		console.log(decodedRefreshToken)
 		if (
 			!decodedAccessToken.username ||
 			!decodedAccessToken.email ||
@@ -123,11 +125,19 @@ export const verifyAuth = (req, res, info) => {
 		) {
 			return { authorized: false, cause: 'Mismatched users' };
 		}
-
+		console.log('Okkkkkkkkkk');
 		if (info.authType === 'User') {
-			if (
-				req.params.username !== undefined &&
-				req.params.username !== decodedAccessToken.username
+			if (!req.params && !info.username){
+				return {
+					authorized: false,
+					cause: 'Cannot deceted the user',
+				};
+			} else if(
+				(req.params &&
+				req.params.username &&
+				req.params.username !== decodedAccessToken.username) ||
+				(info.username &&
+				info.username !== decodedAccessToken.username)
 			) {
 				return {
 					authorized: false,
@@ -140,8 +150,8 @@ export const verifyAuth = (req, res, info) => {
 			}
 		} else if (info.authType === 'Group') {
 			if (
-				!info.groupEmails ||
-				!info.groupEmails.includes(decodedAccessToken.email)
+				!info.emails ||
+				!info.emails.includes(decodedAccessToken.email)
 			) {
 				return { authorized: false, cause: 'User not in group' };
 			}
@@ -150,7 +160,7 @@ export const verifyAuth = (req, res, info) => {
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
 		if (err.name === 'TokenExpiredError' || err.message === 'jwt expired') {
-			try {
+			try {		
 				const refreshToken = jwt.verify(
 					cookie.refreshToken,
 					process.env.ACCESS_KEY
@@ -165,7 +175,6 @@ export const verifyAuth = (req, res, info) => {
 					process.env.ACCESS_KEY,
 					{ expiresIn: '1h' }
 				);
-
 				res.cookie('accessToken', newAccessToken, {
 					httpOnly: true,
 					path: '/api',
@@ -173,7 +182,6 @@ export const verifyAuth = (req, res, info) => {
 					sameSite: 'none',
 					secure: true,
 				});
-
 				res.locals.refreshedTokenMessage =
 					'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls';
 				return { authorized: true, cause: 'Authorized' };
@@ -181,6 +189,7 @@ export const verifyAuth = (req, res, info) => {
 				if (err.name === 'TokenExpiredError') {
 					return { authorized: false, cause: 'Perform login again' };
 				}
+				return { authorized: false, cause: err.name}
 			}
 		} else {
 			return { authorized: false, cause: err.name };
