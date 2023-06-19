@@ -154,11 +154,11 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;
-	if (!refreshToken) return res.status(400).json('User not logged in');
+	if (!refreshToken) return res.status(400).json({ error: 'User not logged in'});
 
 	try {
 		const user = await User.findOne({ refreshToken: refreshToken });
-		if (!user) return res.status(400).json('User not found');
+		if (!user) return res.status(400).json({ error: 'User not found' });
 
 		user.refreshToken = null;
 		res.cookie('accessToken', '', {
