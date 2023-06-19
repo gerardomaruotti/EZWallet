@@ -106,7 +106,7 @@ export const createGroup = async (req, res) => {
 
 		const { validEmails, alreadyInGroup, membersNotFound } = await checkGroupEmails(memberEmails);
 
-		if (validEmails.length == 0)
+		if (validEmails.length == 0 || validEmails.length == 1 && validEmails[0].email === userEmail)
 			return res.status(400).json({ error: 'All the emails are invalid' });
 
 		if (alreadyInGroup.some((email) => email.email === userEmail))
@@ -181,7 +181,7 @@ export const getGroup = async (req, res) => {
 		const group = await Group.findOne({ name: req.params.name });
 			if (!group) return res.status(400).json({ error: 'Group not found' });
 		
-		const { authorized, cause } = verifyMultipleAuth(req, res, {authType: ['Group', 'Admin'], groupEmails: group.members.map((m) => m.email)});
+		const { authorized, cause } = verifyMultipleAuth(req, res, {authType: ['Group', 'Admin'], emails: group.members.map((m) => m.email)});
 		if (!authorized) 
 			return res.status(401).json({ error: cause });
 
@@ -224,7 +224,7 @@ export const addToGroup = async (req, res) => {
 			return res.status(400).json({ error: 'Group not found' });
 
 		if (req.path.split('/').slice(-1)[0] === 'add') {
-			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', emails: group.members.map((m) => m.email) });
 			if (!authorized) return res.status(401).json({ error: cause });
 		} else if (req.path.split('/').slice(-1)[0] === 'insert') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
@@ -292,7 +292,7 @@ export const removeFromGroup = async (req, res) => {
 			return res.status(400).json({ error: 'Group not found' });
 
 		if (req.path.split('/').slice(-1)[0] === 'remove') {
-			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', groupEmails: group.members.map((m) => m.email) });
+			const { authorized, cause } = verifyAuth(req, res, { authType: 'Group', emails: group.members.map((m) => m.email) });
 			if (!authorized) return res.status(401).json({ error: cause });
 		} else if (req.path.split('/').slice(-1)[0] === 'pull') {
 			const { authorized, cause } = verifyAuth(req, res, { authType: 'Admin' });
@@ -372,7 +372,9 @@ export const deleteUser = async (req, res) => {
 		const group = await Group.findOne({ 'members.email': email });
 
 		let deletedGroup;
-		if(group.members.length == 1) {
+		if(!group){
+			deletedGroup = { deletedCount: 0, modifiedCount: 0 };
+		} else if (group.members.length == 1) {
 			deletedGroup = await Group.deleteMany({
 				name: group.name,
 			});
@@ -387,8 +389,8 @@ export const deleteUser = async (req, res) => {
 
 		const response = {
 			data: {
-				deletedTransaction: deletedTransactions.deletedCount,
-				deleteFromGroup: deletedGroup.modifiedCount > 0 || deletedGroup.deletedCount > 0			
+				deletedTransactions: deletedTransactions.deletedCount,
+				deletedFromGroup: deletedGroup.modifiedCount > 0 || deletedGroup.deletedCount > 0			
 			},
 			refreshedTokenMessage: res.locals.refreshedTokenMessage
 		};

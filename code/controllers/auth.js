@@ -23,7 +23,11 @@ export const register = async (req, res) => {
 			return res.status(400).json({ error: 'Email not correct formatted' });
 
 		if (await User.findOne({ email: email }))
-			return res.status(400).json({ message: 'User already registered' });
+			return res.status(400).json({ error: 'User already registered' });
+
+		if (await User.findOne({ username: username }))
+			return res.status(400).json({ error: 'User already registered' });
+
 		const hashedPassword = await bcrypt.hash(password, 12);
 		await User.create({
 			username,
@@ -57,9 +61,9 @@ export const registerAdmin = async (req, res) => {
 
 		if (
 			(await User.findOne({ email: email })) ||
-			(await User.findOne({ email: email }))
+			(await User.findOne({ username: username }))
 		)
-			return res.status(400).json({ message: 'User already registered' });
+			return res.status(400).json({ error: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
 		await User.create({
 			username,
@@ -91,10 +95,10 @@ export const login = async (req, res) => {
 
 	try {
 		const existingUser = await User.findOne({ email: email });
-		if (!existingUser) return res.status(400).json('User need to register');
+		if (!existingUser) return res.status(400).json({ error: 'User need to register' });
 
 		const match = await bcrypt.compare(password, existingUser.password);
-		if (!match) return res.status(400).json('Wrong credentials');
+		if (!match) return res.status(400).json({ error: 'Wrong credentials' });
 		//CREATE ACCESSTOKEN
 		const accessToken = jwt.sign(
 			{
@@ -154,11 +158,11 @@ export const login = async (req, res) => {
  */
 export const logout = async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;
-	if (!refreshToken) return res.status(400).json('User not logged in');
+	if (!refreshToken) return res.status(400).json({ error: 'User not logged in'});
 
 	try {
 		const user = await User.findOne({ refreshToken: refreshToken });
-		if (!user) return res.status(400).json('User not found');
+		if (!user) return res.status(400).json({ error: 'User not found' });
 
 		user.refreshToken = null;
 		res.cookie('accessToken', '', {

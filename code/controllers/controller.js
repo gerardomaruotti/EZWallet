@@ -25,11 +25,12 @@ export const createCategory = async (req, res) => {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
 
-		categories.findOne({ type: type }).then((data) => {
-			if (data) {
-				return res.status(400).json({ error: 'Category already exists' });
-			}
-		});
+		const existingCategory = await categories.findOne({ type: type });
+
+		if (existingCategory) {
+			return res.status(400).json({ error: 'Category already exists' });
+		}
+
 		const new_categories = new categories({ type, color });
 		new_categories.save().then((data) => {
 			res.status(200).json({
@@ -107,9 +108,16 @@ export const deleteCategory = async (req, res) => {
 		if (!types || types.length == 0) {
 			return res.status(400).json({ error: 'Missing parameters' });
 		}
+
 		let checkCategoriesNumber = await categories.find();
 		if (checkCategoriesNumber.length == 1) {
 			return res.status(400).json({ error: 'Only one category remaining!' });
+		} else if (checkCategoriesNumber.length === types.length) {
+			const oldestItem = await categories.findOne().sort({ date: 1 });
+			let index = types.indexOf(oldestItem.type);
+			if (index > -1) {
+				types.splice(index, 1);
+			}
 		}
 
 		let responseData = {
@@ -118,16 +126,27 @@ export const deleteCategory = async (req, res) => {
 		};
 
 		for (const type of types) {
-			let data = await categories.findOne({ type });
-			if (!data) {
-				return res.status(400).json({ error: 'Category does not exist' });
-			}
+			let categoriesNumber = await categories.find();
+			if (categoriesNumber.length == 1) {
+				await transactions.updateMany(
+					{ type },
+					{ $set: { type: categoriesNumber[0].type } }
+				);
+			} else {
+				let data = await categories.findOne({ type });
+				if (!data) {
+					return res.status(400).json({ error: 'Category does not exist' });
+				}
 
+				await categories.deleteOne({ type });
+			}
+			const oldestItem = await categories.findOne().sort({ date: 1 });
 			const typeTransactions = await transactions.find({ type });
 			responseData.count += typeTransactions.length;
-
-			await transactions.updateMany({ type }, { $set: { type: 'investment' } });
-			await data.remove();
+			await transactions.updateMany(
+				{ type },
+				{ $set: { type: oldestItem.type } }
+			);
 		}
 
 		res.status(200).json({
@@ -182,7 +201,31 @@ export const createTransaction = async (req, res) => {
 		});
 		if (!authorized) return res.status(401).json({ error: cause });
 
+		const cookie = req.cookies;
+		const decodedAccessToken = jwt.verify(
+			cookie.accessToken,
+			process.env.ACCESS_KEY
+		);
+
+		if (decodedAccessToken.username !== req.params.username) {
+			return res.status(401).json({ error: 'Unauthorized' });
+		}
+
 		const { username, amount, type } = req.body;
+		const routeUsername = req.params.username;
+
+		if (!username || !amount || !type) {
+			return res.status(400).json({ error: 'Missing parameters' });
+		}
+
+		if (routeUsername !== username) {
+			return res.status(400).json({ error: 'Unauthorized' });
+		}
+
+		let parsedAmount = parseFloat(amount);
+		if (!parsedAmount) {
+			return res.status(400).json({ error: 'Invalid amount' });
+		}
 
 		const typeLook = await categories.findOne({ type: type });
 		if (!typeLook) {
@@ -498,7 +541,7 @@ export const getTransactionsByGroup = async (req, res) => {
 		} else {
 			const { authorized, cause } = verifyAuth(req, res, {
 				authType: 'Group',
-				groupEmails: memberEmails,
+				emails: memberEmails,
 			});
 			if (!authorized) return res.status(401).json({ error: cause });
 		}
@@ -573,7 +616,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 		} else {
 			const { authorized, cause } = verifyAuth(req, res, {
 				authType: 'Group',
-				groupEmails: memberEmails,
+				emails: memberEmails,
 			});
 			if (!authorized) return res.status(401).json({ error: cause });
 		}
@@ -665,6 +708,12 @@ export const deleteTransaction = async (req, res) => {
 		const idLook = await transactions.findOne({ _id: id });
 		if (!idLook) {
 			return res.status(400).json({ error: 'Transaction not found.' });
+		}
+
+		if (userLook.username !== idLook.username) {
+			return res
+				.status(400)
+				.json({ error: 'Transaction does not belong to you.' });
 		}
 
 		let data = await transactions.deleteOne({ _id: req.body._id });
