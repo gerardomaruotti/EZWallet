@@ -63,7 +63,7 @@ export const registerAdmin = async (req, res) => {
 			(await User.findOne({ email: email })) ||
 			(await User.findOne({ email: email }))
 		)
-			return res.status(400).json({ message: 'User already registered' });
+			return res.status(400).json({ error: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
 		await User.create({
 			username,
@@ -95,10 +95,10 @@ export const login = async (req, res) => {
 
 	try {
 		const existingUser = await User.findOne({ email: email });
-		if (!existingUser) return res.status(400).json('User need to register');
+		if (!existingUser) return res.status(400).json({ error: 'User need to register' });
 
 		const match = await bcrypt.compare(password, existingUser.password);
-		if (!match) return res.status(400).json('Wrong credentials');
+		if (!match) return res.status(400).json({ error: 'Wrong credentials' });
 		//CREATE ACCESSTOKEN
 		const accessToken = jwt.sign(
 			{
