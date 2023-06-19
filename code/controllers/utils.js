@@ -98,12 +98,12 @@ export const verifyAuth = (req, res, info) => {
 			cookie.accessToken,
 			process.env.ACCESS_KEY
 		);
-		console.log(decodedAccessToken)
+
 		const decodedRefreshToken = jwt.verify(
 			cookie.refreshToken,
 			process.env.ACCESS_KEY
 		);
-		console.log(decodedRefreshToken)
+
 		if (
 			!decodedAccessToken.username ||
 			!decodedAccessToken.email ||
@@ -125,19 +125,18 @@ export const verifyAuth = (req, res, info) => {
 		) {
 			return { authorized: false, cause: 'Mismatched users' };
 		}
-		console.log('Okkkkkkkkkk');
+
 		if (info.authType === 'User') {
-			if (!req.params && !info.username){
+			if (!req.params && !info.username) {
 				return {
 					authorized: false,
 					cause: 'Cannot deceted the user',
 				};
-			} else if(
+			} else if (
 				(req.params &&
-				req.params.username &&
-				req.params.username !== decodedAccessToken.username) ||
-				(info.username &&
-				info.username !== decodedAccessToken.username)
+					req.params.username &&
+					req.params.username !== decodedAccessToken.username) ||
+				(info.username && info.username !== decodedAccessToken.username)
 			) {
 				return {
 					authorized: false,
@@ -149,10 +148,7 @@ export const verifyAuth = (req, res, info) => {
 				return { authorized: false, cause: 'Not admin' };
 			}
 		} else if (info.authType === 'Group') {
-			if (
-				!info.emails ||
-				!info.emails.includes(decodedAccessToken.email)
-			) {
+			if (!info.emails || !info.emails.includes(decodedAccessToken.email)) {
 				return { authorized: false, cause: 'User not in group' };
 			}
 		}
@@ -160,7 +156,7 @@ export const verifyAuth = (req, res, info) => {
 		return { authorized: true, cause: 'Authorized' };
 	} catch (err) {
 		if (err.name === 'TokenExpiredError' || err.message === 'jwt expired') {
-			try {		
+			try {
 				const refreshToken = jwt.verify(
 					cookie.refreshToken,
 					process.env.ACCESS_KEY
@@ -189,7 +185,7 @@ export const verifyAuth = (req, res, info) => {
 				if (err.name === 'TokenExpiredError') {
 					return { authorized: false, cause: 'Perform login again' };
 				}
-				return { authorized: false, cause: err.name}
+				return { authorized: false, cause: err.name };
 			}
 		} else {
 			return { authorized: false, cause: err.name };
@@ -275,7 +271,6 @@ export const isEmail = (email) => {
 	return email.match(validRegex) ? true : false;
 };
 
-// This function takes in an array of member emails and a group name. It first filters out any emails that are not in the database, then checks if they are in the group. If no group name is specified, it only checks if they are in any group. It returns an object with the valid emails, emails that are already in the group, emails that are not in the group, and emails that are not in the database.
 export const checkGroupEmails = async (memberEmails, groupName) => {
 	let alreadyInGroup = [];
 	let membersNotFound = [];
