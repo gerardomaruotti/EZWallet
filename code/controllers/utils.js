@@ -24,20 +24,39 @@ export const handleDateFilterParams = (req) => {
 		if (isNaN(fromDate.getTime())) {
 			throw new Error('Invalid `from` parameter');
 		}
-		filter.date = { $gte: fromDate };
+
+		const Day = new Date(
+			fromDate.getFullYear(),
+			fromDate.getMonth(),
+			fromDate.getUTCDate(),
+		);
+		const startOfDay= new Date(Day.getTime() + 2* 60 * 60 * 1000);
+		startOfDay.setUTCHours(0, 0, 0, 0);
+		filter.date = { $gte: startOfDay };
 	}
 
 	if (upTo) {
-		const upToDate = new Date(upTo);
-		if (isNaN(upToDate.getTime())) {
+		const dateObj = new Date(upTo);
+		const Day = new Date(
+			dateObj.getFullYear(),
+			dateObj.getMonth(),
+			dateObj.getUTCDate(),
+		);
+		if (isNaN(Day.getTime())) {
 			throw new Error('Invalid `upTo` parameter');
 		}
 		if (filter.date) {
-			filter.date.$lte = new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+			const startOfDay= new Date(Day.getTime() + 2* 60 * 60 * 1000);
+		startOfDay.setUTCHours(0, 0, 0, 0);
+		const endOfDay = new Date (startOfDay);
+		endOfDay.setUTCHours(23, 59, 59, 999);
+			filter.date.$lte = new Date(endOfDay.getTime());
 		} else {
-			filter.date = {
-				$lt: new Date(upToDate.getTime() + 24 * 60 * 60 * 1000 - 1),
-			};
+			const startOfDay= new Date(Day.getTime() + 2* 60 * 60 * 1000);
+		startOfDay.setUTCHours(0, 0, 0, 0);
+		const endOfDay = new Date (startOfDay);
+		endOfDay.setUTCHours(23, 59, 59, 999);
+		filter.date = { $lte: endOfDay };
 		}
 	}
 
@@ -46,13 +65,16 @@ export const handleDateFilterParams = (req) => {
 		if (isNaN(dateObj.getTime())) {
 			throw new Error('Invalid `date` parameter');
 		}
-		const startOfDay = new Date(
+		const Day = new Date(
 			dateObj.getFullYear(),
 			dateObj.getMonth(),
-			dateObj.getDate()
+			dateObj.getUTCDate(),
 		);
-		const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
-		filter.date = { $gte: startOfDay, $lte: endOfDay };
+		const startOfDay= new Date(Day.getTime() + 2* 60 * 60 * 1000);
+		startOfDay.setUTCHours(0, 0, 0, 0);
+		const endOfDay = new Date (startOfDay);
+		endOfDay.setUTCHours(23, 59, 59, 999);
+		filter.date = { $gte: startOfDay , $lte: endOfDay };
 	}
 	if (Object.keys(filter).length === 0) {
 		filter = {};
