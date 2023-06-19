@@ -61,7 +61,7 @@ export const registerAdmin = async (req, res) => {
 
 		if (
 			(await User.findOne({ email: email })) ||
-			(await User.findOne({ email: email }))
+			(await User.findOne({ username: username }))
 		)
 			return res.status(400).json({ message: 'User already registered' });
 		const hashedPassword = await bcrypt.hash(password, 12);
