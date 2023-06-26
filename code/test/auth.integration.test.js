@@ -146,7 +146,7 @@ describe('register', () => {
 				.then((response) => {
 					expect(response.status).toBe(400);
 					expect(response.body).toStrictEqual({
-						message: 'User already registered',
+						error: 'User already registered',
 					});
 					done();
 				});
@@ -277,7 +277,7 @@ describe('registerAdmin', () => {
 				.then((response) => {
 					expect(response.status).toBe(400);
 					expect(response.body).toStrictEqual({
-						message: 'User already registered',
+						error: 'User already registered',
 					});
 					done();
 				});
@@ -369,7 +369,7 @@ describe('login', () => {
 			.send({ email: 'admin@gmail.com', password: '123456hello' })
 			.then((response) => {
 				expect(response.status).toBe(400);
-				expect(response.body).toStrictEqual('Wrong credentials');
+				expect(response.body).toStrictEqual({ error: 'Wrong credentials' });
 				done();
 			});
 	});
@@ -380,7 +380,7 @@ describe('login', () => {
 			.send({ email: 'enrico@gmail.com', password: '12345hello' })
 			.then((response) => {
 				expect(response.status).toBe(400);
-				expect(response.body).toStrictEqual('User need to register');
+				expect(response.body).toStrictEqual({ error: 'User need to register' });
 				done();
 			});
 	});
@@ -419,7 +419,7 @@ describe('logout', () => {
 			.get('/api/logout')
 			.then((response) => {
 				expect(response.status).toBe(400);
-				expect(response.body).toStrictEqual('User not logged in');
+				expect(response.body).toStrictEqual({ error: 'User not logged in' });
 				done();
 			});
 	});
@@ -430,7 +430,7 @@ describe('logout', () => {
 			.set('Cookie', `refreshToken=${'refreshtokentests'}`)
 			.then((response) => {
 				expect(response.status).toBe(400);
-				expect(response.body).toStrictEqual('User not found');
+				expect(response.body).toStrictEqual({ error: 'User not found' });
 				done();
 			});
 	});

@@ -128,10 +128,7 @@ export const deleteCategory = async (req, res) => {
 		for (const type of types) {
 			let categoriesNumber = await categories.find();
 			if (categoriesNumber.length == 1) {
-				await transactions.updateMany(
-					{ type },
-					{ $set: { type: categoriesNumber[0].type } }
-				);
+				await transactions.updateMany({ type }, { $set: { type: categoriesNumber[0].type } });
 			} else {
 				let data = await categories.findOne({ type });
 				if (!data) {
@@ -140,13 +137,10 @@ export const deleteCategory = async (req, res) => {
 
 				await categories.deleteOne({ type });
 			}
-			const oldestItem = await categories.findOne().sort({ date: 1 });
+			const oldestItem = await categories.findOne();
 			const typeTransactions = await transactions.find({ type });
 			responseData.count += typeTransactions.length;
-			await transactions.updateMany(
-				{ type },
-				{ $set: { type: oldestItem.type } }
-			);
+			await transactions.updateMany({ type }, { $set: { type: oldestItem.type } });
 		}
 
 		res.status(200).json({
@@ -174,9 +168,7 @@ export const getCategories = async (req, res) => {
 
 		let data = await categories.find({});
 
-		let filter = data.map((v) =>
-			Object.assign({}, { type: v.type, color: v.color })
-		);
+		let filter = data.map((v) => Object.assign({}, { type: v.type, color: v.color }));
 
 		return res.status(200).json({
 			data: filter,
@@ -202,10 +194,7 @@ export const createTransaction = async (req, res) => {
 		if (!authorized) return res.status(401).json({ error: cause });
 
 		const cookie = req.cookies;
-		const decodedAccessToken = jwt.verify(
-			cookie.accessToken,
-			process.env.ACCESS_KEY
-		);
+		const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
 
 		if (decodedAccessToken.username !== req.params.username) {
 			return res.status(401).json({ error: 'Unauthorized' });
@@ -711,9 +700,7 @@ export const deleteTransaction = async (req, res) => {
 		}
 
 		if (userLook.username !== idLook.username) {
-			return res
-				.status(400)
-				.json({ error: 'Transaction does not belong to you.' });
+			return res.status(400).json({ error: 'Transaction does not belong to you.' });
 		}
 
 		let data = await transactions.deleteOne({ _id: req.body._id });

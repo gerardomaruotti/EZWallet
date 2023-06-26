@@ -1,8 +1,4 @@
-import {
-	handleDateFilterParams,
-	verifyAuth,
-	handleAmountFilterParams,
-} from '../controllers/utils';
+import { handleDateFilterParams, verifyAuth, handleAmountFilterParams } from '../controllers/utils';
 import jwt from 'jsonwebtoken';
 
 jest.mock('jsonwebtoken');
@@ -69,9 +65,7 @@ describe('handleDateFilterParams', () => {
 			},
 		};
 
-		expect(() => handleDateFilterParams(mockReq)).toThrowError(
-			'Invalid `date` parameter'
-		);
+		expect(() => handleDateFilterParams(mockReq)).toThrowError('Invalid `date` parameter');
 	});
 });
 
@@ -209,10 +203,7 @@ describe('verifyAuth', () => {
 		const response = verifyAuth(mockReq, mockRes, info);
 
 		expect(response).toHaveProperty('authorized', false);
-		expect(response).toHaveProperty(
-			'cause',
-			'Requested user different from the logged one'
-		);
+		expect(response).toHaveProperty('cause', 'Requested user different from the logged one');
 	});
 
 	test('should return authorized false if not admin', () => {

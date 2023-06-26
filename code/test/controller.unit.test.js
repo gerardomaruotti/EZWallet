@@ -3,6 +3,7 @@ import { app } from '../app';
 import { categories, transactions } from '../models/model';
 import { User, Group } from '../models/User';
 import { verifyAuth, verifyMultipleAuth } from '../controllers/utils';
+import jwt from 'jsonwebtoken';
 import {
 	createCategory,
 	updateCategory,
@@ -21,6 +22,7 @@ import {
 jest.mock('../models/model');
 jest.mock('../controllers/utils');
 jest.mock('../models/User');
+jest.mock('jsonwebtoken');
 
 let mockReq;
 let mockRes;
@@ -455,6 +457,52 @@ describe('updateCategory', () => {
 
 //OK
 describe('deleteCategory', () => {
+	test('should delete category and update transactions', async () => {
+		verifyAuth.mockImplementation(() => ({
+			authorized: true,
+			cause: 'Authorized',
+		}));
+
+		mockReq.body.types = ['test'];
+
+		const mockCategories = [
+			{ type: 'test', remove: jest.fn() },
+			{ type: 'test1', remove: jest.fn() },
+		];
+
+		const mockTransactions = [
+			{
+				type: 'test',
+				amount: 100,
+			},
+			{
+				type: 'test',
+				amount: 200,
+			},
+		];
+
+		categories.find.mockResolvedValue(mockCategories);
+		categories.findOne.mockResolvedValue(mockCategories[1]);
+
+		transactions.find.mockResolvedValue(mockTransactions);
+
+		await deleteCategory(mockReq, mockRes);
+
+		expect(transactions.updateMany).toHaveBeenCalledWith(
+			{ type: mockCategories[0].type },
+			{ $set: { type: mockCategories[1].type } }
+		);
+
+		expect(mockRes.status).toHaveBeenCalledWith(200);
+		expect(mockRes.json).toHaveBeenCalledWith({
+			data: {
+				message: 'Categories deleted',
+				count: mockTransactions.length,
+			},
+			refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
+		});
+	});
+
 	test('should return 401 if user is not authorized', async () => {
 		verifyAuth.mockImplementation(() => ({
 			authorized: false,
@@ -513,54 +561,6 @@ describe('deleteCategory', () => {
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
 			error: 'Category does not exist',
-		});
-	});
-
-	test('should delete category and update transactions', async () => {
-		verifyAuth.mockImplementation(() => ({
-			authorized: true,
-			cause: 'Authorized',
-		}));
-
-		mockReq.body.types = ['test'];
-
-		const mockCategory = {
-			type: 'test',
-			remove: jest.fn(),
-		};
-
-		const mockTransactions = [
-			{
-				type: 'test',
-				amount: 100,
-			},
-			{
-				type: 'test',
-				amount: 200,
-			},
-		];
-
-		categories.find.mockResolvedValue([{ type: 'test' }]);
-		categories.findOne.mockResolvedValue(mockCategory);
-
-		transactions.find.mockResolvedValue(mockTransactions);
-
-		await deleteCategory(mockReq, mockRes);
-
-		expect(transactions.updateMany).toHaveBeenCalledWith(
-			{ type: 'test' },
-			{ $set: { type: 'investment' } }
-		);
-
-		expect(mockCategory.remove).toHaveBeenCalled();
-
-		expect(mockRes.status).toHaveBeenCalledWith(200);
-		expect(mockRes.json).toHaveBeenCalledWith({
-			data: {
-				message: 'Categories deleted',
-				count: mockTransactions.length,
-			},
-			refreshedTokenMessage: mockRes.locals.refreshedTokenMessage,
 		});
 	});
 
@@ -683,6 +683,22 @@ describe('createTransaction', () => {
 	});
 
 	test('should return 400 if category does not exist', async () => {
+		mockReq.params = {
+			username: 'username',
+		};
+
+		mockReq.body = {
+			username: 'username',
+			amount: 100,
+			type: 'investment',
+		};
+		jwt.verify.mockImplementationOnce(() => {
+			return {
+				username: 'username',
+				email: 'email@example.com',
+			};
+		});
+
 		verifyMultipleAuth.mockImplementation(() => ({
 			authorized: true,
 			cause: 'Authorized',
@@ -699,6 +715,18 @@ describe('createTransaction', () => {
 	});
 
 	test('should return 400 if user does not exist', async () => {
+		mockReq.body = {
+			username: 'username',
+			amount: 100,
+			type: 'investment',
+		};
+		mockReq.params = {
+			username: 'username',
+		};
+		jwt.verify.mockImplementation(() => ({
+			_id: '5f9d5c6b2c3b3e1d7c9b4b1a',
+			username: 'username',
+		}));
 		verifyMultipleAuth.mockImplementation(() => ({
 			authorized: true,
 			cause: 'Authorized',
@@ -721,6 +749,18 @@ describe('createTransaction', () => {
 	});
 
 	test('should return 500 if there is database error', async () => {
+		mockReq.body = {
+			username: 'username',
+			amount: 100,
+			type: 'investment',
+		};
+		mockReq.params = {
+			username: 'username',
+		};
+		jwt.verify.mockImplementation(() => ({
+			_id: '5f9d5c6b2c3b3e1d7c9b4b1a',
+			username: 'username',
+		}));
 		verifyMultipleAuth.mockImplementation(() => ({
 			authorized: true,
 			cause: 'Authorized',
@@ -756,6 +796,18 @@ describe('createTransaction', () => {
 	});
 
 	test('should create transaction and return data', async () => {
+		mockReq.body = {
+			username: 'username',
+			amount: 100,
+			type: 'investment',
+		};
+		mockReq.params = {
+			username: 'username',
+		};
+		jwt.verify.mockImplementation(() => ({
+			_id: '5f9d5c6b2c3b3e1d7c9b4b1a',
+			username: 'username',
+		}));
 		verifyMultipleAuth.mockImplementation(() => ({
 			authorized: true,
 			cause: 'Authorized',
