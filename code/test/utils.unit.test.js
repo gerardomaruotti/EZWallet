@@ -354,7 +354,7 @@ describe('verifyAuth', () => {
 		mockReq.cookies.refreshToken = 'refresh-token';
 
 		info.authType = 'Group';
-		info.groupEmails = ['email@example.com'];
+		info.emails = ['email@example.com'];
 
 		jwt.verify
 			.mockImplementationOnce(() => {

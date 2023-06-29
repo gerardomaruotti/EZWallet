@@ -1193,8 +1193,8 @@ describe('deleteUser', () => {
 		expect(mockRes.json).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
-					deletedTransaction: 10,
-					deleteFromGroup: true,
+					deletedTransactions: 10,
+					deletedFromGroup: true,
 				}),
 				refreshedTokenMessage: expect.any(String),
 			})
@@ -1218,8 +1218,8 @@ describe('deleteUser', () => {
 		expect(mockRes.json).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
-					deletedTransaction: 10,
-					deleteFromGroup: false,
+					deletedTransactions: 10,
+					deletedFromGroup: false,
 				}),
 				refreshedTokenMessage: expect.any(String),
 			})

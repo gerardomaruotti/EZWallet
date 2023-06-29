@@ -147,7 +147,8 @@ describe('getUser', () => {
 			username: 'tester',
 			email: 'tester@test.com',
 			password: 'tester',
-		}).then(() => {
+		})
+		.then(() => {
 			request(app)
 				.get(`/api/users/${username}`)
 				.set('Cookie', `accessToken="" refreshToken=""`)
@@ -164,22 +165,28 @@ describe('getUser', () => {
 describe('createGroup', () => {
 	test('Nominal case: should create a group', (done) => {
 		User.create({
-			username: 'tester',
+			username: 'admin',
 			email: 'admin@email.com',
-			password: 'tester',
+			password: 'admin',
 		}).then(() => {
-			request(app)
-				.post('/api/groups')
-				.set(
-					'Cookie',
-					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
-				)
-				.send({ name: 'testGroup', memberEmails: ['admin@example.com'] })
-				.then((response) => {
-					expect(response.status).toBe(200);
-					done();
-				})
-				.catch((err) => done(err));
+			User.create({
+				username: 'test',
+				email: 'test@email.com',
+				password: 'test',
+			}).then(() => {
+				request(app)
+					.post('/api/groups')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.send({ name: 'testGroup', memberEmails: ['test@email.com'] })
+					.then((response) => {
+						expect(response.status).toBe(200);
+						done();
+					})
+					.catch((err) => done(err));
+			});
 		});
 	});
 
