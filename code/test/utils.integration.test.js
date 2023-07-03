@@ -3,7 +3,6 @@ import { app } from '../app';
 import { categories, transactions } from '../models/model';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import 'jest-extended';
 import { User, Group } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { verifyAuth, handleDateFilterParams } from '../controllers/utils';
@@ -149,11 +148,7 @@ describe('utils.js', () => {
 				},
 			});
 			//The response object must have a field that contains the message, with the name being either "message" or "refreshedTokenMessage"
-			const message = res.locals.refreshedTokenMessage
-				? true
-				: res.locals.message
-				? true
-				: false;
+			const message = res.locals.refreshedTokenMessage ? true : res.locals.message ? true : false;
 			expect(message).toBe(true);
 		});
 		test('Tokens are both valid and belong to the requested user and to be false accessToken missing email ', () => {
@@ -404,9 +399,7 @@ describe('utils.js', () => {
 			//The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
 			//Checks on the "cause" field are omitted since it can be any string
 			expect(Object.values(response).includes(false)).toBe(true);
-			expect(response.cause).toBe(
-				'Requested user different from the logged one'
-			);
+			expect(response.cause).toBe('Requested user different from the logged one');
 		});
 		test('Tokens is from a user trying to pass as an admin it should give an error ', () => {
 			//The only difference between access and refresh token is (in practice) their duration, but the payload is the same

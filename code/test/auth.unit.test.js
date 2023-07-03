@@ -239,7 +239,7 @@ describe('register', () => {
 		await register(mockReq, mockRes);
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			message: 'User already registered',
+			error: 'User already registered',
 		});
 	});
 
@@ -263,7 +263,7 @@ describe('register', () => {
 		await register(mockReq, mockRes);
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			message: 'User already registered',
+			error: 'User already registered',
 		});
 	});
 
@@ -515,7 +515,7 @@ describe('registerAdmin', () => {
 		await registerAdmin(mockReq, mockRes);
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			message: 'User already registered',
+			error: 'User already registered',
 		});
 	});
 
@@ -694,7 +694,7 @@ describe('Login', () => {
 
 		await login(mockReq, mockRes);
 		expect(mockRes.status).toHaveBeenCalledWith(400);
-		expect(mockRes.json).toHaveBeenCalledWith('User need to register');
+		expect(mockRes.json).toHaveBeenCalledWith({ error: 'User need to register' });
 	});
 
 	test('Password wrong', async () => {
@@ -724,7 +724,7 @@ describe('Login', () => {
 
 		await login(mockReq, mockRes);
 		expect(mockRes.status).toHaveBeenCalledWith(400);
-		expect(mockRes.json).toHaveBeenCalledWith('Wrong credentials');
+		expect(mockRes.json).toHaveBeenCalledWith({ error: 'Wrong credentials' });
 	});
 
 	test('Database error', async () => {
@@ -798,10 +798,10 @@ describe('logout', () => {
 
 		await logout(mockReq, mockRes);
 		expect(mockRes.status).toHaveBeenCalledWith(400);
-		expect(mockRes.json).toHaveBeenCalledWith('User not logged in');
+		expect(mockRes.json).toHaveBeenCalledWith({ error: 'User not logged in' });
 	});
 
-	test(' User not found', async () => {
+	test('User not found', async () => {
 		const mockReq = {
 			params: {},
 			cookies: {
@@ -820,7 +820,7 @@ describe('logout', () => {
 
 		await logout(mockReq, mockRes);
 		expect(mockRes.status).toHaveBeenCalledWith(400);
-		expect(mockRes.json).toHaveBeenCalledWith('User not found');
+		expect(mockRes.json).toHaveBeenCalledWith({ error: 'User not found' });
 	});
 
 	test('Database error', async () => {

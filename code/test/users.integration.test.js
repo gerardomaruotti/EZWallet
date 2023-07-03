@@ -54,10 +54,7 @@ describe('getUsers', () => {
 	test('should return empty list if there are no users', (done) => {
 		request(app)
 			.get('/api/users')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.then((response) => {
 				expect(response.status).toBe(200);
 				done();
@@ -110,10 +107,7 @@ describe('getUser', () => {
 		const username = 'tester';
 		request(app)
 			.get(`/api/users/${username}`)
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.then((response) => {
 				expect(response.status).toBe(400);
 				expect(response.body).toStrictEqual({ error: 'User not found' });
@@ -153,7 +147,8 @@ describe('getUser', () => {
 			username: 'tester',
 			email: 'tester@test.com',
 			password: 'tester',
-		}).then(() => {
+		})
+		.then(() => {
 			request(app)
 				.get(`/api/users/${username}`)
 				.set('Cookie', `accessToken="" refreshToken=""`)
@@ -170,22 +165,28 @@ describe('getUser', () => {
 describe('createGroup', () => {
 	test('Nominal case: should create a group', (done) => {
 		User.create({
-			username: 'tester',
+			username: 'admin',
 			email: 'admin@email.com',
-			password: 'tester',
+			password: 'admin',
 		}).then(() => {
-			request(app)
-				.post('/api/groups')
-				.set(
-					'Cookie',
-					`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
-				)
-				.send({ name: 'testGroup', memberEmails: ['admin@example.com'] })
-				.then((response) => {
-					expect(response.status).toBe(200);
-					done();
-				})
-				.catch((err) => done(err));
+			User.create({
+				username: 'test',
+				email: 'test@email.com',
+				password: 'test',
+			}).then(() => {
+				request(app)
+					.post('/api/groups')
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid};`
+					)
+					.send({ name: 'testGroup', memberEmails: ['test@email.com'] })
+					.then((response) => {
+						expect(response.status).toBe(200);
+						done();
+					})
+					.catch((err) => done(err));
+			});
 		});
 	});
 
@@ -397,12 +398,8 @@ describe('getGroups', () => {
 				)
 				.then((response) => {
 					expect(response.status).toBe(200);
-					expect(response.body.data[0].members[0].email).toBe(
-						'tester1@gmail.com'
-					);
-					expect(response.body.data[0].members[1].email).toBe(
-						'tester2@gmail.com'
-					);
+					expect(response.body.data[0].members[0].email).toBe('tester1@gmail.com');
+					expect(response.body.data[0].members[1].email).toBe('tester2@gmail.com');
 					done();
 				});
 		});
@@ -489,10 +486,7 @@ describe('getGroup', () => {
 					expect(response.body).toStrictEqual({
 						data: {
 							name: 'testGroup',
-							members: [
-								{ email: 'tester1@gmail.com' },
-								{ email: 'tester2@gmail.com' },
-							],
+							members: [{ email: 'tester1@gmail.com' }, { email: 'tester2@gmail.com' }],
 						},
 					});
 
@@ -537,10 +531,7 @@ describe('addToGroup', () => {
 		const response = await request(app)
 			.patch(`/api/groups/${name}/insert`)
 			.send({ emails: ['tester2@gmail.com'] })
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			);
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`);
 
 		expect(response.status).toBe(200);
 	});
@@ -551,9 +542,7 @@ describe('addToGroup', () => {
 			name: 'grouptest',
 			members: [{ email: 'tester1@gmail.com' }],
 		});
-		const response = await request(app)
-			.patch(`/api/groups/${name}/insert`)
-			.send({});
+		const response = await request(app).patch(`/api/groups/${name}/insert`).send({});
 
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe(
@@ -569,10 +558,7 @@ describe('addToGroup', () => {
 		const response = await request(app)
 			.patch('/api/groups/gruppononesistente/add')
 			.send({ emails: ['tester2@gmail.com'] })
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
-			);
+			.set('Cookie', `accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`);
 
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe('Group not found');
@@ -639,10 +625,7 @@ describe('addToGroup', () => {
 			.send({
 				emails: [],
 			})
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
-			);
+			.set('Cookie', `accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`);
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe('All the emails are invalid');
 	});
@@ -657,10 +640,7 @@ describe('addToGroup', () => {
 		const response = await request(app)
 			.patch(`/api/groups/${name}/insert`)
 			.send({ emails: ['tester2.gmail.com'] })
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`
-			);
+			.set('Cookie', `accessToken=${adminAccessTokenValid};refreshToken=${adminAccessTokenValid}`);
 
 		expect(response.status).toBe(400);
 		expect(response.body.error).toBe('Mail not correct formatted');
@@ -677,10 +657,7 @@ describe('removeFromGroup', () => {
 		}).then(() => {
 			Group.create({
 				name: 'groupname',
-				members: [
-					{ email: 'okok123@example.com' },
-					{ email: 'admin@email.com' },
-				],
+				members: [{ email: 'okok123@example.com' }, { email: 'admin@email.com' }],
 			})
 				.then(() => {
 					request(app)
@@ -711,10 +688,7 @@ describe('removeFromGroup', () => {
 		}).then(() => {
 			Group.create({
 				name: 'groupname',
-				members: [
-					{ email: 'okok123@example.com' },
-					{ email: 'admin@email.com' },
-				],
+				members: [{ email: 'okok123@example.com' }, { email: 'admin@email.com' }],
 			})
 				.then(() => {
 					request(app)
@@ -789,10 +763,7 @@ describe('removeFromGroup', () => {
 		}).then(() => {
 			Group.create({
 				name: 'groupname',
-				members: [
-					{ email: 'okok123@example.com' },
-					{ email: 'admin@email.com' },
-				],
+				members: [{ email: 'okok123@example.com' }, { email: 'admin@email.com' }],
 			})
 				.then(() => {
 					request(app)
@@ -823,10 +794,7 @@ describe('removeFromGroup', () => {
 		}).then(() => {
 			Group.create({
 				name: 'groupname',
-				members: [
-					{ email: 'okok123@example.com' },
-					{ email: 'admin@email.com' },
-				],
+				members: [{ email: 'okok123@example.com' }, { email: 'admin@email.com' }],
 			})
 				.then(() => {
 					request(app)
@@ -854,10 +822,7 @@ describe('removeFromGroup', () => {
 		}).then(() => {
 			Group.create({
 				name: 'groupname',
-				members: [
-					{ email: 'okok123@example.com' },
-					{ email: 'sadmin@email.com' },
-				],
+				members: [{ email: 'okok123@example.com' }, { email: 'sadmin@email.com' }],
 			})
 				.then(() => {
 					request(app)
@@ -920,10 +885,7 @@ describe('deleteUser', () => {
 		}).then(() => {
 			Group.create({
 				name: 'groupname',
-				members: [
-					{ email: 'okok123@example.com' },
-					{ email: 'admin@email.com' },
-				],
+				members: [{ email: 'okok123@example.com' }, { email: 'admin@email.com' }],
 			})
 				.then(() => {
 					request(app)
@@ -966,10 +928,7 @@ describe('deleteUser', () => {
 		}).then(() => {
 			Group.create({
 				name: 'groupname',
-				members: [
-					{ email: 'okok123@example.com' },
-					{ email: 'admin@email.com' },
-				],
+				members: [{ email: 'okok123@example.com' }, { email: 'admin@email.com' }],
 			})
 				.then(() => {
 					request(app)
@@ -994,10 +953,7 @@ describe('deleteUser', () => {
 	test('should return 400 if email is not defined', (done) => {
 		request(app)
 			.delete(`/api/users`)
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.then((response) => {
 				expect(response.status).toBe(400);
 				done();
@@ -1008,10 +964,7 @@ describe('deleteUser', () => {
 	test('should return 400 if the user is not found', (done) => {
 		request(app)
 			.delete(`/api/users`)
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ email: 'ok@test.com' })
 			.then((response) => {
 				expect(response.status).toBe(400);

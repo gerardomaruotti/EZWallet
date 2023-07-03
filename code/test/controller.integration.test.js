@@ -4,7 +4,6 @@ import { categories, transactions } from '../models/model';
 import { User, Group } from '../models/User.js';
 import mongoose, { Model } from 'mongoose';
 import dotenv from 'dotenv';
-import e from 'express';
 import jwt from 'jsonwebtoken';
 
 dotenv.config();
@@ -59,10 +58,7 @@ describe('createCategory', () => {
 	test('Should create a category and return it', (done) => {
 		request(app)
 			.post('/api/categories')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ type: 'test', color: 'red' })
 			.then((response) => {
 				expect(response.status).toBe(200);
@@ -87,10 +83,7 @@ describe('createCategory', () => {
 	test('Should return 400 if missing color', (done) => {
 		request(app)
 			.post('/api/categories')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ type: 'test' })
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -101,10 +94,7 @@ describe('createCategory', () => {
 	test('Should return 400 if missing type', (done) => {
 		request(app)
 			.post('/api/categories')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ color: 'red' })
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -200,10 +190,7 @@ describe('updateCategory', () => {
 		//The API request must be awaited as well
 		const response = await request(app)
 			.patch('/api/categories/food') //Route to call
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			) //Setting cookies in the request
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
 			.send({ type: 'health', color: 'red' });
 
 		expect(response.status).toBe(200);
@@ -405,10 +392,7 @@ describe('deleteCategory', () => {
 	test('should return 400 if missing types', (done) => {
 		request(app)
 			.delete('/api/categories')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({})
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -419,10 +403,7 @@ describe('deleteCategory', () => {
 	test('should return 400 if types is empty', (done) => {
 		request(app)
 			.delete('/api/categories')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ types: [] })
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -571,7 +552,7 @@ describe('createTransaction', () => {
 	});
 
 	test('Should return 400 if the user does not exist', (done) => {
-		const username = 'tester';
+		const username = 'admin';
 
 		categories.create({ type: 'income', color: 'red' }).then(() => {
 			request(app)
@@ -590,14 +571,10 @@ describe('createTransaction', () => {
 	});
 
 	test('Should return 400 if category does not exist', (done) => {
-		const username = 'tester';
-
+		const username = 'admin';
 		request(app)
 			.post(`/api/users/${username}/transactions`)
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ username: 'admin', amount: 100, type: 'income' })
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -827,20 +804,18 @@ describe('getTransactionsByUser', () => {
 			password: 'tester',
 			refreshToken: adminAccessTokenValid,
 		}).then(() => {
-			transactions
-				.create({ username: 'tester', amount: 100, type: 'income' })
-				.then(() => {
-					request(app)
-						.get(`/api/transactions/users/${username}`)
-						.set(
-							'Cookie',
-							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-						)
-						.then((response) => {
-							expect(response.status).toBe(200);
-							done();
-						});
-				});
+			transactions.create({ username: 'tester', amount: 100, type: 'income' }).then(() => {
+				request(app)
+					.get(`/api/transactions/users/${username}`)
+					.set(
+						'Cookie',
+						`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+					)
+					.then((response) => {
+						expect(response.status).toBe(200);
+						done();
+					});
+			});
 		});
 	});
 
@@ -853,10 +828,7 @@ describe('getTransactionsByUser', () => {
 			refreshToken: adminAccessTokenValid,
 		}).then(() => {
 			categories
-				.create(
-					{ type: 'income', color: 'red' },
-					{ type: 'investment', color: 'blue' }
-				)
+				.create({ type: 'income', color: 'red' }, { type: 'investment', color: 'blue' })
 				.then(() => {
 					transactions
 						.create(
@@ -963,20 +935,18 @@ describe('getTransactionsByUserByCategory', () => {
 			refreshToken: adminAccessTokenValid,
 		}).then(() => {
 			categories.create({ type: 'income', color: 'red' }).then(() => {
-				transactions
-					.create({ username: 'admin', amount: 100, type: 'income' })
-					.then(() => {
-						request(app)
-							.get(`/api/users/${username}/transactions/category/${category}`)
-							.set(
-								'Cookie',
-								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-							)
-							.then((response) => {
-								expect(response.status).toBe(200);
-								done();
-							});
-					});
+				transactions.create({ username: 'admin', amount: 100, type: 'income' }).then(() => {
+					request(app)
+						.get(`/api/users/${username}/transactions/category/${category}`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(200);
+							done();
+						});
+				});
 			});
 		});
 	});
@@ -991,21 +961,19 @@ describe('getTransactionsByUserByCategory', () => {
 			refreshToken: adminAccessTokenValid,
 		}).then(() => {
 			categories.create({ type: 'income', color: 'red' }).then(() => {
-				transactions
-					.create({ username: 'test', amount: 100, type: 'okok' })
-					.then(() => {
-						request(app)
-							.get(`/api/users/${username}/transactions/category/${category}`)
-							.set(
-								'Cookie',
-								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-							)
-							.then((response) => {
-								expect(response.status).toBe(200);
-								expect(response.body.data).toEqual([]);
-								done();
-							});
-					});
+				transactions.create({ username: 'test', amount: 100, type: 'okok' }).then(() => {
+					request(app)
+						.get(`/api/users/${username}/transactions/category/${category}`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(200);
+							expect(response.body.data).toEqual([]);
+							done();
+						});
+				});
 			});
 		});
 	});
@@ -1062,20 +1030,18 @@ describe('getTransactionsByGroup', () => {
 				name: 'adminGroup',
 				members: [{ email: 'admin@email.com' }],
 			}).then(() => {
-				transactions
-					.create({ username: 'admin', amount: 100, type: 'income' })
-					.then(() => {
-						request(app)
-							.get(`/api/groups/${name}/transactions`)
-							.set(
-								'Cookie',
-								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-							)
-							.then((response) => {
-								expect(response.status).toBe(200);
-								done();
-							});
-					});
+				transactions.create({ username: 'admin', amount: 100, type: 'income' }).then(() => {
+					request(app)
+						.get(`/api/groups/${name}/transactions`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(200);
+							done();
+						});
+				});
 			});
 		});
 	});
@@ -1092,20 +1058,18 @@ describe('getTransactionsByGroup', () => {
 				name: 'adminGroup',
 				memberEmails: ['admin@example,com'],
 			}).then(() => {
-				transactions
-					.create({ username: 'admin', amount: 100, type: 'income' })
-					.then(() => {
-						request(app)
-							.get(`/api/transactions/groups/${name}`)
-							.set(
-								'Cookie',
-								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-							)
-							.then((response) => {
-								expect(response.status).toBe(200);
-								done();
-							});
-					});
+				transactions.create({ username: 'admin', amount: 100, type: 'income' }).then(() => {
+					request(app)
+						.get(`/api/transactions/groups/${name}`)
+						.set(
+							'Cookie',
+							`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+						)
+						.then((response) => {
+							expect(response.status).toBe(200);
+							done();
+						});
+				});
 			});
 		});
 	});
@@ -1186,20 +1150,18 @@ describe('getTransactionsByGroupByCategory', () => {
 					name: 'adminGroup',
 					members: [{ email: 'admin@email.com' }],
 				}).then(() => {
-					transactions
-						.create({ username: 'admin', amount: 100, type: 'income' })
-						.then(() => {
-							request(app)
-								.get(`/api/groups/${name}/transactions/category/${category}`)
-								.set(
-									'Cookie',
-									`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-								)
-								.then((response) => {
-									expect(response.status).toBe(200);
-									done();
-								});
-						});
+					transactions.create({ username: 'admin', amount: 100, type: 'income' }).then(() => {
+						request(app)
+							.get(`/api/groups/${name}/transactions/category/${category}`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
 				});
 			});
 		});
@@ -1219,20 +1181,18 @@ describe('getTransactionsByGroupByCategory', () => {
 				memberEmails: ['admin@example,com'],
 			}).then(() => {
 				categories.create({ type: 'income', color: 'red' }).then(() => {
-					transactions
-						.create({ username: 'admin', amount: 100, type: 'income' })
-						.then(() => {
-							request(app)
-								.get(`/api/transactions/groups/${name}/category/${category}`)
-								.set(
-									'Cookie',
-									`accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`
-								)
-								.then((response) => {
-									expect(response.status).toBe(401);
-									done();
-								});
-						});
+					transactions.create({ username: 'admin', amount: 100, type: 'income' }).then(() => {
+						request(app)
+							.get(`/api/transactions/groups/${name}/category/${category}`)
+							.set(
+								'Cookie',
+								`accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(401);
+								done();
+							});
+					});
 				});
 			});
 		});
@@ -1252,20 +1212,18 @@ describe('getTransactionsByGroupByCategory', () => {
 				memberEmails: ['admin@example.com'],
 			}).then(() => {
 				categories.create({ type: 'income', color: 'red' }).then(() => {
-					transactions
-						.create({ username: 'admin', amount: 100, type: 'income' })
-						.then(() => {
-							request(app)
-								.get(`/api/transactions/groups/${name}/category/${category}`)
-								.set(
-									'Cookie',
-									`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-								)
-								.then((response) => {
-									expect(response.status).toBe(200);
-									done();
-								});
-						});
+					transactions.create({ username: 'admin', amount: 100, type: 'income' }).then(() => {
+						request(app)
+							.get(`/api/transactions/groups/${name}/category/${category}`)
+							.set(
+								'Cookie',
+								`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
+							)
+							.then((response) => {
+								expect(response.status).toBe(200);
+								done();
+							});
+					});
 				});
 			});
 		});
@@ -1320,10 +1278,7 @@ describe('deleteTransaction', () => {
 		const username = 'admin';
 		request(app)
 			.delete(`/api/users/${username}/transactions`)
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ _id: 1 })
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -1398,10 +1353,7 @@ describe('deleteTransactions', () => {
 	test('should return 400 if ids are not provided', (done) => {
 		request(app)
 			.delete('/api/transactions')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.then((response) => {
 				expect(response.status).toBe(400);
 				expect(response.body).toHaveProperty('error', 'Missing parameters');
@@ -1412,10 +1364,7 @@ describe('deleteTransactions', () => {
 	test('should return 400 if ids ais an ampty array', (done) => {
 		request(app)
 			.delete('/api/transactions')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ _ids: [] })
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -1427,10 +1376,7 @@ describe('deleteTransactions', () => {
 	test('should return 400 if one ef ids element is empty', (done) => {
 		request(app)
 			.delete('/api/transactions')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ _ids: [''] })
 			.then((response) => {
 				expect(response.status).toBe(400);
@@ -1442,10 +1388,7 @@ describe('deleteTransactions', () => {
 	test('should return 400 if one or more ids are not found', (done) => {
 		request(app)
 			.delete('/api/transactions')
-			.set(
-				'Cookie',
-				`accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`
-			)
+			.set('Cookie', `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`)
 			.send({ _ids: ['123456789012'] })
 			.then((response) => {
 				expect(response.status).toBe(400);
